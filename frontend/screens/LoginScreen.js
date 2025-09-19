@@ -21,6 +21,16 @@ const LoginScreen = ({ navigation }) => {
         }
     };
 
+    // Quick dev login helpers (only visible in development builds)
+    const quickLogin = async (qEmail, qPassword) => {
+        try {
+            const data = await login(qEmail, qPassword);
+            Alert.alert('Success', `Welcome back, ${data.name}!`);
+        } catch (error) {
+            Alert.alert('Login Failed', error?.response?.data?.message || 'Invalid credentials');
+        }
+    };
+
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Login</Text>
@@ -40,6 +50,13 @@ const LoginScreen = ({ navigation }) => {
                 secureTextEntry
             />
             <Button title="Log In" onPress={handleLogin} />
+            {__DEV__ && (
+                <View style={{ marginTop: 12 }}>
+                    <Button title="Quick login (Host)" onPress={() => quickLogin('host', 'host')} />
+                    <View style={{ height: 8 }} />
+                    <Button title="Quick login (User)" onPress={() => quickLogin('test', 'test')} />
+                </View>
+            )}
             <Button
                 title="Don't have an account? Register"
                 onPress={() => navigation.navigate('Register')}

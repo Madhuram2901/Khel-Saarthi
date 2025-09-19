@@ -37,7 +37,7 @@ app.use('/api/events', eventRoutes);
 // Initialize our socket logic
 initializeSocket(io);
 
-const PORT = process.env.PORT || 10000;
+const PORT = process.env.PORT || 5001;
 
 // Start the server using server.listen() instead of app.listen()
 server.listen(PORT, () => {

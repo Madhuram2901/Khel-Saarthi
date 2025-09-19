@@ -13,3 +13,9 @@ yarn-error.log*
 
 macOS specific files
 .DS_Store
+
+# Ignore backend temp uploads (handled by Cloudinary)
+backend/uploads/
+
+Ignore uploads folder
+uploads/

@@ -29,6 +29,15 @@ const EventDetailsScreen = ({ route, navigation }) => {
     }, [eventId]);
 
     const handleRegister = async () => {
+        // Check if user has a badminton profile before registering
+        if (!user.profiles?.badminton?.skillLevel) {
+            Alert.alert(
+                'Profile Incomplete',
+                'Please complete your Badminton profile before registering for an event.',
+                [{ text: 'OK', onPress: () => navigation.navigate('ProfileStack', { screen: 'BadmintonProfile' }) }]
+            );
+            return;
+        }
         try {
             await api.post(`/events/${eventId}/register`);
             Alert.alert('Success', 'You have successfully registered for this event!');

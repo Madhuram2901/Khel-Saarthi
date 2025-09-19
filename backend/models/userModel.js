@@ -22,6 +22,25 @@ const userSchema = mongoose.Schema(
             enum: ['participant', 'host'],
             default: 'participant',
         },
+        profilePicture: {
+            type: String,
+            default: '', // Cloudinary image URL
+        },
+        profilePicturePublicId: {
+            type: String,
+            default: '', // Cloudinary public_id for deletion/replacement
+        },
+        profiles: {
+            badminton: {
+                skillLevel: { type: String, enum: ['Beginner', 'Intermediate', 'Advanced'] },
+                playstyle: { type: String, enum: ['Smasher', 'Retriever', 'All-Rounder'] },
+                height: { type: Number }, // in cm
+                weight: { type: Number }, // in kg
+                experience: { type: Number }, // in years
+            },
+            // You can add more sports here in the future
+            // athletics: { ... }
+        },
     },
     {
         timestamps: true,

@@ -16,7 +16,8 @@ const LoginScreen = ({ navigation }) => {
             const data = await login(email, password); // Use the login function from context
             Alert.alert('Success', `Welcome back, ${data.name}!`);
         } catch (error) {
-            console.error(error.response.data);
+            // Safer logging: response may be undefined depending on the failure mode
+            console.error(error?.response?.data || error.message);
             Alert.alert('Login Failed', 'Invalid email or password.');
         }
     };

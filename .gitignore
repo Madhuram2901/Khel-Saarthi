@@ -1,21 +1,24 @@
-Dependency directories
+# Dependency directories
 node_modules/
 
-Environment variables
-This file contains secret keys and database connection strings.
-NEVER commit this file to GitHub.
+# Environment variables
+# This file contains secret keys and database connection strings.
+# NEVER commit this file to GitHub.
 .env
 
-Log files
+# Log files
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-macOS specific files
+# macOS specific files
 .DS_Store
+
+# Expo files
+.expo/
 
 # Ignore backend temp uploads (handled by Cloudinary)
 backend/uploads/
 
-Ignore uploads folder
+# Ignore uploads folder
 uploads/

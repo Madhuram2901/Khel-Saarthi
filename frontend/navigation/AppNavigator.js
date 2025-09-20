@@ -55,45 +55,108 @@ const Stack = createStackNavigator();
 
 
 function HomeStack() {
-
     return (
-
-        <Stack.Navigator>
-
-            <Stack.Screen name="Home" component={HomeScreen} />
-
-            <Stack.Screen name="CreateEvent" component={CreateEventScreen} />
-
-            <Stack.Screen name="EditEvent" component={EditEventScreen} />
-
-            <Stack.Screen name="EventDetails" component={EventDetailsScreen} />
-
-            <Stack.Screen name="Participants" component={ParticipantsScreen} />
-
-            <Stack.Screen name="Chat" component={ChatScreen} />
-
+        <Stack.Navigator
+            screenOptions={{
+                headerStyle: {
+                    backgroundColor: '#FFFFFF',
+                    elevation: 0,
+                    shadowOpacity: 0,
+                    borderBottomWidth: 1,
+                    borderBottomColor: '#E5E5EA',
+                },
+                headerTitleStyle: {
+                    fontSize: 18,
+                    fontWeight: '600',
+                    color: '#1D1D1F',
+                },
+                headerTintColor: '#007AFF',
+                headerBackTitleVisible: false,
+                cardStyle: { backgroundColor: '#F8F9FA' },
+            }}
+        >
+            <Stack.Screen 
+                name="Home" 
+                component={HomeScreen} 
+                options={{ headerShown: false }}
+            />
+            <Stack.Screen 
+                name="CreateEvent" 
+                component={CreateEventScreen}
+                options={{ 
+                    title: 'Create Event',
+                    headerBackTitle: 'Back'
+                }}
+            />
+            <Stack.Screen 
+                name="EditEvent" 
+                component={EditEventScreen}
+                options={{ 
+                    title: 'Edit Event',
+                    headerBackTitle: 'Back'
+                }}
+            />
+            <Stack.Screen 
+                name="EventDetails" 
+                component={EventDetailsScreen}
+                options={{ headerShown: false }}
+            />
+            <Stack.Screen 
+                name="Participants" 
+                component={ParticipantsScreen}
+                options={{ 
+                    title: 'Participants',
+                    headerBackTitle: 'Back'
+                }}
+            />
+            <Stack.Screen 
+                name="Chat" 
+                component={ChatScreen}
+                options={({ route }) => ({ 
+                    title: route.params?.eventTitle || 'Chat',
+                    headerBackTitle: 'Back'
+                })}
+            />
         </Stack.Navigator>
-
     );
-
 }
 
-
-
 function ProfileStack() {
-
     return (
-
-        <Stack.Navigator>
-
-            <Stack.Screen name="Profile" component={ProfileScreen} />
-
-            <Stack.Screen name="BadmintonProfile" component={BadmintonProfileScreen} />
-
+        <Stack.Navigator
+            screenOptions={{
+                headerStyle: {
+                    backgroundColor: '#FFFFFF',
+                    elevation: 0,
+                    shadowOpacity: 0,
+                    borderBottomWidth: 1,
+                    borderBottomColor: '#E5E5EA',
+                },
+                headerTitleStyle: {
+                    fontSize: 18,
+                    fontWeight: '600',
+                    color: '#1D1D1F',
+                },
+                headerTintColor: '#007AFF',
+                headerBackTitleVisible: false,
+                cardStyle: { backgroundColor: '#F8F9FA' },
+            }}
+        >
+            <Stack.Screen 
+                name="Profile" 
+                component={ProfileScreen}
+                options={{ title: 'Profile' }}
+            />
+            <Stack.Screen 
+                name="BadmintonProfile" 
+                component={BadmintonProfileScreen}
+                options={{ 
+                    title: 'Badminton Profile',
+                    headerBackTitle: 'Profile'
+                }}
+            />
         </Stack.Navigator>
-
     );
-
 }
 
 
@@ -187,61 +250,71 @@ const AppNavigator = () => {
 
 
     return (
-
         <NavigationContainer>
-
             {user ? (
-
-                // Use a Tab Navigator when logged in
-
                 <Tab.Navigator
-
                     screenOptions={({ route }) => ({
-
                         tabBarIcon: ({ focused, color, size }) => {
-
                             let iconName;
-
                             if (route.name === 'HomeStack') {
-
                                 iconName = focused ? 'home' : 'home-outline';
-
                             } else if (route.name === 'ProfileStack') {
-
                                 iconName = focused ? 'person' : 'person-outline';
-
                             }
-
                             return <Ionicons name={iconName} size={size} color={color} />;
-
                         },
-
                         headerShown: false,
-
+                        tabBarActiveTintColor: '#007AFF',
+                        tabBarInactiveTintColor: '#8E8E93',
+                        tabBarStyle: {
+                            backgroundColor: '#FFFFFF',
+                            borderTopWidth: 1,
+                            borderTopColor: '#E5E5EA',
+                            height: 90,
+                            paddingBottom: 20,
+                            paddingTop: 8,
+                        },
+                        tabBarLabelStyle: {
+                            fontSize: 12,
+                            fontWeight: '600',
+                            marginTop: 4,
+                        },
+                        tabBarIconStyle: {
+                            marginTop: 4,
+                        },
                     })}
-
                 >
-
-                    <Tab.Screen name="HomeStack" component={HomeStack} options={{ title: 'Home' }} />
-
-                    <Tab.Screen name="ProfileStack" component={ProfileStack} options={{ title: 'Profile' }} />
-
+                    <Tab.Screen 
+                        name="HomeStack" 
+                        component={HomeStack} 
+                        options={{ title: 'Home' }} 
+                    />
+                    <Tab.Screen 
+                        name="ProfileStack" 
+                        component={ProfileStack} 
+                        options={{ title: 'Profile' }} 
+                    />
                 </Tab.Navigator>
-
             ) : (
-
-                <Stack.Navigator>
-
-                    <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
-
-                    <Stack.Screen name="Register" component={RegisterScreen} options={{ headerShown: false }} />
-
+                <Stack.Navigator
+                    screenOptions={{
+                        headerShown: false,
+                        cardStyle: { backgroundColor: '#FFFFFF' },
+                        gestureEnabled: true,
+                        gestureDirection: 'horizontal',
+                    }}
+                >
+                    <Stack.Screen 
+                        name="Login" 
+                        component={LoginScreen} 
+                    />
+                    <Stack.Screen 
+                        name="Register" 
+                        component={RegisterScreen}
+                    />
                 </Stack.Navigator>
-
             )}
-
         </NavigationContainer>
-
     );
 
 };

@@ -1,23 +1,35 @@
 
-// Profile screen: shows account info, badminton stats, and lets user update name/email and profile picture
 import React, { useContext, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, Image, Alert, ActivityIndicator, Linking } from 'react-native';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  ScrollView, 
+  TextInput, 
+  Image, 
+  Alert, 
+  Linking,
+  StatusBar,
+  TouchableOpacity
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import AuthContext from '../context/AuthContext';
 import StyledButton from '../components/StyledButton';
+import ProfileCard from '../components/ProfileCard';
+import { StatCard, StatRow } from '../components/StatCard';
 import * as ImagePicker from 'expo-image-picker';
 import api from '../api/api';
 
 const ProfileScreen = ({ navigation }) => {
-
     const { user, logout, setUser } = useContext(AuthContext);
     const badmintonProfile = user.profiles?.badminton || {};
     const [name, setName] = useState(user.name);
     const [email, setEmail] = useState(user.email);
-    const [profilePicture, setProfilePicture] = useState(user.profilePicture || '');
-    const [image, setImage] = useState(null); // local image uri
+    const [image, setImage] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [editMode, setEditMode] = useState(false);
 
-    // Ask for photo library permission
     const requestMediaLibraryPermission = async () => {
         try {
             const { status, granted, canAskAgain } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -33,185 +45,399 @@ const ProfileScreen = ({ navigation }) => {
                 );
                 return false;
             }
-            // If status is denied but can ask again, return false (user declined)
             return false;
         } catch (e) {
             return false;
         }
     };
 
-    // Open gallery and select an image (square crop)
     const pickImage = async () => {
         const ok = await requestMediaLibraryPermission();
         if (!ok) return;
         try {
-            const options = {
+            const result = await ImagePicker.launchImageLibraryAsync({
                 allowsEditing: true,
                 aspect: [1, 1],
-                quality: 0.5,
-            };
-
-            // Support both new and old Expo ImagePicker APIs
-            if (ImagePicker?.MediaTypeOptions?.Images) {
-                // Older API
-                options.mediaTypes = ImagePicker.MediaTypeOptions.Images;
-            } else if (ImagePicker?.MediaType) {
-                // Newer API expects an array of MediaType
-                const imgType = ImagePicker.MediaType.Images || ImagePicker.MediaType.Image || ImagePicker.MediaType.image;
-                options.mediaTypes = imgType ? [imgType] : undefined;
-            }
-
-            const result = await ImagePicker.launchImageLibraryAsync(options);
-            if (!result.canceled && result.assets && result.assets.length > 0) {
+                quality: 0.8,
+            });
+            if (!result.canceled && result.assets && result.assets[0]) {
                 setImage(result.assets[0].uri);
-            } else if (result.canceled) {
-                // Optional feedback so it doesn't feel like "nothing happened"
-                // Alert.alert('No image selected');
             }
-        } catch (err) {
-            Alert.alert('Error', err.message || 'Unable to open photo library');
+        } catch (e) {
+            Alert.alert('Error', 'Could not pick image');
         }
     };
 
-    // Save updated name/email and optionally a new profile picture
-    const handleSave = async () => {
+    const updateProfile = async () => {
+        if (!name.trim() || !email.trim()) {
+            Alert.alert('Error', 'Name and email are required');
+            return;
+        }
+
         setLoading(true);
         try {
             const formData = new FormData();
-            // Only send fields that changed to avoid unnecessary validation
-            if (name !== user.name) {
-                formData.append('name', name);
-            }
-            if (email !== user.email) {
-                formData.append('email', email);
-            }
+            formData.append('name', name);
+            formData.append('email', email);
+
             if (image) {
-                const filename = image.split('/').pop();
-                const match = /\.([\w]+)$/.exec(filename);
-                const type = match ? `image/${match[1]}` : `image`;
                 formData.append('profilePicture', {
                     uri: image,
-                    name: filename,
-                    type,
+                    type: 'image/jpeg',
+                    name: 'profile.jpg',
                 });
             }
-            const res = await api.put('/users/update', formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
+
+            const { data } = await api.put('/users/profile', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' },
             });
-            // Update user context and persist
-            if (res.data) {
-                setProfilePicture(res.data.profilePicture);
-                if (setUser) await setUser(res.data);
-                Alert.alert('Success', 'Profile updated!');
-            }
-        } catch (err) {
-            Alert.alert('Error', err.response?.data?.message || err.message);
+
+            setUser(data);
+            setImage(null);
+            setEditMode(false);
+            Alert.alert('Success', 'Profile updated successfully');
+        } catch (error) {
+            console.error(error);
+            Alert.alert('Error', 'Could not update profile');
         } finally {
             setLoading(false);
         }
     };
 
-    // Remove current profile photo
-    const handleRemovePhoto = async () => {
-        setLoading(true);
-        try {
-            const res = await api.delete('/users/profile-picture');
-            if (res.data) {
-                setImage(null);
-                setProfilePicture('');
-                if (setUser) await setUser({ ...user, profilePicture: '' });
-                Alert.alert('Success', 'Profile picture removed');
-            }
-        } catch (err) {
-            Alert.alert('Error', err.response?.data?.message || err.message);
-        } finally {
-            setLoading(false);
-        }
-    };
+    const MenuSection = ({ title, children }) => (
+        <View style={styles.menuSection}>
+            <Text style={styles.sectionTitle}>{title}</Text>
+            {children}
+        </View>
+    );
+
+    const MenuItem = ({ icon, title, subtitle, onPress, rightElement, color = '#1D1D1F' }) => (
+        <TouchableOpacity style={styles.menuItem} onPress={onPress}>
+            <View style={styles.menuItemLeft}>
+                <View style={[styles.menuIcon, { backgroundColor: `${color}15` }]}>
+                    <Ionicons name={icon} size={20} color={color} />
+                </View>
+                <View style={styles.menuItemContent}>
+                    <Text style={styles.menuItemTitle}>{title}</Text>
+                    {subtitle && <Text style={styles.menuItemSubtitle}>{subtitle}</Text>}
+                </View>
+            </View>
+            {rightElement || <Ionicons name="chevron-forward" size={16} color="#8E8E93" />}
+        </TouchableOpacity>
+    );
+
+    if (editMode) {
+        return (
+            <SafeAreaView style={styles.container}>
+                <StatusBar barStyle="dark-content" backgroundColor="#F8F9FA" />
+                <View style={styles.editHeader}>
+                    <TouchableOpacity onPress={() => setEditMode(false)}>
+                        <Text style={styles.cancelButton}>Cancel</Text>
+                    </TouchableOpacity>
+                    <Text style={styles.editTitle}>Edit Profile</Text>
+                    <TouchableOpacity onPress={updateProfile} disabled={loading}>
+                        <Text style={[styles.saveButton, loading && styles.disabledButton]}>
+                            {loading ? 'Saving...' : 'Save'}
+                        </Text>
+                    </TouchableOpacity>
+                </View>
+
+                <ScrollView style={styles.editForm}>
+                    <View style={styles.editAvatarSection}>
+                        <TouchableOpacity onPress={pickImage} style={styles.editAvatarContainer}>
+                            {image ? (
+                                <Image source={{ uri: image }} style={styles.editAvatar} />
+                            ) : user.profilePicture ? (
+                                <Image source={{ uri: user.profilePicture }} style={styles.editAvatar} />
+                            ) : (
+                                <View style={styles.editAvatarPlaceholder}>
+                                    <Ionicons name="camera" size={32} color="#8E8E93" />
+                                </View>
+                            )}
+                            <View style={styles.editAvatarOverlay}>
+                                <Ionicons name="camera" size={20} color="#FFFFFF" />
+                            </View>
+                        </TouchableOpacity>
+                        <Text style={styles.editAvatarText}>Tap to change photo</Text>
+                    </View>
+
+                    <View style={styles.editInputSection}>
+                        <View style={styles.editInputGroup}>
+                            <Text style={styles.editInputLabel}>Name</Text>
+                            <TextInput
+                                style={styles.editInput}
+                                value={name}
+                                onChangeText={setName}
+                                placeholder="Enter your name"
+                                placeholderTextColor="#8E8E93"
+                            />
+                        </View>
+
+                        <View style={styles.editInputGroup}>
+                            <Text style={styles.editInputLabel}>Email</Text>
+                            <TextInput
+                                style={styles.editInput}
+                                value={email}
+                                onChangeText={setEmail}
+                                placeholder="Enter your email"
+                                placeholderTextColor="#8E8E93"
+                                keyboardType="email-address"
+                                autoCapitalize="none"
+                            />
+                        </View>
+                    </View>
+                </ScrollView>
+            </SafeAreaView>
+        );
+    }
 
     return (
-        <ScrollView style={styles.container}>
-            <Text style={styles.header}>My Profile</Text>
-            <View style={styles.card}>
-                <Text style={styles.label}>Profile Picture:</Text>
-                {image ? (
-                    <Image source={{ uri: image }} style={styles.avatar} />
-                ) : profilePicture ? (
-                    <Image source={{ uri: profilePicture }} style={styles.avatar} />
-                ) : (
-                    <View style={[styles.avatar, { backgroundColor: '#eee', alignItems: 'center', justifyContent: 'center' }]}>
-                        <Text style={{ color: '#aaa' }}>No Image</Text>
-                    </View>
-                )}
-                <StyledButton title="Change Picture" onPress={pickImage} style={{ marginBottom: 10 }} />
-                {!!(image || profilePicture) && (
-                    <StyledButton title="Remove Picture" onPress={handleRemovePhoto} style={{ marginBottom: 10, backgroundColor: '#999' }} />
-                )}
-                <Text style={styles.label}>Name:</Text>
-                <TextInput
-                    style={styles.input}
-                    value={name}
-                    onChangeText={setName}
-                    placeholder="Name"
+        <SafeAreaView style={styles.container}>
+            <StatusBar barStyle="dark-content" backgroundColor="#F8F9FA" />
+            <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+                <ProfileCard 
+                    user={user} 
+                    onEditPress={() => setEditMode(true)}
+                    onImagePress={pickImage}
                 />
-                <Text style={styles.label}>Email:</Text>
-                <TextInput
-                    style={styles.input}
-                    value={email}
-                    onChangeText={setEmail}
-                    placeholder="Email"
-                    autoCapitalize="none"
-                    keyboardType="email-address"
-                />
-                <Text style={styles.label}>Role:</Text>
-                <Text style={styles.content}>{user.role}</Text>
-                <StyledButton title={loading ? 'Saving...' : 'Save Changes'} onPress={handleSave} disabled={loading} />
-            </View>
 
-            <Text style={styles.header}>Badminton Stats</Text>
-            <View style={styles.card}>
-                <Text style={styles.label}>Skill Level:</Text>
-                <Text style={styles.content}>{badmintonProfile.skillLevel || 'Not Set'}</Text>
-                <Text style={styles.label}>Playstyle:</Text>
-                <Text style={styles.content}>{badmintonProfile.playstyle || 'Not Set'}</Text>
-                <StyledButton
-                    title="Edit Badminton Profile"
-                    onPress={() => navigation.navigate('BadmintonProfile')}
-                    style={{ marginTop: 15 }}
-                />
-            </View>
+                {/* Stats Section */}
+                <View style={styles.statsSection}>
+                    <Text style={styles.sectionTitle}>Statistics</Text>
+                    <StatRow>
+                        <StatCard 
+                            icon="trophy" 
+                            title="Events Joined" 
+                            value="12" 
+                            color="#FF6B35" 
+                        />
+                        <StatCard 
+                            icon="star" 
+                            title="Rating" 
+                            value={badmintonProfile.skillLevel || "N/A"} 
+                            color="#FFD700" 
+                        />
+                    </StatRow>
+                    <StatRow>
+                        <StatCard 
+                            icon="people" 
+                            title="Partners" 
+                            value="8" 
+                            color="#34C759" 
+                        />
+                        <StatCard 
+                            icon="time" 
+                            title="Hours Played" 
+                            value="45" 
+                            color="#007AFF" 
+                        />
+                    </StatRow>
+                </View>
 
-            <StyledButton title="Sign Out" onPress={logout} style={styles.logoutButton} />
-        </ScrollView>
+                {/* Sports Profiles Section */}
+                <MenuSection title="Sports Profiles">
+                    <MenuItem
+                        icon="tennisball"
+                        title="Badminton Profile"
+                        subtitle={badmintonProfile.skillLevel ? `${badmintonProfile.skillLevel} Level` : "Not set up"}
+                        onPress={() => navigation.navigate('BadmintonProfile')}
+                        color="#AF52DE"
+                    />
+                </MenuSection>
+
+                {/* Settings Section */}
+                <MenuSection title="Settings">
+                    <MenuItem
+                        icon="notifications"
+                        title="Notifications"
+                        subtitle="Push notifications, email alerts"
+                        onPress={() => {/* TODO: Navigate to notifications settings */}}
+                        color="#FF9500"
+                    />
+                    <MenuItem
+                        icon="lock-closed"
+                        title="Privacy & Security"
+                        subtitle="Password, two-factor authentication"
+                        onPress={() => {/* TODO: Navigate to privacy settings */}}
+                        color="#007AFF"
+                    />
+                    <MenuItem
+                        icon="help-circle"
+                        title="Help & Support"
+                        subtitle="FAQ, contact support"
+                        onPress={() => {/* TODO: Navigate to help */}}
+                        color="#34C759"
+                    />
+                </MenuSection>
+
+                {/* Account Section */}
+                <MenuSection title="Account">
+                    <MenuItem
+                        icon="log-out"
+                        title="Sign Out"
+                        onPress={logout}
+                        color="#FF3B30"
+                        rightElement={null}
+                    />
+                </MenuSection>
+
+                <View style={styles.bottomPadding} />
+            </ScrollView>
+        </SafeAreaView>
     );
 };
 
-
 const styles = StyleSheet.create({
-    container: { flex: 1, padding: 15, backgroundColor: '#f5f5f5' },
-    header: { fontSize: 22, fontWeight: 'bold', marginTop: 10, marginBottom: 10 },
-    card: { backgroundColor: 'white', borderRadius: 8, padding: 15, marginBottom: 20 },
-    label: { fontSize: 14, color: 'gray' },
-    content: { fontSize: 18, marginBottom: 10 },
-    input: {
-        borderWidth: 1,
-        borderColor: '#ddd',
-        borderRadius: 6,
-        padding: 10,
+    container: {
+        flex: 1,
+        backgroundColor: '#F8F9FA',
+    },
+    scrollView: {
+        flex: 1,
+    },
+    statsSection: {
+        marginTop: 24,
+        marginBottom: 16,
+    },
+    sectionTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#1D1D1F',
+        paddingHorizontal: 20,
+        marginBottom: 16,
+    },
+    menuSection: {
+        marginBottom: 32,
+    },
+    menuItem: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        backgroundColor: '#FFFFFF',
+        paddingVertical: 16,
+        paddingHorizontal: 20,
+        marginHorizontal: 20,
+        marginBottom: 2,
+        borderRadius: 12,
+    },
+    menuItemLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flex: 1,
+    },
+    menuIcon: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 16,
+    },
+    menuItemContent: {
+        flex: 1,
+    },
+    menuItemTitle: {
         fontSize: 16,
-        marginBottom: 10,
-        backgroundColor: '#fafafa',
+        fontWeight: '600',
+        color: '#1D1D1F',
+        marginBottom: 2,
     },
-    avatar: {
-        width: 100,
-        height: 100,
-        borderRadius: 50,
-        marginBottom: 10,
-        alignSelf: 'center',
+    menuItemSubtitle: {
+        fontSize: 14,
+        color: '#8E8E93',
     },
-    logoutButton: { backgroundColor: '#FF3B30', marginTop: 20 },
+    editHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: 20,
+        paddingVertical: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: '#E5E5EA',
+        backgroundColor: '#FFFFFF',
+    },
+    cancelButton: {
+        fontSize: 16,
+        color: '#8E8E93',
+    },
+    editTitle: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: '#1D1D1F',
+    },
+    saveButton: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#007AFF',
+    },
+    disabledButton: {
+        color: '#8E8E93',
+    },
+    editForm: {
+        flex: 1,
+        backgroundColor: '#FFFFFF',
+    },
+    editAvatarSection: {
+        alignItems: 'center',
+        paddingVertical: 32,
+    },
+    editAvatarContainer: {
+        position: 'relative',
+    },
+    editAvatar: {
+        width: 120,
+        height: 120,
+        borderRadius: 60,
+    },
+    editAvatarPlaceholder: {
+        width: 120,
+        height: 120,
+        borderRadius: 60,
+        backgroundColor: '#F2F2F7',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    editAvatarOverlay: {
+        position: 'absolute',
+        bottom: 8,
+        right: 8,
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: '#007AFF',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 3,
+        borderColor: '#FFFFFF',
+    },
+    editAvatarText: {
+        marginTop: 12,
+        fontSize: 14,
+        color: '#8E8E93',
+    },
+    editInputSection: {
+        paddingHorizontal: 20,
+    },
+    editInputGroup: {
+        marginBottom: 24,
+    },
+    editInputLabel: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#1D1D1F',
+        marginBottom: 8,
+    },
+    editInput: {
+        backgroundColor: '#F2F2F7',
+        borderRadius: 12,
+        paddingHorizontal: 16,
+        paddingVertical: 16,
+        fontSize: 16,
+        color: '#1D1D1F',
+    },
+    bottomPadding: {
+        height: 40,
+    },
 });
 
 export default ProfileScreen;

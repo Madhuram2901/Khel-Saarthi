@@ -81,12 +81,20 @@ const HomeScreen = ({ navigation }) => {
             <Text style={styles.date}>{getCurrentDate()}</Text>
           </View>
         </View>
-        <TouchableOpacity 
-          style={styles.searchButton}
-          onPress={() => {/* TODO: Add search functionality */}}
-        >
-          <Ionicons name="search" size={24} color="#007AFF" />
-        </TouchableOpacity>
+        <View style={styles.headerRight}>
+          <TouchableOpacity 
+            style={styles.aiButton} 
+            onPress={() => navigation.navigate('AiChat')}
+          >
+            <Ionicons name="sparkles" size={20} color="#fff" />
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.searchButton}
+            onPress={() => {/* TODO: Add search functionality */}}
+          >
+            <Ionicons name="search" size={24} color="#007AFF" />
+          </TouchableOpacity>
+        </View>
       </View>
       
       <HeroCard 
@@ -112,10 +120,32 @@ const HomeScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F8F9FA" />
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        <HeaderSection />
-        
+      <StatusBar barStyle="dark-content" backgroundColor="#f5f5f5" />
+      
+      {/* Header */}
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.greeting}>Hello, {user?.name || 'Athlete'}! 👋</Text>
+          <Text style={styles.subGreeting}>Ready to play today?</Text>
+        </View>
+        <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
+          <Image 
+            source={{ uri: user?.profilePicture || 'https://via.placeholder.com/100' }} 
+            style={styles.profilePic} 
+          />
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        {/* Hero Section */}
+        <HeroCard 
+          title="Discover Sports Events Near You"
+          subtitle="Join local sports communities"
+          onPress={() => {/* TODO: Navigate to search/discover */}}
+          icon="trophy"
+        />
+
+        {/* AI Recommendation Section */}
         <AIRecommendationSection />
 
         {/* Category Filter Section */}
@@ -214,78 +244,68 @@ const HomeScreen = ({ navigation }) => {
             size="medium"
           />
         </View>
+
+        <View style={{ height: 80 }} />
       </ScrollView>
+
+      {/* Floating AI Button */}
+      <TouchableOpacity 
+        style={styles.fab} 
+        onPress={() => navigation.navigate('AiChat')}
+        activeOpacity={0.8}
+      >
+        <Ionicons name="sparkles" size={24} color="#fff" />
+      </TouchableOpacity>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: '#F8F9FA' 
-  },
-  scrollView: {
+  container: {
     flex: 1,
+    backgroundColor: '#fff',
   },
-  headerSection: {
-    backgroundColor: '#FFFFFF',
-    paddingBottom: 20,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
+  fab: {
+    position: 'absolute',
+    bottom: 24,
+    right: 24,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#4CAF50', // Sporty Green
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.30,
+    shadowRadius: 4.65,
+    elevation: 8,
+    zIndex: 1000,
   },
-  headerTop: {
+  header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 20,
-  },
-  userInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#007AFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  avatarText: {
-    color: '#FFFFFF',
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  avatarImage: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    paddingVertical: 15,
   },
   greeting: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1D1D1F',
-    marginBottom: 2,
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#333',
   },
-  date: {
+  subGreeting: {
     fontSize: 14,
-    color: '#8E8E93',
+    color: '#666',
+    marginTop: 4,
   },
-  searchButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#F2F2F7',
-    justifyContent: 'center',
-    alignItems: 'center',
+  profilePic: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
   },
   sectionContainer: {
     marginVertical: 12,

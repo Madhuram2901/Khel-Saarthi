@@ -46,11 +46,13 @@ import ProfileScreen from '../screens/ProfileScreen';
 
 import BadmintonProfileScreen from '../screens/BadmintonProfileScreen';
 
+import AiChatScreen from '../screens/AiChatScreen'; // Import AI Chat Screen
 
 
-const Tab = createBottomTabNavigator();
 
 const Stack = createStackNavigator();
+
+const Tab = createBottomTabNavigator();
 
 
 
@@ -99,7 +101,7 @@ function HomeStack() {
             <Stack.Screen 
                 name="EventDetails" 
                 component={EventDetailsScreen}
-                options={{ headerShown: false }}
+                options={{ title: 'Event Details' }}
             />
             <Stack.Screen 
                 name="Participants" 
@@ -112,11 +114,18 @@ function HomeStack() {
             <Stack.Screen 
                 name="Chat" 
                 component={ChatScreen}
-                options={({ route }) => ({ 
-                    title: route.params?.eventTitle || 'Chat',
-                    headerBackTitle: 'Back'
-                })}
+                options={{ title: 'Chat' }}
             />
+            <Stack.Screen 
+                name="BadmintonProfile" 
+                component={BadmintonProfileScreen}
+                options={{ title: 'Badminton Profile' }}
+            />
+            <Stack.Screen 
+                name="AiChat" 
+                component={AiChatScreen}
+                options={{ headerShown: false }}
+            /> 
         </Stack.Navigator>
     );
 }

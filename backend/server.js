@@ -25,6 +25,7 @@ connectDB();
 // Import route files
 const userRoutes = require('./routes/userRoutes');
 const eventRoutes = require('./routes/eventRoutes');
+const chatRoutes = require('./routes/chatRoutes'); // Added Chat Routes
 
 // API Routes
 app.get('/', (req, res) => {
@@ -33,6 +34,7 @@ app.get('/', (req, res) => {
 
 app.use('/api/users', userRoutes);
 app.use('/api/events', eventRoutes);
+app.use('/api/chat', chatRoutes); // Mount Chat Routes
 
 // Initialize our socket logic
 initializeSocket(io);

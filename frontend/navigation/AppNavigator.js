@@ -47,6 +47,8 @@ import ProfileScreen from '../screens/ProfileScreen';
 import BadmintonProfileScreen from '../screens/BadmintonProfileScreen';
 
 import AiChatScreen from '../screens/AiChatScreen'; // Import AI Chat Screen
+import NewsScreen from '../screens/NewsScreen';
+
 
 
 
@@ -77,44 +79,47 @@ function HomeStack() {
                 cardStyle: { backgroundColor: '#F8F9FA' },
             }}
         >
-            <Stack.Screen 
-                name="Home" 
-                component={HomeScreen} 
+            <Stack.Screen
+                name="Home"
+                component={HomeScreen}
                 options={{ headerShown: false }}
             />
-            <Stack.Screen 
-                name="CreateEvent" 
+            <Stack.Screen
+                name="CreateEvent"
                 component={CreateEventScreen}
-                options={{ 
+                options={{
                     title: 'Create Event',
                     headerBackTitle: 'Back'
                 }}
             />
-            <Stack.Screen 
-                name="EditEvent" 
+            <Stack.Screen
+                name="EditEvent"
                 component={EditEventScreen}
-                options={{ 
+                options={{
                     title: 'Edit Event',
                     headerBackTitle: 'Back'
                 }}
             />
-            <Stack.Screen 
-                name="EventDetails" 
+            <Stack.Screen
+                name="EventDetails"
                 component={EventDetailsScreen}
                 options={{ title: 'Event Details' }}
             />
-            <Stack.Screen 
-                name="Participants" 
+            <Stack.Screen
+                name="Participants"
                 component={ParticipantsScreen}
-                options={{ 
+                options={{
                     title: 'Participants',
                     headerBackTitle: 'Back'
                 }}
             />
-            <Stack.Screen 
-                name="Chat" 
+            <Stack.Screen
+                name="Chat"
                 component={ChatScreen}
-                options={{ title: 'Chat' }}
+                options={({ route }) => ({
+                    title: route.params?.eventTitle || 'Chat',
+                    headerBackTitle: 'Back'
+                })}
             />
             <Stack.Screen 
                 name="BadmintonProfile" 
@@ -151,18 +156,48 @@ function ProfileStack() {
                 cardStyle: { backgroundColor: '#F8F9FA' },
             }}
         >
-            <Stack.Screen 
-                name="Profile" 
+            <Stack.Screen
+                name="Profile"
                 component={ProfileScreen}
                 options={{ title: 'Profile' }}
             />
-            <Stack.Screen 
-                name="BadmintonProfile" 
+            <Stack.Screen
+                name="BadmintonProfile"
                 component={BadmintonProfileScreen}
-                options={{ 
+                options={{
                     title: 'Badminton Profile',
                     headerBackTitle: 'Profile'
                 }}
+            />
+        </Stack.Navigator>
+    );
+}
+
+function NewsStack() {
+    return (
+        <Stack.Navigator
+            screenOptions={{
+                headerStyle: {
+                    backgroundColor: '#FFFFFF',
+                    elevation: 0,
+                    shadowOpacity: 0,
+                    borderBottomWidth: 1,
+                    borderBottomColor: '#E5E5EA',
+                },
+                headerTitleStyle: {
+                    fontSize: 18,
+                    fontWeight: '600',
+                    color: '#1D1D1F',
+                },
+                headerTintColor: '#007AFF',
+                headerBackTitleVisible: false,
+                cardStyle: { backgroundColor: '#F8F9FA' },
+            }}
+        >
+            <Stack.Screen
+                name="News"
+                component={NewsScreen}
+                options={{ title: 'Sports News' }}
             />
         </Stack.Navigator>
     );
@@ -267,6 +302,8 @@ const AppNavigator = () => {
                             let iconName;
                             if (route.name === 'HomeStack') {
                                 iconName = focused ? 'home' : 'home-outline';
+                            } else if (route.name === 'NewsStack') {
+                                iconName = focused ? 'newspaper' : 'newspaper-outline';
                             } else if (route.name === 'ProfileStack') {
                                 iconName = focused ? 'person' : 'person-outline';
                             }
@@ -293,15 +330,20 @@ const AppNavigator = () => {
                         },
                     })}
                 >
-                    <Tab.Screen 
-                        name="HomeStack" 
-                        component={HomeStack} 
-                        options={{ title: 'Home' }} 
+                    <Tab.Screen
+                        name="HomeStack"
+                        component={HomeStack}
+                        options={{ title: 'Home' }}
                     />
-                    <Tab.Screen 
-                        name="ProfileStack" 
-                        component={ProfileStack} 
-                        options={{ title: 'Profile' }} 
+                    <Tab.Screen
+                        name="NewsStack"
+                        component={NewsStack}
+                        options={{ title: 'News' }}
+                    />
+                    <Tab.Screen
+                        name="ProfileStack"
+                        component={ProfileStack}
+                        options={{ title: 'Profile' }}
                     />
                 </Tab.Navigator>
             ) : (
@@ -313,12 +355,12 @@ const AppNavigator = () => {
                         gestureDirection: 'horizontal',
                     }}
                 >
-                    <Stack.Screen 
-                        name="Login" 
-                        component={LoginScreen} 
+                    <Stack.Screen
+                        name="Login"
+                        component={LoginScreen}
                     />
-                    <Stack.Screen 
-                        name="Register" 
+                    <Stack.Screen
+                        name="Register"
                         component={RegisterScreen}
                     />
                 </Stack.Navigator>

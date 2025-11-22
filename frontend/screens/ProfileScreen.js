@@ -1,16 +1,16 @@
 
-import React, { useContext, useState } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
-  TextInput, 
-  Image, 
-  Alert, 
-  Linking,
-  StatusBar,
-  TouchableOpacity
+import React, { useContext, useState, useEffect } from 'react';
+import {
+    View,
+    Text,
+    StyleSheet,
+    ScrollView,
+    TextInput,
+    Image,
+    Alert,
+    Linking,
+    StatusBar,
+    TouchableOpacity
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -29,6 +29,20 @@ const ProfileScreen = ({ navigation }) => {
     const [image, setImage] = useState(null);
     const [loading, setLoading] = useState(false);
     const [editMode, setEditMode] = useState(false);
+    const [eventsJoined, setEventsJoined] = useState(0);
+
+    useEffect(() => {
+        const fetchEventsJoined = async () => {
+            try {
+                const { data } = await api.get('/users/myevents');
+                setEventsJoined(data.length);
+            } catch (error) {
+                console.error('Error fetching events:', error);
+            }
+        };
+        fetchEventsJoined();
+    }, []);
+
 
     const requestMediaLibraryPermission = async () => {
         try {
@@ -195,8 +209,8 @@ const ProfileScreen = ({ navigation }) => {
         <SafeAreaView style={styles.container}>
             <StatusBar barStyle="dark-content" backgroundColor="#F8F9FA" />
             <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-                <ProfileCard 
-                    user={user} 
+                <ProfileCard
+                    user={user}
                     onEditPress={() => setEditMode(true)}
                     onImagePress={pickImage}
                 />
@@ -205,31 +219,31 @@ const ProfileScreen = ({ navigation }) => {
                 <View style={styles.statsSection}>
                     <Text style={styles.sectionTitle}>Statistics</Text>
                     <StatRow>
-                        <StatCard 
-                            icon="trophy" 
-                            title="Events Joined" 
-                            value="12" 
-                            color="#FF6B35" 
+                        <StatCard
+                            icon="trophy"
+                            title="Events Joined"
+                            value={eventsJoined.toString()}
+                            color="#FF6B35"
                         />
-                        <StatCard 
-                            icon="star" 
-                            title="Rating" 
-                            value={badmintonProfile.skillLevel || "N/A"} 
-                            color="#FFD700" 
+                        <StatCard
+                            icon="star"
+                            title="Rating"
+                            value={badmintonProfile.skillLevel || "N/A"}
+                            color="#FFD700"
                         />
                     </StatRow>
                     <StatRow>
-                        <StatCard 
-                            icon="people" 
-                            title="Partners" 
-                            value="8" 
-                            color="#34C759" 
+                        <StatCard
+                            icon="people"
+                            title="Partners"
+                            value="8"
+                            color="#34C759"
                         />
-                        <StatCard 
-                            icon="time" 
-                            title="Hours Played" 
-                            value="45" 
-                            color="#007AFF" 
+                        <StatCard
+                            icon="time"
+                            title="Hours Played"
+                            value="45"
+                            color="#007AFF"
                         />
                     </StatRow>
                 </View>
@@ -251,21 +265,21 @@ const ProfileScreen = ({ navigation }) => {
                         icon="notifications"
                         title="Notifications"
                         subtitle="Push notifications, email alerts"
-                        onPress={() => {/* TODO: Navigate to notifications settings */}}
+                        onPress={() => {/* TODO: Navigate to notifications settings */ }}
                         color="#FF9500"
                     />
                     <MenuItem
                         icon="lock-closed"
                         title="Privacy & Security"
                         subtitle="Password, two-factor authentication"
-                        onPress={() => {/* TODO: Navigate to privacy settings */}}
+                        onPress={() => {/* TODO: Navigate to privacy settings */ }}
                         color="#007AFF"
                     />
                     <MenuItem
                         icon="help-circle"
                         title="Help & Support"
                         subtitle="FAQ, contact support"
-                        onPress={() => {/* TODO: Navigate to help */}}
+                        onPress={() => {/* TODO: Navigate to help */ }}
                         color="#34C759"
                     />
                 </MenuSection>

@@ -35,6 +35,7 @@ app.get('/', (req, res) => {
 app.use('/api/users', userRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/chat', chatRoutes); // Mount Chat Routes
+app.use('/api/news', require('./routes/newsRoutes'));
 
 // Initialize our socket logic
 initializeSocket(io);

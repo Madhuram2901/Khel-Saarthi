@@ -29,6 +29,8 @@ const chatRoutes = require('./routes/chatRoutes');
 const newsRoutes = require('./routes/newsRoutes');
 const venueRoutes = require('./routes/venueRoutes');
 const bookingRoutes = require('./routes/bookingRoutes');
+const tournamentRoutes = require('./routes/tournamentRoutes');
+const matchRoutes = require('./routes/matchRoutes');
 
 // API Routes
 app.get('/', (req, res) => {
@@ -41,6 +43,8 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/news', newsRoutes);
 app.use('/api/venues', venueRoutes);
 app.use('/api/bookings', bookingRoutes);
+app.use('/api/tournaments', tournamentRoutes);
+app.use('/api/matches', matchRoutes);
 
 // Initialize our socket logic
 initializeSocket(io);

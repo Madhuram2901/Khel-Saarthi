@@ -28,10 +28,18 @@ import VenueDetailsScreen from '../screens/VenueDetailsScreen';
 import MyBookingsScreen from '../screens/MyBookingsScreen';
 import AddVenueScreen from '../screens/AddVenueScreen';
 import EditVenueScreen from '../screens/EditVenueScreen';
+// Tournament Screens
+import TournamentListScreen from '../screens/TournamentListScreen';
+import CreateTournamentScreen from '../screens/CreateTournamentScreen';
+import TournamentDashboardScreen from '../screens/TournamentDashboardScreen';
+import ManageTeamsScreen from '../screens/ManageTeamsScreen';
+import GenerateFixturesScreen from '../screens/GenerateFixturesScreen';
+import MatchDetailsScreen from '../screens/MatchDetailsScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 const VenueStack = createStackNavigator();
+const TournamentStack = createStackNavigator();
 
 function HomeStack() {
     return (
@@ -109,6 +117,27 @@ function VenueStackScreen() {
     );
 }
 
+function TournamentStackScreen() {
+    return (
+        <TournamentStack.Navigator
+            screenOptions={{
+                headerStyle: { backgroundColor: '#FFFFFF', elevation: 0, shadowOpacity: 0, borderBottomWidth: 1, borderBottomColor: '#E5E5EA' },
+                headerTitleStyle: { fontSize: 18, fontWeight: '600', color: '#1D1D1F' },
+                headerTintColor: '#007AFF',
+                headerBackTitleVisible: false,
+                cardStyle: { backgroundColor: '#F8F9FA' },
+            }}
+        >
+            <TournamentStack.Screen name="TournamentList" component={TournamentListScreen} options={{ headerShown: false }} />
+            <TournamentStack.Screen name="CreateTournament" component={CreateTournamentScreen} options={{ title: 'Create Tournament' }} />
+            <TournamentStack.Screen name="TournamentDashboard" component={TournamentDashboardScreen} options={{ title: 'Tournament' }} />
+            <TournamentStack.Screen name="ManageTeams" component={ManageTeamsScreen} options={{ title: 'Manage Teams' }} />
+            <TournamentStack.Screen name="GenerateFixtures" component={GenerateFixturesScreen} options={{ title: 'Generate Fixtures' }} />
+            <TournamentStack.Screen name="MatchDetails" component={MatchDetailsScreen} options={{ title: 'Match Details' }} />
+        </TournamentStack.Navigator>
+    );
+}
+
 const AppNavigator = () => {
     const { user, loading } = useContext(AuthContext);
 
@@ -159,6 +188,7 @@ const AppNavigator = () => {
                         tabBarIcon: ({ focused, color, size }) => {
                             let iconName;
                             if (route.name === 'HomeStack') iconName = focused ? 'home' : 'home-outline';
+                            else if (route.name === 'TournamentStack') iconName = focused ? 'trophy' : 'trophy-outline';
                             else if (route.name === 'VenueStack') iconName = focused ? 'calendar' : 'calendar-outline';
                             else if (route.name === 'NewsStack') iconName = focused ? 'newspaper' : 'newspaper-outline';
                             else if (route.name === 'ProfileStack') iconName = focused ? 'person' : 'person-outline';
@@ -173,6 +203,7 @@ const AppNavigator = () => {
                     })}
                 >
                     <Tab.Screen name="HomeStack" component={HomeStack} options={{ title: 'Home' }} />
+                    <Tab.Screen name="TournamentStack" component={TournamentStackScreen} options={{ title: 'Tournaments' }} />
                     <Tab.Screen name="VenueStack" component={VenueStackScreen} options={{ title: 'Venues' }} />
                     <Tab.Screen name="NewsStack" component={NewsStack} options={{ title: 'News' }} />
                     <Tab.Screen name="ProfileStack" component={ProfileStack} options={{ title: 'Profile' }} />

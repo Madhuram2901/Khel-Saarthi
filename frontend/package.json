@@ -12,6 +12,7 @@
     "@expo/metro-runtime": "~6.1.2",
     "@expo/vector-icons": "^15.0.2",
     "@react-native-async-storage/async-storage": "2.2.0",
+    "@react-native-community/datetimepicker": "8.2.0",
     "@react-navigation/bottom-tabs": "^7.4.7",
     "@react-navigation/native": "^7.1.17",
     "@react-navigation/stack": "^7.4.8",
@@ -29,7 +30,10 @@
     "react-native-web": "^0.21.0",
     "socket.io-client": "^4.8.1",
     "swr": "^2.3.6",
-    "expo-linear-gradient": "~15.0.7"
+    "expo-linear-gradient": "~15.0.7",
+    "react-native-svg": "14.1.0",
+    "react-native-qrcode-svg": "^6.3.11",
+    "nanoid": "^3.3.7"
   },
   "private": true
 }

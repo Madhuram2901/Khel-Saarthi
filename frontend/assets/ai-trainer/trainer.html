@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Gym Trainer</title>
+    <!-- MediaPipe Pose -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"
+        crossorigin="anonymous"></script>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            overflow: hidden;
+        }
+
+        #video-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1);
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1);
+        }
+
+        #debug-overlay {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: #0f0;
+            font-family: monospace;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 5px;
+            z-index: 10;
+            font-size: 16px;
+            pointer-events: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="video-container">
+        <video id="input_video" playsinline webkit-playsinline></video>
+        <canvas id="output_canvas"></canvas>
+        <div id="debug-overlay">Initializing...</div>
+    </div>
+
+    <script>
+        // --- EXERCISES LOGIC INLINED ---
+
+        const EXERCISE_CONFIG = {
+            squat: {
+                landmarks: [23, 24, 25, 26, 27, 28],
+                thresholds: {
+                    depth: 100,
+                    stand: 160,
+                }
+            }
+        };
+
+        function calculateAngle(a, b, c) {
+            const radians = Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(a.y - b.y, a.x - b.x);
+            let angle = Math.abs(radians * 180.0 / Math.PI);
+            if (angle > 180.0) {
+                angle = 360 - angle;
+            }
+            return angle;
+        }
+
+        class ExerciseCounter {
+            constructor(exerciseType) {
+                this.type = exerciseType;
+                this.count = 0;
+                this.state = 'up';
+                this.feedback = '';
+            }
+
+            reset() {
+                this.count = 0;
+                this.state = 'up';
+                this.feedback = '';
+            }
+
+            analyze(landmarks) {
+                if (this.type === 'squat') {
+                    return this.analyzeSquat(landmarks);
+                }
+                return { count: this.count, feedback: 'Unknown exercise' };
+            }
+
+            analyzeSquat(landmarks) {
+                const leftHip = landmarks[23];
+                const leftKnee = landmarks[25];
+                const leftAnkle = landmarks[27];
+
+                if (!leftHip || !leftKnee || !leftAnkle) return { count: this.count, feedback: "No pose" };
+
+                // Basic visibility check
+                if (leftHip.visibility < 0.5 || leftKnee.visibility < 0.5 || leftAnkle.visibility < 0.5) {
+                    return { count: this.count, feedback: "Body not fully visible" };
+                }
+
+                const angle = calculateAngle(leftHip, leftKnee, leftAnkle);
+
+                const STAND_THRESH = 160;
+                const DEPTH_THRESH = 100;
+
+                let currentFeedback = "";
+
+                if (angle < DEPTH_THRESH) {
+                    this.state = 'down';
+                    currentFeedback = "Good depth!";
+                } else if (angle > STAND_THRESH) {
+                    if (this.state === 'down') {
+                        this.count++;
+                        this.state = 'up';
+                        currentFeedback = "Rep complete!";
+                    } else {
+                        currentFeedback = "Start next rep";
+                    }
+                } else {
+                    if (this.state === 'up') currentFeedback = "Go lower...";
+                    else currentFeedback = "Push up!";
+                }
+
+                return {
+                    count: this.count,
+                    feedback: currentFeedback,
+                    angle: Math.round(angle)
+                };
+            }
+        }
+
+        // --- MAIN SCRIPT ---
+
+        const videoElement = document.getElementById('input_video');
+        const canvasElement = document.getElementById('output_canvas');
+        const canvasCtx = canvasElement.getContext('2d');
+        const debugOverlay = document.getElementById('debug-overlay');
+
+        let camera = null;
+        let counter = new ExerciseCounter('squat');
+
+        function onResults(results) {
+            canvasCtx.save();
+            canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+
+            canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
+
+            if (results.poseLandmarks) {
+                drawConnectors(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS,
+                    { color: '#00FF00', lineWidth: 4 });
+                drawLandmarks(canvasCtx, results.poseLandmarks,
+                    { color: '#FF0000', lineWidth: 2 });
+
+                // Analyze
+                const analysis = counter.analyze(results.poseLandmarks);
+
+                // Send to React Native
+                if (window.ReactNativeWebView) {
+                    window.ReactNativeWebView.postMessage(JSON.stringify({
+                        type: 'analysis',
+                        data: analysis
+                    }));
+                }
+
+                debugOverlay.innerText = `Reps: ${analysis.count}\nFeedback: ${analysis.feedback}\nAngle: ${analysis.angle}`;
+            }
+            canvasCtx.restore();
+        }
+
+        const pose = new Pose({
+            locateFile: (file) => {
+                return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
+            }
+        });
+
+        pose.setOptions({
+            modelComplexity: 1,
+            smoothLandmarks: true,
+            enableSegmentation: false,
+            minDetectionConfidence: 0.5,
+            minTrackingConfidence: 0.5
+        });
+
+        pose.onResults(onResults);
+
+        async function startCamera() {
+            try {
+                // Use web-standard getUserMedia
+                const constraints = {
+                    video: {
+                        facingMode: 'user',
+                        // Don't enforce width/height too strictly, let browser decide best fit
+                    },
+                    audio: false
+                };
+
+                // We use CameraUtils from MediaPipe which wraps getUserMedia
+                camera = new Camera(videoElement, {
+                    onFrame: async () => {
+                        await pose.send({ image: videoElement });
+                    },
+                    width: 640,
+                    height: 480
+                });
+
+                await camera.start();
+                debugOverlay.innerText = "Camera started";
+            } catch (e) {
+                debugOverlay.innerText = "Camera Error: " + e.message;
+                if (window.ReactNativeWebView) {
+                    window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'error', message: e.message }));
+                }
+            }
+        }
+
+        // Handle messages from native
+        window.addEventListener('message', (event) => {
+            // Handling future commands
+        });
+
+        startCamera();
+
+        function resizeCanvas() {
+            canvasElement.width = window.innerWidth;
+            canvasElement.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+    </script>
+</body>
+
+</html>

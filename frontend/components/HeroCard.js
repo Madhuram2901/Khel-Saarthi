@@ -2,12 +2,12 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ImageBackground } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-const HeroCard = ({ title, subtitle, onPress, icon = 'trophy' }) => {
+const HeroCard = ({ title, subtitle, onPress, icon = 'trophy', image }) => {
   return (
     <TouchableOpacity onPress={onPress} style={styles.container}>
       <ImageBackground
         source={{
-          uri: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600&h=300&fit=crop'
+          uri: image || 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600&h=300&fit=crop'
         }}
         style={styles.imageBackground}
         imageStyle={styles.backgroundImage}

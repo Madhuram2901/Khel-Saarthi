@@ -30,6 +30,8 @@ import MyBookingsScreen from '../screens/MyBookingsScreen';
 import AddVenueScreen from '../screens/AddVenueScreen';
 import EditVenueScreen from '../screens/EditVenueScreen';
 
+import AiGymTrainerScreen from '../screens/AiGymTrainerScreen';
+
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 const VenueStack = createStackNavigator();
@@ -53,6 +55,7 @@ function HomeStack() {
             <Stack.Screen name="Chat" component={ChatScreen} options={({ route }) => ({ title: route.params?.eventTitle || 'Chat', headerBackTitle: 'Back' })} />
             <Stack.Screen name="BadmintonProfile" component={BadmintonProfileScreen} options={{ title: 'Badminton Profile' }} />
             <Stack.Screen name="AiChat" component={AiChatScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="AiGymTrainer" component={AiGymTrainerScreen} options={{ headerShown: false }} />
         </Stack.Navigator>
     );
 }
@@ -154,7 +157,7 @@ const AppNavigator = () => {
 
     const getTabBarVisibility = (route) => {
         const routeName = getFocusedRouteNameFromRoute(route);
-        const hiddenScreens = ['CreateEvent', 'EditEvent', 'EventDetails', 'Participants', 'Chat', 'BadmintonProfile', 'AiChat', 'VenueDetails', 'AddVenue', 'EditVenue', 'MyBookings'];
+        const hiddenScreens = ['CreateEvent', 'EditEvent', 'EventDetails', 'Participants', 'Chat', 'BadmintonProfile', 'AiChat', 'VenueDetails', 'AddVenue', 'EditVenue', 'MyBookings', 'AiGymTrainer'];
         return hiddenScreens.includes(routeName) ? 'none' : 'flex';
     };
 
@@ -167,30 +170,30 @@ const AppNavigator = () => {
                         headerShown: false,
                     }}
                 >
-                    <Tab.Screen 
-                        name="HomeStack" 
-                        component={HomeStack} 
-                        options={({ route }) => ({ 
+                    <Tab.Screen
+                        name="HomeStack"
+                        component={HomeStack}
+                        options={({ route }) => ({
                             title: 'Home',
                             tabBarStyle: { display: getTabBarVisibility(route) }
-                        })} 
+                        })}
                     />
-                    <Tab.Screen 
-                        name="VenueStack" 
-                        component={VenueStackScreen} 
-                        options={({ route }) => ({ 
+                    <Tab.Screen
+                        name="VenueStack"
+                        component={VenueStackScreen}
+                        options={({ route }) => ({
                             title: 'Venues',
                             tabBarStyle: { display: getTabBarVisibility(route) }
-                        })} 
+                        })}
                     />
                     <Tab.Screen name="NewsStack" component={NewsStack} options={{ title: 'News' }} />
-                    <Tab.Screen 
-                        name="ProfileStack" 
-                        component={ProfileStack} 
-                        options={({ route }) => ({ 
+                    <Tab.Screen
+                        name="ProfileStack"
+                        component={ProfileStack}
+                        options={({ route }) => ({
                             title: 'Profile',
                             tabBarStyle: { display: getTabBarVisibility(route) }
-                        })} 
+                        })}
                     />
                 </Tab.Navigator>
             ) : (

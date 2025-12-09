@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { 
-  View, 
-  StyleSheet, 
-  Alert, 
-  Text, 
-  ScrollView, 
-  FlatList, 
+import {
+  View,
+  StyleSheet,
+  Alert,
+  Text,
+  ScrollView,
+  FlatList,
   TouchableOpacity,
   StatusBar,
   Image
@@ -54,7 +54,7 @@ const HomeScreen = ({ navigation }) => {
   };
 
   const renderEventCard = ({ item }) => (
-    <EventCard 
+    <EventCard
       event={item}
       onPress={() => navigation.navigate('EventDetails', { eventId: item._id })}
     />
@@ -64,7 +64,7 @@ const HomeScreen = ({ navigation }) => {
     <View style={styles.headerSection}>
       <View style={styles.headerTop}>
         <View style={styles.userInfo}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.avatar}
             onPress={() => navigation.navigate('ProfileStack')}
           >
@@ -82,25 +82,25 @@ const HomeScreen = ({ navigation }) => {
           </View>
         </View>
         <View style={styles.headerRight}>
-          <TouchableOpacity 
-            style={styles.aiButton} 
+          <TouchableOpacity
+            style={styles.aiButton}
             onPress={() => navigation.navigate('AiChat')}
           >
             <Ionicons name="sparkles" size={20} color="#fff" />
           </TouchableOpacity>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.searchButton}
-            onPress={() => {/* TODO: Add search functionality */}}
+            onPress={() => {/* TODO: Add search functionality */ }}
           >
             <Ionicons name="search" size={24} color="#007AFF" />
           </TouchableOpacity>
         </View>
       </View>
-      
-      <HeroCard 
+
+      <HeroCard
         title="Discover Sports Events Near You"
         subtitle="Join local sports communities"
-        onPress={() => {/* TODO: Navigate to search/discover */}}
+        onPress={() => {/* TODO: Navigate to search/discover */ }}
         icon="trophy"
       />
     </View>
@@ -121,7 +121,7 @@ const HomeScreen = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#f5f5f5" />
-      
+
       {/* Header */}
       <View style={styles.header}>
         <View>
@@ -129,21 +129,31 @@ const HomeScreen = ({ navigation }) => {
           <Text style={styles.subGreeting}>Ready to play today?</Text>
         </View>
         <TouchableOpacity onPress={() => navigation.navigate('ProfileStack')}>
-          <Image 
-            source={{ uri: user?.profilePicture || 'https://via.placeholder.com/100' }} 
-            style={styles.profilePic} 
+          <Image
+            source={{ uri: user?.profilePicture || 'https://via.placeholder.com/100' }}
+            style={styles.profilePic}
           />
         </TouchableOpacity>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scrollContent, { paddingBottom: 120 }]}>
         {/* Hero Section */}
-        <HeroCard 
+        <HeroCard
           title="Discover Sports Events Near You"
           subtitle="Join local sports communities"
-          onPress={() => {/* TODO: Navigate to search/discover */}}
+          onPress={() => {/* TODO: Navigate to search/discover */ }}
           icon="trophy"
         />
+
+        <View style={{ marginTop: 16 }}>
+          <HeroCard
+            title="AI Gym Trainer"
+            subtitle="Real-time form analysis & rep counting"
+            onPress={() => navigation.navigate('AiGymTrainer')}
+            icon="body"
+            image="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600&h=300&fit=crop"
+          />
+        </View>
 
         {/* AI Recommendation Section */}
         <AIRecommendationSection />
@@ -152,7 +162,7 @@ const HomeScreen = ({ navigation }) => {
         <View style={styles.sectionContainer}>
           <Text style={styles.sectionTitle}>Filter by Sport</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <CategoryFilter 
+            <CategoryFilter
               categories={categories}
               selectedCategory={filters.category}
               onSelectCategory={(category) => setFilters({ ...filters, category })}
@@ -165,11 +175,11 @@ const HomeScreen = ({ navigation }) => {
           <Text style={styles.sectionTitle}>Events Near You</Text>
           <MapView
             style={styles.map}
-            initialRegion={{ 
-              latitude: 23.2599, 
-              longitude: 77.4126, 
-              latitudeDelta: 0.1, 
-              longitudeDelta: 0.1 
+            initialRegion={{
+              latitude: 23.2599,
+              longitude: 77.4126,
+              latitudeDelta: 0.1,
+              longitudeDelta: 0.1
             }}
           >
             {events.map((event) => {
@@ -177,9 +187,9 @@ const HomeScreen = ({ navigation }) => {
               return (
                 <Marker
                   key={event._id}
-                  coordinate={{ 
-                    latitude: event.location.coordinates[1], 
-                    longitude: event.location.coordinates[0] 
+                  coordinate={{
+                    latitude: event.location.coordinates[1],
+                    longitude: event.location.coordinates[0]
                   }}
                   title={event.title}
                   pinColor={isUserRegistered ? 'green' : 'red'}
@@ -201,11 +211,11 @@ const HomeScreen = ({ navigation }) => {
         <View style={styles.sectionContainer}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Upcoming Events</Text>
-            <TouchableOpacity onPress={() => {/* TODO: Navigate to all events */}}>
+            <TouchableOpacity onPress={() => {/* TODO: Navigate to all events */ }}>
               <Text style={styles.viewAllText}>View All</Text>
             </TouchableOpacity>
           </View>
-          
+
           {events.length > 0 ? (
             <FlatList
               data={events}
@@ -228,17 +238,17 @@ const HomeScreen = ({ navigation }) => {
         {/* Action Buttons Section */}
         <View style={styles.actionSection}>
           {user?.role === 'host' && (
-            <StyledButton 
-              title="Create New Event" 
+            <StyledButton
+              title="Create New Event"
               onPress={() => navigation.navigate('CreateEvent')}
               variant="primary"
               icon="add-circle"
               size="large"
             />
           )}
-          <StyledButton 
-            title="Sign Out" 
-            onPress={logout} 
+          <StyledButton
+            title="Sign Out"
+            onPress={logout}
             variant="outline"
             icon="log-out"
             size="medium"
@@ -249,8 +259,8 @@ const HomeScreen = ({ navigation }) => {
       </ScrollView>
 
       {/* Floating AI Button */}
-      <TouchableOpacity 
-        style={styles.fab} 
+      <TouchableOpacity
+        style={styles.fab}
         onPress={() => navigation.navigate('AiChat')}
         activeOpacity={0.8}
       >
@@ -317,9 +327,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginBottom: 16,
   },
-  sectionTitle: { 
-    fontSize: 22, 
-    fontWeight: 'bold', 
+  sectionTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
     color: '#1D1D1F',
     paddingHorizontal: 20,
     marginBottom: 12,
@@ -356,7 +366,7 @@ const styles = StyleSheet.create({
     color: '#007AFF',
     fontWeight: '600',
   },
-  map: { 
+  map: {
     height: 200,
     marginHorizontal: 20,
     borderRadius: 16,
@@ -402,7 +412,7 @@ const styles = StyleSheet.create({
     color: '#8E8E93',
     marginTop: 4,
   },
-  actionSection: { 
+  actionSection: {
     padding: 20,
     paddingBottom: 40,
   },

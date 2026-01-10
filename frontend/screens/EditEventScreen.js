@@ -125,7 +125,7 @@ const EditEventScreen = ({ route, navigation }) => {
     const displayBanner = bannerImage ? bannerImage.uri : (existingBanner || getSportImage(category));
 
     return (
-        <ScrollView contentContainerStyle={styles.container}>
+        <ScrollView contentContainerStyle={[styles.container, { paddingBottom: 120 }]}>
             <Text style={styles.title}>Edit Event</Text>
 
             {/* Banner Image Picker */}

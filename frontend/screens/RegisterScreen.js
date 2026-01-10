@@ -58,7 +58,7 @@ const RegisterScreen = ({ navigation }) => {
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={styles.keyboardView}
             >
-                <ScrollView contentContainerStyle={styles.scrollContent}>
+                <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: 120 }]}>
                     <View style={styles.header}>
                         <TouchableOpacity
                             style={styles.backButton}

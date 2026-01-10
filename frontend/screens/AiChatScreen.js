@@ -43,13 +43,13 @@ const AiChatScreen = ({ navigation }) => {
     try {
       // Call our new backend endpoint
       const response = await api.post('/chat', { message: userMsg.text });
-      
+
       const aiMsg = {
         id: (Date.now() + 1).toString(),
         text: response.data.reply,
         sender: 'ai',
       };
-      
+
       setMessages((prev) => [...prev, aiMsg]);
     } catch (error) {
       console.error("Chat Error:", error);
@@ -71,6 +71,69 @@ const AiChatScreen = ({ navigation }) => {
     }
   }, [messages]);
 
+  const renderMessageText = (text) => {
+    // Regex to match [[TYPE:ID:NAME]]
+    const regex = /\[\[(EVENT|VENUE):([a-zA-Z0-9]+):(.*?)\]\]/g;
+    const parts = [];
+    let lastIndex = 0;
+    let match;
+
+    while ((match = regex.exec(text)) !== null) {
+      // Add text before the match
+      if (match.index > lastIndex) {
+        parts.push({ type: 'text', content: text.substring(lastIndex, match.index) });
+      }
+
+      // Add the match as a link
+      parts.push({
+        type: 'link',
+        linkType: match[1], // EVENT or VENUE
+        id: match[2],
+        name: match[3],
+      });
+
+      lastIndex = regex.lastIndex;
+    }
+
+    // Add remaining text
+    if (lastIndex < text.length) {
+      parts.push({ type: 'text', content: text.substring(lastIndex) });
+    }
+
+    return parts.map((part, index) => {
+      if (part.type === 'text') {
+        return <Text key={index}>{part.content}</Text>;
+      } else {
+        return (
+          <Text
+            key={index}
+            style={styles.linkText}
+            onPress={() => handleLinkPress(part.linkType, part.id)}
+          >
+            {part.name}
+          </Text>
+        );
+      }
+    });
+  };
+
+  const handleLinkPress = (type, id) => {
+    if (type === 'EVENT') {
+      navigation.navigate('EventDetails', { eventId: id });
+    } else if (type === 'VENUE') {
+      // VenueDetails is in VenueStack, so we might need to navigate to the stack first
+      // But usually nested navigators handle deep links if screen name is unique enough or we use the hierarchy
+      // Based on AppNavigator, VenueDetails is inside VenueStack.
+      // Let's try direct navigation first, if it fails we might need to specify stack.
+      // However, usually React Navigation finds the screen.
+      // Checking AppNavigator: VenueDetails is in VenueStack.
+      navigation.navigate('VenueStack', {
+        screen: 'VenueDetails',
+        params: { venueId: id }
+      });
+    }
+  };
+
   const renderItem = ({ item }) => {
     const isUser = item.sender === 'user';
     return (
@@ -81,7 +144,7 @@ const AiChatScreen = ({ navigation }) => {
         ]}
       >
         <Text style={[styles.messageText, isUser ? styles.userText : styles.aiText]}>
-          {item.text}
+          {isUser ? item.text : renderMessageText(item.text)}
         </Text>
       </View>
     );
@@ -90,17 +153,17 @@ const AiChatScreen = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#1a1a1a" />
-      
+
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
         <View>
-            <Text style={styles.headerTitle}>Khel-Saarthi AI</Text>
-            <Text style={styles.headerSubtitle}>Your Sports Companion</Text>
+          <Text style={styles.headerTitle}>Khel-Saarthi AI</Text>
+          <Text style={styles.headerSubtitle}>Your Sports Companion</Text>
         </View>
-        <View style={{ width: 24 }} /> 
+        <View style={{ width: 24 }} />
       </View>
 
       {/* Chat Area */}
@@ -201,6 +264,11 @@ const styles = StyleSheet.create({
   },
   aiText: {
     color: '#E0E0E0',
+  },
+  linkText: {
+    color: '#4CAF50',
+    fontWeight: 'bold',
+    textDecorationLine: 'underline',
   },
   inputContainer: {
     flexDirection: 'row',

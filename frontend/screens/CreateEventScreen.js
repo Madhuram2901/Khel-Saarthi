@@ -93,7 +93,7 @@ const CreateEventScreen = ({ navigation }) => {
     };
 
     return (
-        <ScrollView contentContainerStyle={styles.container}>
+        <ScrollView contentContainerStyle={[styles.container, { paddingBottom: 120 }]}>
             <Text style={styles.title}>Create New Event</Text>
 
             {/* Banner Image Picker */}

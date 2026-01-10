@@ -1,6 +1,6 @@
 import React, { useContext, useEffect } from 'react';
 import { ActivityIndicator, View } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, getFocusedRouteNameFromRoute } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { io } from 'socket.io-client';
@@ -9,6 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Toast from 'react-native-toast-message';
 import api from '../api/api';
 import AuthContext from '../context/AuthContext';
+import FloatingTabBar from '../components/FloatingTabBar';
 
 // Import all Screens
 import HomeScreen from '../screens/HomeScreen';
@@ -180,34 +181,94 @@ const AppNavigator = () => {
         );
     }
 
+    const getTabBarVisibility = (route) => {
+      const routeName = getFocusedRouteNameFromRoute(route);
+
+      const hiddenScreens = [
+        'CreateEvent',
+        'EditEvent',
+        'EventDetails',
+        'Participants',
+        'Chat',
+        'BadmintonProfile',
+        'AiChat',
+        'VenueDetails',
+        'AddVenue',
+        'EditVenue',
+        'MyBookings',
+
+        // Added Tournament screens to tab bar
+        'CreateTournament',
+        'TournamentDashboard',
+        'ManageTeams',
+        'GenerateFixtures',
+        'MatchDetails',
+      ];
+
+      return hiddenScreens.includes(routeName) ? 'none' : 'flex';
+    };
+
+
     return (
         <NavigationContainer>
             {user ? (
                 <Tab.Navigator
-                    screenOptions={({ route }) => ({
-                        tabBarIcon: ({ focused, color, size }) => {
-                            let iconName;
-                            if (route.name === 'HomeStack') iconName = focused ? 'home' : 'home-outline';
-                            else if (route.name === 'TournamentStack') iconName = focused ? 'trophy' : 'trophy-outline';
-                            else if (route.name === 'VenueStack') iconName = focused ? 'calendar' : 'calendar-outline';
-                            else if (route.name === 'NewsStack') iconName = focused ? 'newspaper' : 'newspaper-outline';
-                            else if (route.name === 'ProfileStack') iconName = focused ? 'person' : 'person-outline';
-                            return <Ionicons name={iconName} size={size} color={color} />;
-                        },
-                        headerShown: false,
-                        tabBarActiveTintColor: '#007AFF',
-                        tabBarInactiveTintColor: '#8E8E93',
-                        tabBarStyle: { backgroundColor: '#FFFFFF', borderTopWidth: 1, borderTopColor: '#E5E5EA', height: 90, paddingBottom: 20, paddingTop: 8 },
-                        tabBarLabelStyle: { fontSize: 12, fontWeight: '600', marginTop: 4 },
-                        tabBarIconStyle: { marginTop: 4 },
-                    })}
-                >
-                    <Tab.Screen name="HomeStack" component={HomeStack} options={{ title: 'Home' }} />
-                    <Tab.Screen name="TournamentStack" component={TournamentStackScreen} options={{ title: 'Tournaments' }} />
-                    <Tab.Screen name="VenueStack" component={VenueStackScreen} options={{ title: 'Venues' }} />
-                    <Tab.Screen name="NewsStack" component={NewsStack} options={{ title: 'News' }} />
-                    <Tab.Screen name="ProfileStack" component={ProfileStack} options={{ title: 'Profile' }} />
-                </Tab.Navigator>
+  tabBar={(props) => <FloatingTabBar {...props} />}
+  screenOptions={({ route }) => ({
+    headerShown: false,
+    tabBarIcon: ({ focused, color, size }) => {
+      let iconName;
+
+      if (route.name === 'HomeStack') iconName = focused ? 'home' : 'home-outline';
+      else if (route.name === 'TournamentStack') iconName = focused ? 'trophy' : 'trophy-outline';
+      else if (route.name === 'VenueStack') iconName = focused ? 'calendar' : 'calendar-outline';
+      else if (route.name === 'NewsStack') iconName = focused ? 'newspaper' : 'newspaper-outline';
+      else if (route.name === 'ProfileStack') iconName = focused ? 'person' : 'person-outline';
+
+      return <Ionicons name={iconName} size={size} color={color} />;
+    },
+  })}
+>
+  <Tab.Screen
+    name="HomeStack"
+    component={HomeStack}
+    options={({ route }) => ({
+      title: 'Home',
+      tabBarStyle: { display: getTabBarVisibility(route) },
+    })}
+  />
+
+  <Tab.Screen
+    name="TournamentStack"
+    component={TournamentStackScreen}
+    options={{ title: 'Tournaments' }}
+  />
+
+  <Tab.Screen
+    name="VenueStack"
+    component={VenueStackScreen}
+    options={({ route }) => ({
+      title: 'Venues',
+      tabBarStyle: { display: getTabBarVisibility(route) },
+    })}
+  />
+
+  <Tab.Screen
+    name="NewsStack"
+    component={NewsStack}
+    options={{ title: 'News' }}
+  />
+
+  <Tab.Screen
+    name="ProfileStack"
+    component={ProfileStack}
+    options={({ route }) => ({
+      title: 'Profile',
+      tabBarStyle: { display: getTabBarVisibility(route) },
+    })}
+  />
+</Tab.Navigator>
+
             ) : (
                 <Stack.Navigator screenOptions={{ headerShown: false, cardStyle: { backgroundColor: '#FFFFFF' } }}>
                     <Stack.Screen name="Login" component={LoginScreen} />

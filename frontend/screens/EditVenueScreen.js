@@ -110,7 +110,7 @@ const EditVenueScreen = ({ route, navigation }) => {
     if (loading) return <ActivityIndicator size="large" style={{ flex: 1, justifyContent: 'center' }} />;
 
     return (
-        <ScrollView style={styles.container}>
+        <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 120 }}>
             <View style={styles.imageSection}>
                 <TouchableOpacity onPress={pickImage} style={styles.imagePicker}>
                     <Image source={{ uri: newImage || image }} style={styles.previewImage} />

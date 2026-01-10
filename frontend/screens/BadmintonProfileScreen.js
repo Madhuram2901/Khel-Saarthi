@@ -41,7 +41,7 @@ const BadmintonProfileScreen = ({ navigation }) => {
     };
 
     return (
-        <ScrollView contentContainerStyle={styles.container}>
+        <ScrollView contentContainerStyle={[styles.container, { paddingBottom: 120 }]}>
             <Text style={styles.title}>Edit Badminton Profile</Text>
 
             <Text style={styles.label}>Skill Level</Text>

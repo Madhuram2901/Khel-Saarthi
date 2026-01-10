@@ -128,7 +128,7 @@ const HomeScreen = ({ navigation }) => {
           <Text style={styles.greeting}>Hello, {user?.name || 'Athlete'}! 👋</Text>
           <Text style={styles.subGreeting}>Ready to play today?</Text>
         </View>
-        <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
+        <TouchableOpacity onPress={() => navigation.navigate('ProfileStack')}>
           <Image 
             source={{ uri: user?.profilePicture || 'https://via.placeholder.com/100' }} 
             style={styles.profilePic} 
@@ -136,7 +136,7 @@ const HomeScreen = ({ navigation }) => {
         </TouchableOpacity>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scrollContent, { paddingBottom: 120 }]}>
         {/* Hero Section */}
         <HeroCard 
           title="Discover Sports Events Near You"
@@ -267,7 +267,7 @@ const styles = StyleSheet.create({
   },
   fab: {
     position: 'absolute',
-    bottom: 24,
+    bottom: 110,
     right: 24,
     width: 56,
     height: 56,

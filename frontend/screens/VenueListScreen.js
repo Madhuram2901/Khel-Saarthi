@@ -175,6 +175,7 @@ const styles = StyleSheet.create({
         color: '#007AFF',
         fontWeight: 'bold',
     },
+    list: { padding: 15, paddingBottom: 140 },
     searchContainer: { padding: 15, backgroundColor: '#fff' },
     searchBar: {
         flexDirection: 'row',
@@ -184,7 +185,6 @@ const styles = StyleSheet.create({
         padding: 10
     },
     input: { marginLeft: 10, flex: 1 },
-    list: { padding: 15 },
     card: {
         backgroundColor: '#fff',
         borderRadius: 12,
@@ -214,7 +214,7 @@ const styles = StyleSheet.create({
     empty: { textAlign: 'center', marginTop: 50, color: '#666' },
     fab: {
         position: 'absolute',
-        bottom: 20,
+        bottom: 110,
         right: 20,
         backgroundColor: '#007AFF',
         width: 56,

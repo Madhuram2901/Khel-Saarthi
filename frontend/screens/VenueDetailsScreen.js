@@ -65,7 +65,7 @@ const VenueDetailsScreen = ({ route, navigation }) => {
     const isManager = user && managerId && (user._id == managerId || user._id === managerId.toString());
 
     return (
-        <ScrollView style={styles.container}>
+        <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 120 }}>
             <Image
                 source={{ uri: venue.images[0] || 'https://images.unsplash.com/photo-1522778119026-d647f0565c6a' }}
                 style={styles.image}

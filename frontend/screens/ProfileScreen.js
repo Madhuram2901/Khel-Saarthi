@@ -19,6 +19,7 @@ import StyledButton from '../components/StyledButton';
 import ProfileCard from '../components/ProfileCard';
 import { StatCard, StatRow } from '../components/StatCard';
 import * as ImagePicker from 'expo-image-picker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../api/api';
 
 const ProfileScreen = ({ navigation }) => {
@@ -102,10 +103,16 @@ const ProfileScreen = ({ navigation }) => {
                 });
             }
 
-            const { data } = await api.put('/users/profile', formData, {
+            const { data } = await api.put('/users/update', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' },
             });
 
+            // Update token and fetch fresh user data
+            if (data.token) {
+                await AsyncStorage.setItem('userToken', data.token);
+                api.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
+            }
+            
             setUser(data);
             setImage(null);
             setEditMode(false);
@@ -208,7 +215,7 @@ const ProfileScreen = ({ navigation }) => {
     return (
         <SafeAreaView style={styles.container}>
             <StatusBar barStyle="dark-content" backgroundColor="#F8F9FA" />
-            <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+            <ScrollView style={styles.scrollView} contentContainerStyle={{ paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
                 <ProfileCard
                     user={user}
                     onEditPress={() => setEditMode(true)}
@@ -226,13 +233,28 @@ const ProfileScreen = ({ navigation }) => {
                             color="#FF6B35"
                         />
                         <StatCard
-                            icon="star"
                             title="Rating"
-                            value={badmintonProfile.skillLevel || "N/A"}
-                            color="#FFD700"
+                            image={
+                                badmintonProfile.skillLevel === 'Beginner'
+                                    ? require('../assets/beginner.png')
+                                    : badmintonProfile.skillLevel === 'Intermediate'
+                                    ? require('../assets/intermediate.png')
+                                    : badmintonProfile.skillLevel === 'Advanced'
+                                    ? require('../assets/advance.png')
+                                    : null
+                            }
+                            imageColor={
+                                badmintonProfile.skillLevel === 'Beginner'
+                                    ? '#E8F5E9'
+                                    : badmintonProfile.skillLevel === 'Intermediate'
+                                    ? '#E3F2FD'
+                                    : badmintonProfile.skillLevel === 'Advanced'
+                                    ? '#FFF3E0'
+                                    : '#FFFFFF'
+                            }
                         />
                     </StatRow>
-                    <StatRow>
+                    {/* <StatRow>
                         <StatCard
                             icon="people"
                             title="Partners"
@@ -245,7 +267,7 @@ const ProfileScreen = ({ navigation }) => {
                             value="45"
                             color="#007AFF"
                         />
-                    </StatRow>
+                    </StatRow> */}
                 </View>
 
                 {/* Sports Profiles Section */}

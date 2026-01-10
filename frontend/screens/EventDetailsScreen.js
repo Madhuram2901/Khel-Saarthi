@@ -113,7 +113,7 @@ const EventDetailsScreen = ({ route, navigation }) => {
                 </View>
             </ImageBackground>
 
-            <ScrollView style={styles.contentContainer} showsVerticalScrollIndicator={false}>
+            <ScrollView style={styles.contentContainer} contentContainerStyle={{ paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
                 {/* Event Header */}
                 <View style={styles.eventHeader}>
                     <View style={styles.eventTitleRow}>

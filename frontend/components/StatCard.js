@@ -1,15 +1,19 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-const StatCard = ({ icon, title, value, color = '#007AFF' }) => {
+const StatCard = ({ icon, title, value, color = '#007AFF', image, imageColor }) => {
   return (
-    <View style={styles.container}>
-      <View style={[styles.iconContainer, { backgroundColor: `${color}20` }]}>
-        <Ionicons name={icon} size={24} color={color} />
-      </View>
+    <View style={[styles.container, imageColor && { backgroundColor: imageColor }]}>
+      {image ? (
+        <Image source={image} style={styles.imageContainer} resizeMode="cover" />
+      ) : (
+        <View style={[styles.iconContainer, { backgroundColor: `${color}20` }]}>
+          <Ionicons name={icon} size={24} color={color} />
+        </View>
+      )}
       <View style={styles.content}>
-        <Text style={styles.value}>{value}</Text>
+        {!image && <Text style={styles.value}>{value}</Text>}
         <Text style={styles.title}>{title}</Text>
       </View>
     </View>
@@ -48,6 +52,12 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     justifyContent: 'center',
     alignItems: 'center',
+    marginBottom: 12,
+  },
+  imageContainer: {
+    width: 100,
+    height: 100,
+    borderRadius: 12,
     marginBottom: 12,
   },
   content: {

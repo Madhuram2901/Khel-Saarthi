@@ -12,16 +12,23 @@
     "@expo/metro-runtime": "~6.1.2",
     "@expo/vector-icons": "^15.0.2",
     "@react-native-async-storage/async-storage": "2.2.0",
+    "@react-native-community/datetimepicker": "8.2.0",
     "@react-navigation/bottom-tabs": "^7.4.7",
     "@react-navigation/native": "^7.1.17",
     "@react-navigation/stack": "^7.4.8",
+
     "axios": "^1.12.0",
+
     "expo": "~54.0.2",
     "expo-blur": "^15.0.7",
+    "expo-camera": "~17.0.10",
     "expo-constants": "~18.0.9",
+    "expo-haptics": "~15.0.8",
     "expo-image-picker": "~17.0.8",
     "expo-linear-gradient": "~15.0.7",
+    "expo-speech": "~14.0.8",
     "expo-status-bar": "~3.0.8",
+
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-native": "0.81.4",
@@ -29,12 +36,13 @@
     "react-native-safe-area-context": "^5.6.1",
     "react-native-toast-message": "^2.3.3",
     "react-native-web": "^0.21.0",
+    "react-native-webview": "13.15.0",
+    "react-native-svg": "14.1.0",
+    "react-native-qrcode-svg": "^6.3.11",
+
     "socket.io-client": "^4.8.1",
     "swr": "^2.3.6",
-    "react-native-webview": "13.15.0",
-    "expo-camera": "~17.0.10",
-    "expo-speech": "~14.0.8",
-    "expo-haptics": "~15.0.8"
+    "nanoid": "^3.3.7"
   },
   "private": true
 }

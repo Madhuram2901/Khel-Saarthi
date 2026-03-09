@@ -1,276 +1,217 @@
 import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet, Platform, Animated } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  Platform,
+  Animated,
+  TouchableOpacity,
+} from 'react-native';
 import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useLinkBuilder, useTheme } from '@react-navigation/native';
 import { Text, PlatformPressable } from '@react-navigation/elements';
 import { Ionicons } from '@expo/vector-icons';
 
-function FloatingTabBar({ state, descriptors, navigation }) {
-  const { colors } = useTheme();
-  const { buildHref } = useLinkBuilder();
-  const scaleAnims = useRef(state.routes.map(() => new Animated.Value(1))).current;
+// ─── icon + label map ────────────────────────────────────────────────────────
+const ROUTE_META = {
+  HomeStack: { active: 'home', inactive: 'home-outline', label: 'Home' },
+  TournamentStack: { active: 'trophy', inactive: 'trophy-outline', label: 'Tourneys' },
+  VenueStack: { active: 'calendar', inactive: 'calendar-outline', label: 'Venues' },
+  NewsStack: { active: 'newspaper', inactive: 'newspaper-outline', label: 'News' },
+  ProfileStack: { active: 'person', inactive: 'person-outline', label: 'Profile' },
+};
 
-  // Animate focused tab
+const ACTIVE = '#007AFF';
+const INACTIVE = '#8E8E93';
+const FAB_GREEN = '#34C759';
+
+// ─── main component ──────────────────────────────────────────────────────────
+function FloatingTabBar({ state, descriptors, navigation }) {
+  const { buildHref } = useLinkBuilder();
+
+  // One animated opacity value per tab (for the pill underline)
+  const pillOpacities = useRef(
+    state.routes.map((_, i) => new Animated.Value(i === state.index ? 1 : 0))
+  ).current;
+
+  // FAB press scale
+  const fabScale = useRef(new Animated.Value(1)).current;
+
+  // Animate pill opacities whenever active index changes
   useEffect(() => {
-    state.routes.forEach((route, index) => {
-      if (state.index === index) {
-        Animated.sequence([
-          Animated.spring(scaleAnims[index], {
-            toValue: 1.15,
-            friction: 3,
-            tension: 40,
-            useNativeDriver: true,
-          }),
-          Animated.spring(scaleAnims[index], {
-            toValue: 1,
-            friction: 3,
-            tension: 40,
-            useNativeDriver: true,
-          })
-        ]).start();
-      } else {
-        Animated.timing(scaleAnims[index], {
-          toValue: 1,
-          duration: 200,
-          useNativeDriver: true,
-        }).start();
-      }
+    state.routes.forEach((_, i) => {
+      Animated.spring(pillOpacities[i], {
+        toValue: i === state.index ? 1 : 0,
+        useNativeDriver: true,
+        damping: 14,
+        mass: 0.6,
+        stiffness: 160,
+      }).start();
     });
   }, [state.index]);
 
-  // Check if tab bar should be hidden
+  // Hide the bar on deep screens
   const { tabBarStyle } = descriptors[state.routes[state.index].key].options;
-  if (tabBarStyle?.display === 'none') {
-    return null;
-  }
+  if (tabBarStyle?.display === 'none') return null;
+
+  // FAB press handlers
+  const handleFabPressIn = () =>
+    Animated.spring(fabScale, { toValue: 0.92, useNativeDriver: true, speed: 40, bounciness: 0 }).start();
+  const handleFabPressOut = () =>
+    Animated.spring(fabScale, { toValue: 1, useNativeDriver: true, speed: 20, bounciness: 8 }).start();
+
+  // ── shared tab row ────────────────────────────────────────────────────────
+  const tabRow = state.routes.map((route, index) => {
+    const { options } = descriptors[route.key];
+    const isFocused = state.index === index;
+    const meta = ROUTE_META[route.name] ?? {};
+    const iconName = isFocused ? (meta.active ?? 'ellipse') : (meta.inactive ?? 'ellipse-outline');
+    const displayLabel = meta.label ?? (options.title ?? route.name);
+
+    const onPress = () => {
+      const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
+      if (!isFocused && !event.defaultPrevented) navigation.navigate(route.name, route.params);
+    };
+    const onLongPress = () => navigation.emit({ type: 'tabLongPress', target: route.key });
+
+    return (
+      <PlatformPressable
+        key={route.key}
+        href={buildHref(route.name, route.params)}
+        accessibilityRole="button"
+        accessibilityState={isFocused ? { selected: true } : {}}
+        accessibilityLabel={options.tabBarAccessibilityLabel}
+        testID={options.tabBarButtonTestID}
+        onPress={onPress}
+        onLongPress={onLongPress}
+        style={styles.tabButton}
+      >
+        <View style={styles.tabInner}>
+          <Ionicons
+            name={iconName}
+            size={24}
+            color={isFocused ? ACTIVE : INACTIVE}
+          />
+          <Text
+            style={[
+              styles.tabLabel,
+              { color: isFocused ? ACTIVE : INACTIVE },
+            ]}
+            numberOfLines={1}
+          >
+            {displayLabel}
+          </Text>
+          {/* Animated pill underline */}
+          <Animated.View style={[styles.pill, { opacity: pillOpacities[index] }]} />
+        </View>
+      </PlatformPressable>
+    );
+  });
+
+  // ── glass bar shell (platform-split for blur support) ────────────────────
+  const barContent = (
+    <View style={styles.tabBar}>
+      {tabRow}
+    </View>
+  );
 
   return (
-    <View style={styles.tabBarContainer}>
+    <View style={styles.container}>
+      {/* Glass bar */}
       {Platform.OS === 'ios' ? (
-        <BlurView intensity={100} tint="extraLight" style={styles.blurContainer}>
-          <View style={styles.tabBar}>
-          {state.routes.map((route, index) => {
-          const { options } = descriptors[route.key];
-          const label =
-            options.tabBarLabel !== undefined
-              ? options.tabBarLabel
-              : options.title !== undefined
-                ? options.title
-                : route.name;
-
-          const isFocused = state.index === index;
-
-          const onPress = () => {
-            const event = navigation.emit({
-              type: 'tabPress',
-              target: route.key,
-              canPreventDefault: true,
-            });
-
-            if (!isFocused && !event.defaultPrevented) {
-              navigation.navigate(route.name, route.params);
-            }
-          };
-
-          const onLongPress = () => {
-            navigation.emit({
-              type: 'tabLongPress',
-              target: route.key,
-            });
-          };
-
-          // Get icon name based on route
-          let iconName;
-          if (route.name === 'HomeStack') iconName = isFocused ? 'home' : 'home-outline';
-          else if (route.name === 'VenueStack') iconName = isFocused ? 'calendar' : 'calendar-outline';
-          else if (route.name === 'NewsStack') iconName = isFocused ? 'newspaper' : 'newspaper-outline';
-          else if (route.name === 'ProfileStack') iconName = isFocused ? 'person' : 'person-outline';
-
-          return (
-            <PlatformPressable
-              key={route.key}
-              href={buildHref(route.name, route.params)}
-              accessibilityRole="button"
-              accessibilityState={isFocused ? { selected: true } : {}}
-              accessibilityLabel={options.tabBarAccessibilityLabel}
-              testID={options.tabBarButtonTestID}
-              onPress={onPress}
-              onLongPress={onLongPress}
-              style={styles.tabButton}
-            >
-              <Animated.View style={[
-                styles.tabItemContainer,
-                isFocused && styles.tabItemFocused,
-                { transform: [{ scale: scaleAnims[index] }] }
-              ]}>
-                <Ionicons
-                  name={iconName}
-                  size={isFocused ? 28 : 24}
-                  color={isFocused ? '#007AFF' : '#8E8E93'}
-                />
-                {!isFocused && (
-                  <Text
-                    style={[
-                      styles.tabLabel,
-                      { color: '#8E8E93' }
-                    ]}
-                  >
-                    {label}
-                  </Text>
-                )}
-              </Animated.View>
-            </PlatformPressable>
-          );
-        })}
-          </View>
+        <BlurView intensity={80} tint="light" style={styles.glassBar}>
+          <View style={styles.glassOverlay} />
+          {barContent}
         </BlurView>
       ) : (
-        <View style={[styles.blurContainer, styles.androidBlur]}>
-          <View style={styles.tabBar}>
-            {state.routes.map((route, index) => {
-              const { options } = descriptors[route.key];
-              const label =
-                options.tabBarLabel !== undefined
-                  ? options.tabBarLabel
-                  : options.title !== undefined
-                    ? options.title
-                    : route.name;
-
-              const isFocused = state.index === index;
-
-              const onPress = () => {
-                const event = navigation.emit({
-                  type: 'tabPress',
-                  target: route.key,
-                  canPreventDefault: true,
-                });
-
-                if (!isFocused && !event.defaultPrevented) {
-                  navigation.navigate(route.name, route.params);
-                }
-              };
-
-              const onLongPress = () => {
-                navigation.emit({
-                  type: 'tabLongPress',
-                  target: route.key,
-                });
-              };
-
-              // Get icon name based on route
-              let iconName;
-              if (route.name === 'HomeStack') iconName = isFocused ? 'home' : 'home-outline';
-              else if (route.name === 'VenueStack') iconName = isFocused ? 'calendar' : 'calendar-outline';
-              else if (route.name === 'NewsStack') iconName = isFocused ? 'newspaper' : 'newspaper-outline';
-              else if (route.name === 'ProfileStack') iconName = isFocused ? 'person' : 'person-outline';
-
-              return (
-                <PlatformPressable
-                  key={route.key}
-                  href={buildHref(route.name, route.params)}
-                  accessibilityRole="button"
-                  accessibilityState={isFocused ? { selected: true } : {}}
-                  accessibilityLabel={options.tabBarAccessibilityLabel}
-                  testID={options.tabBarButtonTestID}
-                  onPress={onPress}
-                  onLongPress={onLongPress}
-                  style={styles.tabButton}
-                >
-                  <Animated.View style={[
-                    styles.tabItemContainer,
-                    isFocused && styles.tabItemFocused,
-                    { transform: [{ scale: scaleAnims[index] }] }
-                  ]}>
-                    <Ionicons
-                      name={iconName}
-                      size={isFocused ? 28 : 24}
-                      color={isFocused ? '#007AFF' : '#8E8E93'}
-                    />
-                    {!isFocused && (
-                      <Text
-                        style={[
-                          styles.tabLabel,
-                          { color: '#8E8E93' }
-                        ]}
-                      >
-                        {label}
-                      </Text>
-                    )}
-                  </Animated.View>
-                </PlatformPressable>
-              );
-            })}
-          </View>
+        <View style={[styles.glassBar, styles.androidBar]}>
+          {barContent}
         </View>
       )}
     </View>
   );
 }
 
+// ─── styles ──────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  tabBarContainer: {
+  container: {
     position: 'absolute',
     bottom: 20,
-    left: 20,
-    right: 20,
+    left: 16,
+    right: 16,
     alignItems: 'center',
+    // outer floating shadow
     ...Platform.select({
       ios: {
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.15,
-        shadowRadius: 20,
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.08,
+        shadowRadius: 24,
       },
-      android: {
-        elevation: 10,
-      },
+      android: { elevation: 12 },
     }),
   },
-  blurContainer: {
-    borderRadius: 25,
-    overflow: 'hidden',
+
+  // Glass pill shape
+  glassBar: {
     width: '100%',
-    maxWidth: 400,
+    borderRadius: 28,
+    overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.5)',
+    borderColor: 'rgba(255,255,255,0.60)',
+    // semi-transparent white tint behind blur on iOS
+    backgroundColor: 'rgba(255,255,255,0.72)',
   },
-  androidBlur: {
-    backgroundColor: 'rgba(248, 249, 250, 0.95)',
-    ...Platform.select({
-      android: {
-        elevation: 8,
-      },
-    }),
+  // Thin gloss overlay simulating glass reflection (iOS only)
+  glassOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 16,
+    backgroundColor: 'rgba(255,255,255,0.22)',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    zIndex: 1,
   },
+  androidBar: {
+    backgroundColor: 'rgba(248,249,250,0.97)',
+    borderColor: 'rgba(220,220,220,0.80)',
+  },
+
+  // Inner row
   tabBar: {
     flexDirection: 'row',
-    paddingVertical: 12,
+    height: 64,
     paddingHorizontal: 8,
-    backgroundColor: Platform.OS === 'ios' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+    alignItems: 'center',
   },
+
   tabButton: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  tabItemContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 20,
+    height: '100%',
   },
-  tabItemFocused: {
-    backgroundColor: 'rgba(0, 122, 255, 0.15)',
-    borderRadius: 20,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
+  tabInner: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 3,
+    paddingTop: 4,
+    position: 'relative',
   },
   tabLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    marginTop: 4,
+    fontSize: 10,
+    fontWeight: '500',
+    letterSpacing: 0.1,
+  },
+
+  // Small blue pill dot beneath the active icon
+  pill: {
+    marginTop: 3,
+    width: 20,
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: ACTIVE,
   },
 });
 

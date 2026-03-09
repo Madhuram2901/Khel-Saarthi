@@ -14,7 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 // ─── icon + label map ────────────────────────────────────────────────────────
 const ROUTE_META = {
   HomeStack: { active: 'home', inactive: 'home-outline', label: 'Home' },
-  TournamentStack: { active: 'trophy', inactive: 'trophy-outline', label: 'Tourneys' },
+  TournamentStack: { active: 'trophy', inactive: 'trophy-outline', label: 'Tournaments' },
   VenueStack: { active: 'calendar', inactive: 'calendar-outline', label: 'Venues' },
   NewsStack: { active: 'newspaper', inactive: 'newspaper-outline', label: 'News' },
   ProfileStack: { active: 'person', inactive: 'person-outline', label: 'Profile' },

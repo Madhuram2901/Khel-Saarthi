@@ -19,8 +19,15 @@ const EventCard = ({ event, onPress, style = {} }) => {
               <Text style={styles.day}>{day}</Text>
               <Text style={styles.month}>{month.toUpperCase()}</Text>
             </View>
-            <View style={styles.categoryBadge}>
-              <Text style={styles.categoryText}>{event.category}</Text>
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              {event.entryFee !== undefined && (
+                <View style={[styles.categoryBadge, { backgroundColor: '#34C759' }]}>
+                  <Text style={styles.categoryText}>{event.entryFee > 0 ? `₹${event.entryFee}` : 'Free'}</Text>
+                </View>
+              )}
+              <View style={styles.categoryBadge}>
+                <Text style={styles.categoryText}>{event.category}</Text>
+              </View>
             </View>
           </View>
 

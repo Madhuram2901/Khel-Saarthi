@@ -263,6 +263,23 @@ const TournamentDashboardScreen = ({ route, navigation }) => {
                             </TouchableOpacity>
                         )}
 
+                        {/* Pay & Join Button — shown for non-host users on published tournaments */}
+                        {!isHost && tournament.status === 'PUBLISHED' && (
+                            <TouchableOpacity
+                                style={[styles.actionButton, { backgroundColor: '#34C759' }]}
+                                onPress={() =>
+                                    navigation.navigate('TournamentPayment', {
+                                        tournamentId,
+                                        tournamentName: tournament.name,
+                                        entryFee: 100, // Default ₹100 — change as needed
+                                    })
+                                }
+                            >
+                                <Ionicons name="card" size={24} color="#FFF" />
+                                <Text style={styles.actionButtonText}>Pay ₹100 & Join Tournament</Text>
+                            </TouchableOpacity>
+                        )}
+
                         {tournament.venues && tournament.venues.length > 0 && (
                             <View style={styles.infoSection}>
                                 <Text style={styles.infoTitle}>Venues</Text>

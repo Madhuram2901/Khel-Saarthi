@@ -2,6 +2,8 @@ const express = require('express');
 const http = require('http');
 const { Server } = require("socket.io");
 const dotenv = require('dotenv');
+const path = require('path');
+const fs = require('fs');
 const connectDB = require('./config/db');
 const cors = require('cors');
 const initializeSocket = require('./socketHandler');
@@ -31,6 +33,7 @@ const venueRoutes = require('./routes/venueRoutes');
 const bookingRoutes = require('./routes/bookingRoutes');
 const tournamentRoutes = require('./routes/tournamentRoutes');
 const matchRoutes = require('./routes/matchRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
 
 // API Routes
 app.get('/', (req, res) => {
@@ -45,6 +48,9 @@ app.use('/api/venues', venueRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/tournaments', tournamentRoutes);
 app.use('/api/matches', matchRoutes);
+app.use('/api/payment', paymentRoutes);
+
+
 
 // Initialize our socket logic
 initializeSocket(io);

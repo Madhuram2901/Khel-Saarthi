@@ -41,6 +41,7 @@ const EventDetailsScreen = ({ route, navigation }) => {
         fetchEventDetails();
     }, [eventId]);
 
+
     const handleRegister = async () => {
         if (!user.profiles?.badminton?.skillLevel) {
             Alert.alert(
@@ -50,17 +51,30 @@ const EventDetailsScreen = ({ route, navigation }) => {
             );
             return;
         }
+
+        if (event.entryFee && event.entryFee > 0) {
+            navigation.navigate('EventPayment', {
+                eventId: event._id,
+                eventTitle: event.title,
+                entryFee: event.entryFee,
+            });
+            return;
+        }
+
         try {
+            // Register on backend
             await api.post(`/events/${eventId}/register`);
-            Alert.alert('Success', 'You have successfully registered for this event!');
+            Alert.alert('Success', 'Successfully registered!');
             // Refresh event data to update registration status
             const { data } = await api.get(`/events/${eventId}`);
             setEvent(data);
         } catch (error) {
             const message = error.response?.data?.message || 'Could not register for the event. You may already be registered.';
             Alert.alert('Registration Failed', message);
+            console.error(error);
         }
     };
+
 
     const calculateHoursLeft = (eventDate) => {
         return Math.max(0, Math.floor((new Date(eventDate) - new Date()) / (1000 * 60 * 60)));
@@ -143,7 +157,9 @@ const EventDetailsScreen = ({ route, navigation }) => {
                 {/* Price and Register Button */}
                 <View style={styles.priceSection}>
                     <View style={styles.priceInfo}>
-                        <Text style={styles.priceLabel}>Free</Text>
+                        <Text style={styles.priceLabel}>
+                            {event.entryFee && event.entryFee > 0 ? `₹${event.entryFee}` : 'Free'}
+                        </Text>
                         <View style={styles.shareButton}>
                             <Ionicons name="share-outline" size={20} color="#007AFF" />
                         </View>

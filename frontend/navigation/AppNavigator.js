@@ -20,6 +20,7 @@ import EditEventScreen from '../screens/EditEventScreen';
 import EventDetailsScreen from '../screens/EventDetailsScreen';
 import ParticipantsScreen from '../screens/ParticipantsScreen';
 import ChatScreen from '../screens/ChatScreen';
+import EventPaymentScreen from '../screens/EventPaymentScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import BadmintonProfileScreen from '../screens/BadmintonProfileScreen';
 import AiChatScreen from '../screens/AiChatScreen';
@@ -36,6 +37,7 @@ import TournamentDashboardScreen from '../screens/TournamentDashboardScreen';
 import ManageTeamsScreen from '../screens/ManageTeamsScreen';
 import GenerateFixturesScreen from '../screens/GenerateFixturesScreen';
 import MatchDetailsScreen from '../screens/MatchDetailsScreen';
+import TournamentPaymentScreen from '../screens/TournamentPaymentScreen';
 
 import AiGymTrainerScreen from '../screens/AiGymTrainerScreen';
 
@@ -59,6 +61,7 @@ function HomeStack() {
             <Stack.Screen name="CreateEvent" component={CreateEventScreen} options={{ title: 'Create Event', headerBackTitle: 'Back' }} />
             <Stack.Screen name="EditEvent" component={EditEventScreen} options={{ title: 'Edit Event', headerBackTitle: 'Back' }} />
             <Stack.Screen name="EventDetails" component={EventDetailsScreen} options={{ title: 'Event Details' }} />
+            <Stack.Screen name="EventPayment" component={EventPaymentScreen} options={{ title: 'Pay & Join Event' }} />
             <Stack.Screen name="Participants" component={ParticipantsScreen} options={{ title: 'Participants', headerBackTitle: 'Back' }} />
             <Stack.Screen name="Chat" component={ChatScreen} options={({ route }) => ({ title: route.params?.eventTitle || 'Chat', headerBackTitle: 'Back' })} />
             <Stack.Screen name="BadmintonProfile" component={BadmintonProfileScreen} options={{ title: 'Badminton Profile' }} />
@@ -138,6 +141,7 @@ function TournamentStackScreen() {
             <TournamentStack.Screen name="ManageTeams" component={ManageTeamsScreen} options={{ title: 'Manage Teams' }} />
             <TournamentStack.Screen name="GenerateFixtures" component={GenerateFixturesScreen} options={{ title: 'Generate Fixtures' }} />
             <TournamentStack.Screen name="MatchDetails" component={MatchDetailsScreen} options={{ title: 'Match Details' }} />
+            <TournamentStack.Screen name="TournamentPayment" component={TournamentPaymentScreen} options={{ title: 'Pay & Join Tournament' }} />
         </TournamentStack.Navigator>
     );
 }
@@ -194,6 +198,7 @@ const AppNavigator = () => {
         'CreateEvent',
         'EditEvent',
         'EventDetails',
+        'EventPayment',
         'Participants',
         'Chat',
 
@@ -214,6 +219,7 @@ const AppNavigator = () => {
         'ManageTeams',
         'GenerateFixtures',
         'MatchDetails',
+        'TournamentPayment',
       ];
 
       return hiddenScreens.includes(routeName) ? 'none' : 'flex';

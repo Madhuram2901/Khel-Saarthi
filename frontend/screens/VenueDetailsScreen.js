@@ -39,22 +39,29 @@ const VenueDetailsScreen = ({ route, navigation }) => {
             return;
         }
 
+        const durationHours = parseInt(duration);
+        const totalAmount = venue.pricePerHour * durationHours;
+
         setBookingLoading(true);
+
         try {
             await api.post(`/venues/${venueId}/book`, {
                 date,
                 startTime,
-                duration: parseInt(duration)
+                duration: durationHours,
             });
-            Alert.alert('Success', 'Booking Confirmed!', [
-                { text: 'View My Bookings', onPress: () => navigation.navigate('MyBookings') }
+
+            Alert.alert('Success', `Booking Confirmed! Total: ₹${totalAmount}`, [
+                { text: 'View My Bookings', onPress: () => navigation.navigate('MyBookings') },
             ]);
         } catch (error) {
             Alert.alert('Booking Failed', error.response?.data?.message || 'Slot not available');
+            console.error(error);
         } finally {
             setBookingLoading(false);
         }
     };
+
 
     if (loading) return <ActivityIndicator size="large" style={styles.loader} />;
     if (!venue) return null;
@@ -126,7 +133,7 @@ const VenueDetailsScreen = ({ route, navigation }) => {
                         />
                     </View>
                     <StyledButton
-                        title={bookingLoading ? "Processing..." : "Pay & Book"}
+                        title={bookingLoading ? "Processing..." : "Confirm Booking"}
                         onPress={handleBook}
                         disabled={bookingLoading}
                     />

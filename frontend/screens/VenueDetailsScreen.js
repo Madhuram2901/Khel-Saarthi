@@ -1,13 +1,16 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useMemo } from 'react';
 import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, TextInput, Alert, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../api/api';
 import StyledButton from '../components/StyledButton';
 import AuthContext from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 
 const VenueDetailsScreen = ({ route, navigation }) => {
     const { venueId } = route.params;
     const { user } = useContext(AuthContext);
+    const { colors } = useTheme();
+    const styles = useMemo(() => makeStyles(colors), [colors]);
     const [venue, setVenue] = useState(null);
     const [loading, setLoading] = useState(true);
 
@@ -59,8 +62,6 @@ const VenueDetailsScreen = ({ route, navigation }) => {
     if (loading) return <ActivityIndicator size="large" style={styles.loader} />;
     if (!venue) return null;
 
-    // Check if current user is the manager
-    // venue.manager might be an object (populated) or a string (ID)
     const managerId = venue.manager?._id || venue.manager;
     const isManager = user && managerId && (user._id == managerId || user._id === managerId.toString());
 
@@ -76,13 +77,13 @@ const VenueDetailsScreen = ({ route, navigation }) => {
                     <Text style={styles.name}>{venue.name}</Text>
                     {isManager && (
                         <TouchableOpacity onPress={() => navigation.navigate('EditVenue', { venueId: venue._id })}>
-                            <Ionicons name="create-outline" size={24} color="#007AFF" />
+                            <Ionicons name="create-outline" size={24} color={colors.accent} />
                         </TouchableOpacity>
                     )}
                 </View>
 
                 <Text style={styles.location}>
-                    <Ionicons name="location-outline" size={16} /> {venue.address}, {venue.city}
+                    <Ionicons name="location-outline" size={16} color={colors.textSecondary} /> {venue.address}, {venue.city}
                 </Text>
 
                 <Text style={styles.price}>₹{venue.pricePerHour}/hr</Text>
@@ -95,7 +96,7 @@ const VenueDetailsScreen = ({ route, navigation }) => {
                     {Object.entries(venue.amenities).map(([key, value]) => (
                         value && (
                             <View key={key} style={styles.amenityBadge}>
-                                <Ionicons name="checkmark-circle" size={16} color="#4CAF50" />
+                                <Ionicons name="checkmark-circle" size={16} color={colors.accentGreen} />
                                 <Text style={styles.amenityText}>{key.replace(/([A-Z])/g, ' $1').trim()}</Text>
                             </View>
                         )
@@ -107,6 +108,7 @@ const VenueDetailsScreen = ({ route, navigation }) => {
                     <TextInput
                         style={styles.input}
                         placeholder="Date (YYYY-MM-DD)"
+                        placeholderTextColor={colors.textMuted}
                         value={date}
                         onChangeText={setDate}
                     />
@@ -114,12 +116,14 @@ const VenueDetailsScreen = ({ route, navigation }) => {
                         <TextInput
                             style={[styles.input, { flex: 1, marginRight: 10 }]}
                             placeholder="Start Time (HH:MM)"
+                            placeholderTextColor={colors.textMuted}
                             value={startTime}
                             onChangeText={setStartTime}
                         />
                         <TextInput
                             style={[styles.input, { flex: 1 }]}
                             placeholder="Duration (Hrs)"
+                            placeholderTextColor={colors.textMuted}
                             value={duration}
                             onChangeText={setDuration}
                             keyboardType="numeric"
@@ -136,22 +140,22 @@ const VenueDetailsScreen = ({ route, navigation }) => {
     );
 };
 
-const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#fff' },
+const makeStyles = (colors) => StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
     loader: { flex: 1, justifyContent: 'center' },
     image: { width: '100%', height: 250 },
-    content: { padding: 20, borderTopLeftRadius: 20, borderTopRightRadius: 20, marginTop: -20, backgroundColor: '#fff' },
+    content: { padding: 20, borderTopLeftRadius: 20, borderTopRightRadius: 20, marginTop: -20, backgroundColor: colors.surface },
     headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 },
-    name: { fontSize: 24, fontWeight: 'bold', flex: 1 },
-    location: { fontSize: 16, color: '#666', marginBottom: 10 },
-    price: { fontSize: 20, fontWeight: 'bold', color: '#007AFF', marginBottom: 20 },
-    sectionTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 10, marginTop: 10 },
-    description: { fontSize: 16, color: '#444', lineHeight: 24 },
+    name: { fontSize: 24, fontWeight: 'bold', flex: 1, color: colors.text },
+    location: { fontSize: 16, color: colors.textSecondary, marginBottom: 10 },
+    price: { fontSize: 20, fontWeight: 'bold', color: colors.accent, marginBottom: 20 },
+    sectionTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 10, marginTop: 10, color: colors.text },
+    description: { fontSize: 16, color: colors.textSecondary, lineHeight: 24 },
     amenities: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 20 },
-    amenityBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f0f0f0', padding: 8, borderRadius: 20, marginRight: 10, marginBottom: 10 },
-    amenityText: { marginLeft: 5, color: '#333' },
-    bookingForm: { backgroundColor: '#f9f9f9', padding: 15, borderRadius: 10 },
-    input: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#ddd', borderRadius: 8, padding: 12, marginBottom: 10 },
+    amenityBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surface2, padding: 8, borderRadius: 20, marginRight: 10, marginBottom: 10 },
+    amenityText: { marginLeft: 5, color: colors.text },
+    bookingForm: { backgroundColor: colors.surface2, padding: 15, borderRadius: 10 },
+    input: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 8, padding: 12, marginBottom: 10, color: colors.text },
     row: { flexDirection: 'row' }
 });
 

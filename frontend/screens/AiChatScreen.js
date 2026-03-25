@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -10,12 +10,15 @@ import {
   Platform,
   ActivityIndicator,
   SafeAreaView,
-  StatusBar
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../api/api';
+import { useTheme } from '../context/ThemeContext';
 
 const AiChatScreen = ({ navigation }) => {
+  const { colors, isDark } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, isDark), [colors, isDark]);
+
   const [messages, setMessages] = useState([
     {
       id: '1',
@@ -41,7 +44,6 @@ const AiChatScreen = ({ navigation }) => {
     setIsLoading(true);
 
     try {
-      // Call our new backend endpoint
       const response = await api.post('/chat', { message: userMsg.text });
 
       const aiMsg = {
@@ -65,37 +67,30 @@ const AiChatScreen = ({ navigation }) => {
   };
 
   useEffect(() => {
-    // Scroll to bottom when messages change
     if (flatListRef.current) {
       flatListRef.current.scrollToEnd({ animated: true });
     }
   }, [messages]);
 
   const renderMessageText = (text) => {
-    // Regex to match [[TYPE:ID:NAME]]
     const regex = /\[\[(EVENT|VENUE):([a-zA-Z0-9]+):(.*?)\]\]/g;
     const parts = [];
     let lastIndex = 0;
     let match;
 
     while ((match = regex.exec(text)) !== null) {
-      // Add text before the match
       if (match.index > lastIndex) {
         parts.push({ type: 'text', content: text.substring(lastIndex, match.index) });
       }
-
-      // Add the match as a link
       parts.push({
         type: 'link',
-        linkType: match[1], // EVENT or VENUE
+        linkType: match[1],
         id: match[2],
         name: match[3],
       });
-
       lastIndex = regex.lastIndex;
     }
 
-    // Add remaining text
     if (lastIndex < text.length) {
       parts.push({ type: 'text', content: text.substring(lastIndex) });
     }
@@ -121,12 +116,6 @@ const AiChatScreen = ({ navigation }) => {
     if (type === 'EVENT') {
       navigation.navigate('EventDetails', { eventId: id });
     } else if (type === 'VENUE') {
-      // VenueDetails is in VenueStack, so we might need to navigate to the stack first
-      // But usually nested navigators handle deep links if screen name is unique enough or we use the hierarchy
-      // Based on AppNavigator, VenueDetails is inside VenueStack.
-      // Let's try direct navigation first, if it fails we might need to specify stack.
-      // However, usually React Navigation finds the screen.
-      // Checking AppNavigator: VenueDetails is in VenueStack.
       navigation.navigate('VenueStack', {
         screen: 'VenueDetails',
         params: { venueId: id }
@@ -152,12 +141,10 @@ const AiChatScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#1a1a1a" />
-
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <View>
           <Text style={styles.headerTitle}>Khel-Saarthi AI</Text>
@@ -187,7 +174,7 @@ const AiChatScreen = ({ navigation }) => {
             value={inputText}
             onChangeText={setInputText}
             placeholder="Ask about events..."
-            placeholderTextColor="#888"
+            placeholderTextColor={colors.textSecondary}
             multiline
           />
           <TouchableOpacity
@@ -207,19 +194,19 @@ const AiChatScreen = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (colors, isDark) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#121212', // Dark sporty theme
+    backgroundColor: isDark ? '#121212' : colors.background,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 16,
-    backgroundColor: '#1E1E1E',
+    backgroundColor: isDark ? '#1E1E1E' : colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#333',
+    borderBottomColor: colors.border,
   },
   backButton: {
     padding: 4,
@@ -227,12 +214,12 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#4CAF50', // Sporty Green
+    color: '#4CAF50',
     textAlign: 'center',
   },
   headerSubtitle: {
     fontSize: 12,
-    color: '#888',
+    color: colors.textSecondary,
     textAlign: 'center',
   },
   listContent: {
@@ -247,12 +234,12 @@ const styles = StyleSheet.create({
   },
   userBubble: {
     alignSelf: 'flex-end',
-    backgroundColor: '#4CAF50', // Green for user
+    backgroundColor: '#4CAF50',
     borderBottomRightRadius: 4,
   },
   aiBubble: {
     alignSelf: 'flex-start',
-    backgroundColor: '#2C2C2C', // Dark grey for AI
+    backgroundColor: isDark ? '#2C2C2C' : colors.surface2,
     borderBottomLeftRadius: 4,
   },
   messageText: {
@@ -263,7 +250,7 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   aiText: {
-    color: '#E0E0E0',
+    color: isDark ? '#E0E0E0' : colors.text,
   },
   linkText: {
     color: '#4CAF50',
@@ -274,17 +261,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
-    backgroundColor: '#1E1E1E',
+    backgroundColor: isDark ? '#1E1E1E' : colors.surface,
     borderTopWidth: 1,
-    borderTopColor: '#333',
+    borderTopColor: colors.border,
   },
   input: {
     flex: 1,
-    backgroundColor: '#2C2C2C',
+    backgroundColor: isDark ? '#2C2C2C' : colors.surface2,
     borderRadius: 24,
     paddingHorizontal: 16,
     paddingVertical: 10,
-    color: '#fff',
+    color: colors.text,
     maxHeight: 100,
     marginRight: 12,
   },
@@ -297,7 +284,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   sendButtonDisabled: {
-    backgroundColor: '#333',
+    backgroundColor: isDark ? '#333' : colors.surface2,
   },
 });
 

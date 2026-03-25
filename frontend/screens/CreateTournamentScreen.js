@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
     View,
     Text,
@@ -12,14 +12,18 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import api from '../api/api';
+import { useTheme } from '../context/ThemeContext';
 
 const CreateTournamentScreen = ({ navigation }) => {
+    const { colors, isDark } = useTheme();
+    const styles = useMemo(() => makeStyles(colors, isDark), [colors, isDark]);
+
     const [formData, setFormData] = useState({
         name: '',
         sport: '',
         format: 'KNOCKOUT',
         startDate: new Date(),
-        endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
+        endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
         venues: '',
         isPublic: false,
     });
@@ -86,6 +90,7 @@ const CreateTournamentScreen = ({ navigation }) => {
                     <TextInput
                         style={styles.input}
                         placeholder="e.g., Summer Championship 2024"
+                        placeholderTextColor={colors.textSecondary}
                         value={formData.name}
                         onChangeText={(text) => setFormData({ ...formData, name: text })}
                     />
@@ -96,6 +101,7 @@ const CreateTournamentScreen = ({ navigation }) => {
                     <TextInput
                         style={styles.input}
                         placeholder="e.g., Football, Cricket, Basketball"
+                        placeholderTextColor={colors.textSecondary}
                         value={formData.sport}
                         onChangeText={(text) => setFormData({ ...formData, sport: text })}
                     />
@@ -117,7 +123,7 @@ const CreateTournamentScreen = ({ navigation }) => {
                             <Ionicons
                                 name={format.icon}
                                 size={32}
-                                color={formData.format === format.value ? '#007AFF' : '#666'}
+                                color={formData.format === format.value ? colors.accent : colors.textSecondary}
                             />
                             <Text
                                 style={[
@@ -141,7 +147,7 @@ const CreateTournamentScreen = ({ navigation }) => {
                         style={styles.dateButton}
                         onPress={() => setShowStartPicker(true)}
                     >
-                        <Ionicons name="calendar-outline" size={20} color="#007AFF" />
+                        <Ionicons name="calendar-outline" size={20} color={colors.accent} />
                         <Text style={styles.dateText}>{formatDate(formData.startDate)}</Text>
                     </TouchableOpacity>
                 </View>
@@ -166,7 +172,7 @@ const CreateTournamentScreen = ({ navigation }) => {
                         style={styles.dateButton}
                         onPress={() => setShowEndPicker(true)}
                     >
-                        <Ionicons name="calendar-outline" size={20} color="#007AFF" />
+                        <Ionicons name="calendar-outline" size={20} color={colors.accent} />
                         <Text style={styles.dateText}>{formatDate(formData.endDate)}</Text>
                     </TouchableOpacity>
                 </View>
@@ -195,6 +201,7 @@ const CreateTournamentScreen = ({ navigation }) => {
                     <TextInput
                         style={[styles.input, styles.textArea]}
                         placeholder="e.g., Main Ground, Field A, Court 1"
+                        placeholderTextColor={colors.textSecondary}
                         value={formData.venues}
                         onChangeText={(text) => setFormData({ ...formData, venues: text })}
                         multiline
@@ -207,7 +214,7 @@ const CreateTournamentScreen = ({ navigation }) => {
                     onPress={() => setFormData({ ...formData, isPublic: !formData.isPublic })}
                 >
                     <View style={styles.switchLeft}>
-                        <Ionicons name="globe-outline" size={24} color="#666" />
+                        <Ionicons name="globe-outline" size={24} color={colors.textSecondary} />
                         <View style={styles.switchTextContainer}>
                             <Text style={styles.switchLabel}>Make Public</Text>
                             <Text style={styles.switchDescription}>
@@ -244,10 +251,10 @@ const CreateTournamentScreen = ({ navigation }) => {
     );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (colors, isDark) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#F8F9FA',
+        backgroundColor: colors.background,
     },
     contentContainer: {
         padding: 20,
@@ -259,7 +266,7 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontSize: 20,
         fontWeight: '700',
-        color: '#1D1D1F',
+        color: colors.text,
         marginBottom: 16,
     },
     inputGroup: {
@@ -268,17 +275,17 @@ const styles = StyleSheet.create({
     label: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#666',
+        color: colors.textSecondary,
         marginBottom: 8,
     },
     input: {
-        backgroundColor: '#FFF',
+        backgroundColor: colors.surface,
         borderRadius: 12,
         padding: 16,
         fontSize: 16,
-        color: '#1D1D1F',
+        color: colors.text,
         borderWidth: 1,
-        borderColor: '#E5E5EA',
+        borderColor: colors.border,
     },
     textArea: {
         height: 80,
@@ -290,51 +297,51 @@ const styles = StyleSheet.create({
     },
     formatCard: {
         flex: 1,
-        backgroundColor: '#FFF',
+        backgroundColor: colors.surface,
         borderRadius: 12,
         padding: 16,
         marginHorizontal: 4,
         alignItems: 'center',
         borderWidth: 2,
-        borderColor: '#E5E5EA',
+        borderColor: colors.border,
     },
     formatCardSelected: {
-        borderColor: '#007AFF',
-        backgroundColor: '#F0F8FF',
+        borderColor: colors.accent,
+        backgroundColor: isDark ? 'rgba(0,122,255,0.15)' : '#F0F8FF',
     },
     formatLabel: {
         fontSize: 12,
         fontWeight: '600',
-        color: '#666',
+        color: colors.textSecondary,
         marginTop: 8,
         textAlign: 'center',
     },
     formatLabelSelected: {
-        color: '#007AFF',
+        color: colors.accent,
     },
     dateButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#FFF',
+        backgroundColor: colors.surface,
         borderRadius: 12,
         padding: 16,
         borderWidth: 1,
-        borderColor: '#E5E5EA',
+        borderColor: colors.border,
     },
     dateText: {
         fontSize: 16,
-        color: '#1D1D1F',
+        color: colors.text,
         marginLeft: 12,
     },
     switchRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        backgroundColor: '#FFF',
+        backgroundColor: colors.surface,
         borderRadius: 12,
         padding: 16,
         borderWidth: 1,
-        borderColor: '#E5E5EA',
+        borderColor: colors.border,
     },
     switchLeft: {
         flexDirection: 'row',
@@ -348,30 +355,30 @@ const styles = StyleSheet.create({
     switchLabel: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#1D1D1F',
+        color: colors.text,
     },
     switchDescription: {
         fontSize: 12,
-        color: '#666',
+        color: colors.textSecondary,
         marginTop: 2,
     },
     switch: {
         width: 51,
         height: 31,
         borderRadius: 16,
-        backgroundColor: '#E5E5EA',
+        backgroundColor: colors.border,
         padding: 2,
         justifyContent: 'center',
     },
     switchActive: {
-        backgroundColor: '#34C759',
+        backgroundColor: colors.accentGreen,
     },
     switchThumb: {
         width: 27,
         height: 27,
         borderRadius: 14,
         backgroundColor: '#FFF',
-        shadowColor: '#000',
+        shadowColor: colors.cardShadow,
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.2,
         shadowRadius: 2,
@@ -381,12 +388,12 @@ const styles = StyleSheet.create({
         transform: [{ translateX: 20 }],
     },
     createButton: {
-        backgroundColor: '#007AFF',
+        backgroundColor: colors.accent,
         borderRadius: 12,
         padding: 18,
         alignItems: 'center',
         marginTop: 8,
-        shadowColor: '#007AFF',
+        shadowColor: colors.accent,
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
         shadowRadius: 8,

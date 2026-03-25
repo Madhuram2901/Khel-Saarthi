@@ -1,18 +1,19 @@
-import React, { useState, useContext } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  TextInput, 
-  Alert,
-  StatusBar,
-  TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform
+import React, { useState, useContext, useMemo } from 'react';
+import {
+    View,
+    Text,
+    StyleSheet,
+    TextInput,
+    Alert,
+    StatusBar,
+    TouchableOpacity,
+    KeyboardAvoidingView,
+    Platform
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import AuthContext from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import StyledButton from '../components/StyledButton';
 
 const LoginScreen = ({ navigation }) => {
@@ -21,13 +22,15 @@ const LoginScreen = ({ navigation }) => {
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const { login } = useContext(AuthContext);
+    const { colors } = useTheme();
+    const styles = useMemo(() => makeStyles(colors), [colors]);
 
     const handleLogin = async () => {
         if (!email || !password) {
             Alert.alert('Error', 'Please fill in both fields.');
             return;
         }
-        
+
         setLoading(true);
         try {
             const data = await login(email, password);
@@ -54,15 +57,14 @@ const LoginScreen = ({ navigation }) => {
 
     return (
         <SafeAreaView style={styles.container}>
-            <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-            <KeyboardAvoidingView 
+            <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={styles.keyboardView}
             >
                 <View style={styles.header}>
                     <View style={styles.logoContainer}>
                         <View style={styles.logo}>
-                            <Ionicons name="fitness" size={48} color="#007AFF" />
+                            <Ionicons name="fitness" size={48} color={colors.accent} />
                         </View>
                         <Text style={styles.title}>Welcome to Khel Saarthi</Text>
                         <Text style={styles.subtitle}>Sign in to continue</Text>
@@ -72,11 +74,11 @@ const LoginScreen = ({ navigation }) => {
                 <View style={styles.formContainer}>
                     <View style={styles.inputContainer}>
                         <View style={styles.inputWrapper}>
-                            <Ionicons name="mail-outline" size={20} color="#8E8E93" style={styles.inputIcon} />
+                            <Ionicons name="mail-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
                             <TextInput
                                 style={styles.input}
                                 placeholder="Email"
-                                placeholderTextColor="#8E8E93"
+                                placeholderTextColor={colors.textSecondary}
                                 value={email}
                                 onChangeText={setEmail}
                                 keyboardType="email-address"
@@ -84,33 +86,33 @@ const LoginScreen = ({ navigation }) => {
                                 autoCorrect={false}
                             />
                         </View>
-                        
+
                         <View style={styles.inputWrapper}>
-                            <Ionicons name="lock-closed-outline" size={20} color="#8E8E93" style={styles.inputIcon} />
+                            <Ionicons name="lock-closed-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
                             <TextInput
                                 style={[styles.input, styles.passwordInput]}
                                 placeholder="Password"
-                                placeholderTextColor="#8E8E93"
+                                placeholderTextColor={colors.textSecondary}
                                 value={password}
                                 onChangeText={setPassword}
                                 secureTextEntry={!showPassword}
                                 autoCorrect={false}
                             />
-                            <TouchableOpacity 
+                            <TouchableOpacity
                                 onPress={() => setShowPassword(!showPassword)}
                                 style={styles.passwordToggle}
                             >
-                                <Ionicons 
-                                    name={showPassword ? "eye-off-outline" : "eye-outline"} 
-                                    size={20} 
-                                    color="#8E8E93" 
+                                <Ionicons
+                                    name={showPassword ? "eye-off-outline" : "eye-outline"}
+                                    size={20}
+                                    color={colors.textSecondary}
                                 />
                             </TouchableOpacity>
                         </View>
                     </View>
 
-                    <StyledButton 
-                        title="Sign In" 
+                    <StyledButton
+                        title="Sign In"
                         onPress={handleLogin}
                         disabled={loading}
                         size="large"
@@ -120,15 +122,15 @@ const LoginScreen = ({ navigation }) => {
                     {__DEV__ && (
                         <View style={styles.devButtons}>
                             <Text style={styles.devTitle}>Quick Login (Dev Only)</Text>
-                            <StyledButton 
-                                title="Host Login" 
+                            <StyledButton
+                                title="Host Login"
                                 onPress={() => quickLogin('host', 'host')}
                                 variant="secondary"
                                 size="small"
                                 disabled={loading}
                             />
-                            <StyledButton 
-                                title="User Login" 
+                            <StyledButton
+                                title="User Login"
                                 onPress={() => quickLogin('test', 'test')}
                                 variant="secondary"
                                 size="small"
@@ -150,10 +152,10 @@ const LoginScreen = ({ navigation }) => {
     );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (colors) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#FFFFFF',
+        backgroundColor: colors.background,
     },
     keyboardView: {
         flex: 1,
@@ -172,7 +174,7 @@ const styles = StyleSheet.create({
         width: 80,
         height: 80,
         borderRadius: 40,
-        backgroundColor: '#F2F8FF',
+        backgroundColor: colors.surface2,
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 24,
@@ -180,13 +182,13 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 28,
         fontWeight: 'bold',
-        color: '#1D1D1F',
+        color: colors.text,
         textAlign: 'center',
         marginBottom: 8,
     },
     subtitle: {
         fontSize: 16,
-        color: '#8E8E93',
+        color: colors.textSecondary,
         textAlign: 'center',
     },
     formContainer: {
@@ -199,7 +201,7 @@ const styles = StyleSheet.create({
     inputWrapper: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#F2F2F7',
+        backgroundColor: colors.surface2,
         borderRadius: 12,
         marginBottom: 16,
         paddingHorizontal: 16,
@@ -211,7 +213,7 @@ const styles = StyleSheet.create({
     input: {
         flex: 1,
         fontSize: 16,
-        color: '#1D1D1F',
+        color: colors.text,
     },
     passwordInput: {
         paddingRight: 40,
@@ -226,14 +228,14 @@ const styles = StyleSheet.create({
     },
     devButtons: {
         padding: 16,
-        backgroundColor: '#F8F9FA',
+        backgroundColor: colors.surface2,
         borderRadius: 12,
         marginTop: 16,
     },
     devTitle: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#8E8E93',
+        color: colors.textSecondary,
         textAlign: 'center',
         marginBottom: 12,
     },
@@ -244,11 +246,11 @@ const styles = StyleSheet.create({
     },
     registerText: {
         fontSize: 16,
-        color: '#8E8E93',
+        color: colors.textSecondary,
         textAlign: 'center',
     },
     registerLink: {
-        color: '#007AFF',
+        color: colors.accent,
         fontWeight: '600',
     },
 });

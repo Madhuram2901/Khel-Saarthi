@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useMemo } from 'react';
 import {
     View,
     Text,
@@ -11,9 +11,12 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import api from '../api/api';
 import AuthContext from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 
 const TournamentListScreen = ({ navigation }) => {
     const { user } = useContext(AuthContext);
+    const { colors } = useTheme();
+    const styles = useMemo(() => makeStyles(colors), [colors]);
     const [tournaments, setTournaments] = useState([]);
     const [loading, setLoading] = useState(false);
 
@@ -83,14 +86,14 @@ const TournamentListScreen = ({ navigation }) => {
 
                 <View style={styles.cardBody}>
                     <View style={styles.infoRow}>
-                        <Ionicons name="calendar-outline" size={16} color="#666" />
+                        <Ionicons name="calendar-outline" size={16} color={colors.textSecondary} />
                         <Text style={styles.infoText}>
                             {formatDate(item.startDate)} - {formatDate(item.endDate)}
                         </Text>
                     </View>
 
                     <View style={styles.infoRow}>
-                        <Ionicons name="person-outline" size={16} color="#666" />
+                        <Ionicons name="person-outline" size={16} color={colors.textSecondary} />
                         <Text style={styles.infoText}>
                             {isHost ? 'You' : item.host.name}
                         </Text>
@@ -119,7 +122,7 @@ const TournamentListScreen = ({ navigation }) => {
 
                         {item.isPublic && (
                             <View style={styles.publicBadge}>
-                                <Ionicons name="globe-outline" size={14} color="#007AFF" />
+                                <Ionicons name="globe-outline" size={14} color={colors.accent} />
                                 <Text style={styles.publicText}>Public</Text>
                             </View>
                         )}
@@ -128,7 +131,7 @@ const TournamentListScreen = ({ navigation }) => {
 
                 {isHost && (
                     <View style={styles.cardFooter}>
-                        <Ionicons name="chevron-forward" size={20} color="#007AFF" />
+                        <Ionicons name="chevron-forward" size={20} color={colors.accent} />
                     </View>
                 )}
             </TouchableOpacity>
@@ -157,7 +160,7 @@ const TournamentListScreen = ({ navigation }) => {
                 }
                 ListEmptyComponent={
                     <View style={styles.emptyContainer}>
-                        <Ionicons name="trophy-outline" size={64} color="#CCC" />
+                        <Ionicons name="trophy-outline" size={64} color={colors.textMuted} />
                         <Text style={styles.emptyText}>No tournaments yet</Text>
                         <TouchableOpacity
                             style={styles.emptyButton}
@@ -172,33 +175,35 @@ const TournamentListScreen = ({ navigation }) => {
     );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (colors) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#F8F9FA',
+        backgroundColor: colors.background,
     },
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        padding: 20,
-        backgroundColor: '#FFF',
+        paddingHorizontal: 20,
+        paddingTop: 50,
+        paddingBottom: 16,
+        backgroundColor: colors.surface,
         borderBottomWidth: 1,
-        borderBottomColor: '#E5E5EA',
+        borderBottomColor: colors.border,
     },
     title: {
         fontSize: 28,
         fontWeight: '700',
-        color: '#1D1D1F',
+        color: colors.text,
     },
     createButton: {
-        backgroundColor: '#007AFF',
+        backgroundColor: colors.accent,
         width: 44,
         height: 44,
         borderRadius: 22,
         justifyContent: 'center',
         alignItems: 'center',
-        shadowColor: '#007AFF',
+        shadowColor: colors.accent,
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
         shadowRadius: 8,
@@ -208,11 +213,11 @@ const styles = StyleSheet.create({
         padding: 16,
     },
     card: {
-        backgroundColor: '#FFF',
+        backgroundColor: colors.surface,
         borderRadius: 16,
         padding: 16,
         marginBottom: 16,
-        shadowColor: '#000',
+        shadowColor: colors.cardShadow,
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 8,
@@ -230,12 +235,12 @@ const styles = StyleSheet.create({
     tournamentName: {
         fontSize: 20,
         fontWeight: '700',
-        color: '#1D1D1F',
+        color: colors.text,
         marginBottom: 4,
     },
     sport: {
         fontSize: 14,
-        color: '#666',
+        color: colors.textSecondary,
     },
     formatBadge: {
         paddingHorizontal: 12,
@@ -259,7 +264,7 @@ const styles = StyleSheet.create({
     },
     infoText: {
         fontSize: 14,
-        color: '#666',
+        color: colors.textSecondary,
         marginLeft: 8,
     },
     statusRow: {
@@ -294,12 +299,12 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingHorizontal: 8,
         paddingVertical: 4,
-        backgroundColor: '#E3F2FD',
+        backgroundColor: colors.surface2,
         borderRadius: 8,
     },
     publicText: {
         fontSize: 12,
-        color: '#007AFF',
+        color: colors.accent,
         marginLeft: 4,
         fontWeight: '600',
     },
@@ -313,12 +318,12 @@ const styles = StyleSheet.create({
     },
     emptyText: {
         fontSize: 18,
-        color: '#999',
+        color: colors.textSecondary,
         marginTop: 16,
         marginBottom: 24,
     },
     emptyButton: {
-        backgroundColor: '#007AFF',
+        backgroundColor: colors.accent,
         paddingHorizontal: 24,
         paddingVertical: 12,
         borderRadius: 12,

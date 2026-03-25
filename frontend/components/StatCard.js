@@ -1,8 +1,12 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../context/ThemeContext';
 
 const StatCard = ({ icon, title, value, color = '#007AFF', image, imageColor }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   return (
     <View style={[styles.container, imageColor && { backgroundColor: imageColor }]}>
       {image ? (
@@ -21,25 +25,28 @@ const StatCard = ({ icon, title, value, color = '#007AFF', image, imageColor }) 
 };
 
 const StatRow = ({ children }) => (
-  <View style={styles.row}>
+  <View style={staticStyles.row}>
     {children}
   </View>
 );
 
-const styles = StyleSheet.create({
+const staticStyles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginHorizontal: 20,
     marginVertical: 8,
   },
+});
+
+const makeStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 20,
     marginHorizontal: 4,
-    shadowColor: '#000',
+    shadowColor: colors.cardShadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -66,12 +73,12 @@ const styles = StyleSheet.create({
   value: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#1D1D1F',
+    color: colors.text,
     marginBottom: 4,
   },
   title: {
     fontSize: 12,
-    color: '#8E8E93',
+    color: colors.textSecondary,
     textAlign: 'center',
     fontWeight: '600',
   },

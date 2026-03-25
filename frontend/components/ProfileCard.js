@@ -1,8 +1,12 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../context/ThemeContext';
 
 const ProfileCard = ({ user, onEditPress, onImagePress }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   const getInitials = (name) => {
     return name
       ?.split(' ')
@@ -28,19 +32,19 @@ const ProfileCard = ({ user, onEditPress, onImagePress }) => {
               <Ionicons name="camera" size={16} color="#FFFFFF" />
             </View>
           </TouchableOpacity>
-          
+
           <View style={styles.userInfo}>
             <Text style={styles.userName}>{user.name}</Text>
             <Text style={styles.userEmail}>{user.email}</Text>
             <View style={styles.roleContainer}>
               <View style={[
-                styles.roleBadge, 
-                { backgroundColor: user.role === 'host' ? '#FF6B35' : '#007AFF' }
+                styles.roleBadge,
+                { backgroundColor: user.role === 'host' ? '#FF6B35' : colors.accent }
               ]}>
-                <Ionicons 
-                  name={user.role === 'host' ? 'star' : 'person'} 
-                  size={12} 
-                  color="#FFFFFF" 
+                <Ionicons
+                  name={user.role === 'host' ? 'star' : 'person'}
+                  size={12}
+                  color="#FFFFFF"
                 />
                 <Text style={styles.roleText}>
                   {user.role === 'host' ? 'Event Host' : 'Participant'}
@@ -48,9 +52,9 @@ const ProfileCard = ({ user, onEditPress, onImagePress }) => {
               </View>
             </View>
           </View>
-          
+
           <TouchableOpacity onPress={onEditPress} style={styles.editButton}>
-            <Ionicons name="create-outline" size={20} color="#007AFF" />
+            <Ionicons name="create-outline" size={20} color={colors.accent} />
           </TouchableOpacity>
         </View>
       </View>
@@ -58,16 +62,16 @@ const ProfileCard = ({ user, onEditPress, onImagePress }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (colors) => StyleSheet.create({
   container: {
     paddingHorizontal: 20,
     paddingVertical: 16,
   },
   backgroundCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.surface,
     borderRadius: 20,
     padding: 24,
-    shadowColor: '#000',
+    shadowColor: colors.cardShadow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 12,
@@ -84,13 +88,13 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: colors.surface2,
   },
   avatarPlaceholder: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#007AFF',
+    backgroundColor: colors.accent,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -106,11 +110,11 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#007AFF',
+    backgroundColor: colors.accent,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#FFFFFF',
+    borderColor: colors.surface,
   },
   userInfo: {
     flex: 1,
@@ -119,12 +123,12 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#1D1D1F',
+    color: colors.text,
     marginBottom: 4,
   },
   userEmail: {
     fontSize: 16,
-    color: '#8E8E93',
+    color: colors.textSecondary,
     marginBottom: 8,
   },
   roleContainer: {
@@ -147,7 +151,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: colors.surface2,
     justifyContent: 'center',
     alignItems: 'center',
   },

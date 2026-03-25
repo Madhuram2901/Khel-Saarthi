@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useMemo } from 'react';
 import {
     View,
     Text,
@@ -14,12 +14,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../api/api';
 import AuthContext from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import StyledButton from '../components/StyledButton';
 import { getSportImage, formatEventDate } from '../utils/constants';
 
 const EventDetailsScreen = ({ route, navigation }) => {
     const { eventId } = route.params;
     const { user } = useContext(AuthContext);
+    const { colors, isDark } = useTheme();
+    const styles = useMemo(() => makeStyles(colors, isDark), [colors, isDark]);
 
     const [event, setEvent] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -53,7 +56,6 @@ const EventDetailsScreen = ({ route, navigation }) => {
         try {
             await api.post(`/events/${eventId}/register`);
             Alert.alert('Success', 'You have successfully registered for this event!');
-            // Refresh event data to update registration status
             const { data } = await api.get(`/events/${eventId}`);
             setEvent(data);
         } catch (error) {
@@ -69,7 +71,7 @@ const EventDetailsScreen = ({ route, navigation }) => {
     if (loading) {
         return (
             <View style={styles.centered}>
-                <ActivityIndicator size="large" color="#007AFF" />
+                <ActivityIndicator size="large" color={colors.accent} />
             </View>
         );
     }
@@ -119,20 +121,20 @@ const EventDetailsScreen = ({ route, navigation }) => {
                     <View style={styles.eventTitleRow}>
                         <Text style={styles.eventTitle}>{event.title}</Text>
                         <View style={styles.sportsIndicator}>
-                            <Ionicons name="logo-github" size={16} color="#007AFF" />
+                            <Ionicons name="logo-github" size={16} color={colors.accent} />
                         </View>
                     </View>
 
                     <View style={styles.eventMeta}>
                         <View style={styles.metaItem}>
-                            <Ionicons name="location-outline" size={16} color="#8E8E93" />
+                            <Ionicons name="location-outline" size={16} color={colors.textSecondary} />
                             <Text style={styles.metaText}>
                                 {event.location?.address || 'IIT Bhopal University Ground'}
                             </Text>
                         </View>
 
                         <View style={styles.metaItem}>
-                            <Ionicons name="calendar-outline" size={16} color="#8E8E93" />
+                            <Ionicons name="calendar-outline" size={16} color={colors.textSecondary} />
                             <Text style={styles.metaText}>
                                 {eventDateInfo.formatted} - {eventDateInfo.time}
                             </Text>
@@ -145,7 +147,7 @@ const EventDetailsScreen = ({ route, navigation }) => {
                     <View style={styles.priceInfo}>
                         <Text style={styles.priceLabel}>Free</Text>
                         <View style={styles.shareButton}>
-                            <Ionicons name="share-outline" size={20} color="#007AFF" />
+                            <Ionicons name="share-outline" size={20} color={colors.accent} />
                         </View>
                     </View>
 
@@ -161,7 +163,7 @@ const EventDetailsScreen = ({ route, navigation }) => {
 
                     {isRegistered && (
                         <View style={styles.registeredContainer}>
-                            <Ionicons name="checkmark-circle" size={24} color="#34C759" />
+                            <Ionicons name="checkmark-circle" size={24} color={colors.accentGreen} />
                             <Text style={styles.registeredText}>You're registered!</Text>
                         </View>
                     )}
@@ -171,14 +173,14 @@ const EventDetailsScreen = ({ route, navigation }) => {
                 <View style={styles.participantsSection}>
                     <View style={styles.participantsMeta}>
                         <View style={styles.participantsCount}>
-                            <Ionicons name="people" size={18} color="#007AFF" />
+                            <Ionicons name="people" size={18} color={colors.accent} />
                             <Text style={styles.participantsText}>
                                 {event.registeredParticipants.length} Registered
                             </Text>
                         </View>
 
                         <View style={styles.playersPerTeam}>
-                            <Ionicons name="person" size={18} color="#007AFF" />
+                            <Ionicons name="person" size={18} color={colors.accent} />
                             <Text style={styles.participantsText}>
                                 7 Players Per Team
                             </Text>
@@ -209,14 +211,14 @@ const EventDetailsScreen = ({ route, navigation }) => {
                 <View style={styles.featuresSection}>
                     <Text style={styles.sectionTitle}>Features</Text>
                     <View style={styles.featuresList}>
-                        <View style={[styles.featureTag, { backgroundColor: '#E8F5E8' }]}>
-                            <Text style={[styles.featureText, { color: '#34C759' }]}>Beginner Friendly</Text>
+                        <View style={[styles.featureTag, { backgroundColor: isDark ? 'rgba(52,199,89,0.15)' : '#E8F5E8' }]}>
+                            <Text style={[styles.featureText, { color: colors.accentGreen }]}>Beginner Friendly</Text>
                         </View>
-                        <View style={[styles.featureTag, { backgroundColor: '#FFE8E8' }]}>
-                            <Text style={[styles.featureText, { color: '#FF3B30' }]}>Official Tournament</Text>
+                        <View style={[styles.featureTag, { backgroundColor: isDark ? 'rgba(255,59,48,0.15)' : '#FFE8E8' }]}>
+                            <Text style={[styles.featureText, { color: colors.accentRed }]}>Official Tournament</Text>
                         </View>
-                        <View style={[styles.featureTag, { backgroundColor: '#E8F4FD' }]}>
-                            <Text style={[styles.featureText, { color: '#007AFF' }]}>Inter-College</Text>
+                        <View style={[styles.featureTag, { backgroundColor: isDark ? 'rgba(0,122,255,0.15)' : '#E8F4FD' }]}>
+                            <Text style={[styles.featureText, { color: colors.accent }]}>Inter-College</Text>
                         </View>
                     </View>
                 </View>
@@ -261,27 +263,27 @@ const EventDetailsScreen = ({ route, navigation }) => {
     );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (colors, isDark) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#FFFFFF',
+        backgroundColor: colors.background,
     },
     centered: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#FFFFFF',
+        backgroundColor: colors.background,
     },
     errorText: {
         fontSize: 18,
-        color: '#8E8E93',
+        color: colors.textSecondary,
     },
     headerImage: {
         height: 250,
         justifyContent: 'space-between',
     },
     headerImageStyle: {
-        backgroundColor: '#F2F2F7',
+        backgroundColor: colors.surface2,
     },
     headerOverlay: {
         flex: 1,
@@ -315,7 +317,7 @@ const styles = StyleSheet.create({
         marginTop: -20,
         borderTopLeftRadius: 24,
         borderTopRightRadius: 24,
-        backgroundColor: '#FFFFFF',
+        backgroundColor: colors.background,
     },
     eventHeader: {
         padding: 20,
@@ -330,7 +332,7 @@ const styles = StyleSheet.create({
     eventTitle: {
         fontSize: 28,
         fontWeight: 'bold',
-        color: '#1D1D1F',
+        color: colors.text,
         flex: 1,
         marginRight: 12,
     },
@@ -338,7 +340,7 @@ const styles = StyleSheet.create({
         width: 32,
         height: 32,
         borderRadius: 16,
-        backgroundColor: '#F2F2F7',
+        backgroundColor: colors.surface2,
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -351,7 +353,7 @@ const styles = StyleSheet.create({
     },
     metaText: {
         fontSize: 14,
-        color: '#8E8E93',
+        color: colors.textSecondary,
         marginLeft: 8,
     },
     priceSection: {
@@ -367,40 +369,40 @@ const styles = StyleSheet.create({
     priceLabel: {
         fontSize: 24,
         fontWeight: 'bold',
-        color: '#1D1D1F',
+        color: colors.text,
     },
     shareButton: {
         width: 44,
         height: 44,
         borderRadius: 22,
-        backgroundColor: '#F2F2F7',
+        backgroundColor: colors.surface2,
         justifyContent: 'center',
         alignItems: 'center',
     },
     registerButton: {
-        backgroundColor: '#1D1D1F',
+        backgroundColor: colors.text,
     },
     registeredContainer: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
         paddingVertical: 16,
-        backgroundColor: '#F2F8F2',
+        backgroundColor: isDark ? 'rgba(52,199,89,0.15)' : '#F2F8F2',
         borderRadius: 12,
     },
     registeredText: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#34C759',
+        color: colors.accentGreen,
         marginLeft: 8,
     },
     participantsSection: {
         paddingHorizontal: 20,
         paddingVertical: 16,
-        backgroundColor: '#F8F9FA',
+        backgroundColor: colors.surface,
         borderTopWidth: 1,
         borderBottomWidth: 1,
-        borderColor: '#E5E5EA',
+        borderColor: colors.border,
     },
     participantsMeta: {
         flexDirection: 'row',
@@ -418,7 +420,7 @@ const styles = StyleSheet.create({
     participantsText: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#1D1D1F',
+        color: colors.text,
         marginLeft: 6,
     },
     timeInfo: {
@@ -437,18 +439,18 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontSize: 20,
         fontWeight: 'bold',
-        color: '#1D1D1F',
+        color: colors.text,
         marginBottom: 12,
     },
     descriptionText: {
         fontSize: 16,
-        color: '#3A3A3C',
+        color: colors.textSecondary,
         lineHeight: 24,
         marginBottom: 8,
     },
     readMoreText: {
         fontSize: 16,
-        color: '#007AFF',
+        color: colors.accent,
         fontWeight: '600',
     },
     featuresSection: {

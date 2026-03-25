@@ -1,26 +1,28 @@
-import React, { useState, useEffect, useContext, useRef } from 'react';
+import React, { useState, useEffect, useContext, useRef, useMemo } from 'react';
 import { View, Text, StyleSheet, TextInput, FlatList, ActivityIndicator } from 'react-native';
 import { io } from 'socket.io-client';
 import AuthContext from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import StyledButton from '../components/StyledButton';
 import Constants from 'expo-constants';
-import api from '../api/api'; // Import api for history fetching
+import api from '../api/api';
 
 const ChatScreen = ({ route }) => {
     const { eventId, eventTitle } = route.params;
     const { user } = useContext(AuthContext);
+    const { colors } = useTheme();
+    const styles = useMemo(() => makeStyles(colors), [colors]);
 
     const [message, setMessage] = useState('');
     const [messages, setMessages] = useState([]);
-    const [loading, setLoading] = useState(true); // Add loading state
+    const [loading, setLoading] = useState(true);
     const socketRef = useRef(null);
 
     useEffect(() => {
-        // --- NEW: Function to fetch old messages ---
         const fetchChatHistory = async () => {
             try {
                 const { data } = await api.get(`/events/${eventId}/chat`);
-                setMessages(data.reverse()); // Reverse to show newest messages at the bottom
+                setMessages(data.reverse());
             } catch (error) {
                 console.error("Failed to fetch chat history", error);
             } finally {
@@ -28,7 +30,7 @@ const ChatScreen = ({ route }) => {
             }
         };
 
-        fetchChatHistory(); // Fetch history when the component mounts
+        fetchChatHistory();
 
         const hostUri = Constants.expoConfig.hostUri;
         const ipAddress = hostUri.split(':')[0];
@@ -45,7 +47,6 @@ const ChatScreen = ({ route }) => {
 
     const sendMessage = () => {
         if (message.trim() && socketRef.current) {
-            // The backend will now save the message and broadcast it back
             socketRef.current.emit('sendMessage', { eventId, message, user });
             setMessage('');
         }
@@ -53,13 +54,13 @@ const ChatScreen = ({ route }) => {
 
     const renderMessage = ({ item }) => (
         <View style={[styles.messageBubble, item.user._id === user._id ? styles.myMessage : styles.theirMessage]}>
-            <Text style={styles.userName}>{item.user._id === user._id ? 'You' : item.user.name}</Text>
-            <Text style={styles.messageText}>{item.text}</Text>
+            <Text style={[styles.userName, item.user._id === user._id && { color: '#fff' }]}>{item.user._id === user._id ? 'You' : item.user.name}</Text>
+            <Text style={[styles.messageText, item.user._id === user._id && { color: '#fff' }]}>{item.text}</Text>
         </View>
     );
 
     if (loading) {
-        return <ActivityIndicator size="large" style={{ flex: 1 }} />;
+        return <ActivityIndicator size="large" style={{ flex: 1, backgroundColor: colors.background }} color={colors.accent} />;
     }
 
     return (
@@ -78,6 +79,7 @@ const ChatScreen = ({ route }) => {
                     value={message}
                     onChangeText={setMessage}
                     placeholder="Type a message..."
+                    placeholderTextColor={colors.textSecondary}
                 />
                 <StyledButton title="Send" onPress={sendMessage} />
             </View>
@@ -85,18 +87,17 @@ const ChatScreen = ({ route }) => {
     );
 };
 
-// ... (keep the styles as they are)
-const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#f5f5f5' },
-    title: { fontSize: 20, fontWeight: 'bold', textAlign: 'center', padding: 10, borderBottomWidth: 1, borderColor: '#ddd' },
+const makeStyles = (colors) => StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    title: { fontSize: 20, fontWeight: 'bold', textAlign: 'center', padding: 10, borderBottomWidth: 1, borderColor: colors.border, color: colors.text },
     messageList: { flex: 1, padding: 10 },
-    inputContainer: { flexDirection: 'row', padding: 10, borderTopWidth: 1, borderColor: '#ddd', backgroundColor: 'white' },
-    input: { flex: 1, borderColor: 'gray', borderWidth: 1, borderRadius: 20, paddingHorizontal: 15, marginRight: 10 },
+    inputContainer: { flexDirection: 'row', padding: 10, borderTopWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
+    input: { flex: 1, borderColor: colors.border, borderWidth: 1, borderRadius: 20, paddingHorizontal: 15, marginRight: 10, color: colors.text, backgroundColor: colors.surface2 },
     messageBubble: { maxWidth: '80%', padding: 10, borderRadius: 15, marginBottom: 10 },
-    myMessage: { backgroundColor: '#007AFF', alignSelf: 'flex-end' },
-    theirMessage: { backgroundColor: '#E5E5EA', alignSelf: 'flex-start' },
-    userName: { fontWeight: 'bold', marginBottom: 3, color: 'black' },
-    messageText: { color: 'black' }
+    myMessage: { backgroundColor: colors.accent, alignSelf: 'flex-end' },
+    theirMessage: { backgroundColor: colors.surface2, alignSelf: 'flex-start' },
+    userName: { fontWeight: 'bold', marginBottom: 3, color: colors.text },
+    messageText: { color: colors.text }
 });
 
 export default ChatScreen;

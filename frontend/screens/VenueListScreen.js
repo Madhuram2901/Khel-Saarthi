@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useMemo } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, Image, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../api/api';
 import { useNavigation } from '@react-navigation/native';
 import AuthContext from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import MyBookingsScreen from './MyBookingsScreen';
 import VenueHostDashboard from './VenueHostDashboard';
 import Constants from 'expo-constants';
@@ -11,7 +12,9 @@ import Constants from 'expo-constants';
 const VenueListScreen = () => {
     const navigation = useNavigation();
     const { user } = useContext(AuthContext);
-    const [viewMode, setViewMode] = useState('explore'); // 'explore', 'bookings', 'dashboard'
+    const { colors } = useTheme();
+    const styles = useMemo(() => makeStyles(colors), [colors]);
+    const [viewMode, setViewMode] = useState('explore');
     const [venues, setVenues] = useState([]);
     const [loading, setLoading] = useState(true);
     const [city, setCity] = useState('');
@@ -74,9 +77,10 @@ const VenueListScreen = () => {
             <>
                 <View style={styles.searchContainer}>
                     <View style={styles.searchBar}>
-                        <Ionicons name="search" size={20} color="#666" />
+                        <Ionicons name="search" size={20} color={colors.textSecondary} />
                         <TextInput
                             placeholder="Search by city..."
+                            placeholderTextColor={colors.textMuted}
                             style={styles.input}
                             value={city}
                             onChangeText={setCity}
@@ -85,7 +89,7 @@ const VenueListScreen = () => {
                 </View>
 
                 {loading ? (
-                    <ActivityIndicator size="large" color="#007AFF" style={styles.loader} />
+                    <ActivityIndicator size="large" color={colors.accent} style={styles.loader} />
                 ) : (
                     <FlatList
                         data={venues}
@@ -119,7 +123,6 @@ const VenueListScreen = () => {
                     <Text style={[styles.navText, viewMode === 'explore' && styles.navTextActive]}>Explore</Text>
                 </TouchableOpacity>
 
-                {/* Show My Bookings only if NOT a Host/Manager */}
                 {!['venue_manager', 'host'].includes(user?.role) && (
                     <TouchableOpacity
                         style={[styles.navItem, viewMode === 'bookings' && styles.navItemActive]}
@@ -144,19 +147,19 @@ const VenueListScreen = () => {
     );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (colors) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f8f9fa',
-        paddingTop: Constants.statusBarHeight // Add padding for status bar
+        backgroundColor: colors.background,
+        paddingTop: Constants.statusBarHeight
     },
     navBar: {
         flexDirection: 'row',
-        backgroundColor: '#fff',
+        backgroundColor: colors.surface,
         paddingVertical: 10,
         paddingHorizontal: 15,
         borderBottomWidth: 1,
-        borderBottomColor: '#eee',
+        borderBottomColor: colors.border,
     },
     navItem: {
         marginRight: 20,
@@ -164,66 +167,70 @@ const styles = StyleSheet.create({
     },
     navItemActive: {
         borderBottomWidth: 2,
-        borderBottomColor: '#007AFF',
+        borderBottomColor: colors.accent,
     },
     navText: {
         fontSize: 16,
-        color: '#666',
+        color: colors.textSecondary,
         fontWeight: '500',
     },
     navTextActive: {
-        color: '#007AFF',
+        color: colors.accent,
         fontWeight: 'bold',
     },
     list: { padding: 15, paddingBottom: 140 },
-    searchContainer: { padding: 15, backgroundColor: '#fff' },
+    searchContainer: { padding: 15, backgroundColor: colors.surface },
     searchBar: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#f0f0f0',
+        backgroundColor: colors.surface2,
         borderRadius: 10,
         padding: 10
     },
-    input: { marginLeft: 10, flex: 1 },
+    input: { marginLeft: 10, flex: 1, color: colors.text },
     card: {
-        backgroundColor: '#fff',
+        backgroundColor: colors.surface,
         borderRadius: 12,
         marginBottom: 15,
         overflow: 'hidden',
-        elevation: 3
+        elevation: 3,
+        shadowColor: colors.cardShadow,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
     },
     image: { width: '100%', height: 150 },
     info: { padding: 12 },
-    name: { fontSize: 18, fontWeight: 'bold', marginBottom: 4 },
-    address: { color: '#666', marginBottom: 8 },
+    name: { fontSize: 18, fontWeight: 'bold', marginBottom: 4, color: colors.text },
+    address: { color: colors.textSecondary, marginBottom: 8 },
     row: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
-    price: { fontSize: 16, fontWeight: '600', color: '#007AFF' },
+    price: { fontSize: 16, fontWeight: '600', color: colors.accent },
     rating: { flexDirection: 'row', alignItems: 'center' },
-    ratingText: { marginLeft: 4, color: '#666' },
+    ratingText: { marginLeft: 4, color: colors.textSecondary },
     tags: { flexDirection: 'row', flexWrap: 'wrap' },
     tag: {
-        backgroundColor: '#e1f5fe',
+        backgroundColor: colors.surface2,
         paddingHorizontal: 8,
         paddingVertical: 4,
         borderRadius: 4,
         marginRight: 6,
         marginBottom: 4
     },
-    tagText: { color: '#0277bd', fontSize: 12 },
+    tagText: { color: colors.accent, fontSize: 12 },
     loader: { marginTop: 50 },
-    empty: { textAlign: 'center', marginTop: 50, color: '#666' },
+    empty: { textAlign: 'center', marginTop: 50, color: colors.textSecondary },
     fab: {
         position: 'absolute',
         bottom: 110,
         right: 20,
-        backgroundColor: '#007AFF',
+        backgroundColor: colors.accent,
         width: 56,
         height: 56,
         borderRadius: 28,
         justifyContent: 'center',
         alignItems: 'center',
         elevation: 5,
-        shadowColor: '#000',
+        shadowColor: colors.cardShadow,
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.25,
         shadowRadius: 3.84,

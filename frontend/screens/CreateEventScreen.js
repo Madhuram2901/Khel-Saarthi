@@ -1,12 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, TextInput, Alert, ScrollView, TouchableOpacity, Image } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../api/api';
+import { useTheme } from '../context/ThemeContext';
 import StyledButton from '../components/StyledButton';
 
 const CreateEventScreen = ({ navigation }) => {
+    const { colors } = useTheme();
+    const styles = useMemo(() => makeStyles(colors), [colors]);
+
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [date, setDate] = useState('');
@@ -19,7 +23,6 @@ const CreateEventScreen = ({ navigation }) => {
     const categories = ['Cricket', 'Football', 'Badminton', 'Running', 'Other'];
     const skillLevels = ['Beginner', 'Intermediate', 'Advanced', 'All Levels'];
 
-    // Request permissions
     useEffect(() => {
         (async () => {
             const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -34,7 +37,7 @@ const CreateEventScreen = ({ navigation }) => {
             const result = await ImagePicker.launchImageLibraryAsync({
                 mediaTypes: ImagePicker.MediaTypeOptions.Images,
                 allowsEditing: true,
-                aspect: [16, 9], // Banner aspect ratio
+                aspect: [16, 9],
                 quality: 0.8,
             });
 
@@ -69,7 +72,6 @@ const CreateEventScreen = ({ navigation }) => {
             formData.append('skillLevel', skillLevel);
             formData.append('entryFee', entryFee);
 
-            // Add banner image if selected
             if (bannerImage) {
                 formData.append('bannerImage', {
                     uri: bannerImage.uri,
@@ -110,7 +112,7 @@ const CreateEventScreen = ({ navigation }) => {
                         />
                     ) : (
                         <View style={styles.bannerPlaceholder}>
-                            <Ionicons name="image-outline" size={48} color="#999" />
+                            <Ionicons name="image-outline" size={48} color={colors.textSecondary} />
                             <Text style={styles.bannerPlaceholderText}>
                                 Tap to upload banner
                             </Text>
@@ -134,12 +136,14 @@ const CreateEventScreen = ({ navigation }) => {
             <TextInput
                 style={styles.input}
                 placeholder="Event Title"
+                placeholderTextColor={colors.textSecondary}
                 value={title}
                 onChangeText={setTitle}
             />
             <TextInput
                 style={styles.input}
                 placeholder="Description"
+                placeholderTextColor={colors.textSecondary}
                 value={description}
                 onChangeText={setDescription}
                 multiline
@@ -148,6 +152,7 @@ const CreateEventScreen = ({ navigation }) => {
             <TextInput
                 style={styles.input}
                 placeholder="Date (YYYY-MM-DD)"
+                placeholderTextColor={colors.textSecondary}
                 value={date}
                 onChangeText={setDate}
             />
@@ -156,6 +161,7 @@ const CreateEventScreen = ({ navigation }) => {
             <TextInput
                 style={styles.input}
                 placeholder="0 for free"
+                placeholderTextColor={colors.textSecondary}
                 value={entryFee}
                 onChangeText={setEntryFee}
                 keyboardType="numeric"
@@ -205,15 +211,17 @@ const CreateEventScreen = ({ navigation }) => {
     );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (colors) => StyleSheet.create({
     container: {
         padding: 20,
+        backgroundColor: colors.background,
     },
     title: {
         fontSize: 24,
         fontWeight: 'bold',
         marginBottom: 20,
         textAlign: 'center',
+        color: colors.text,
     },
     bannerSection: {
         marginBottom: 20,
@@ -223,16 +231,16 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         marginBottom: 10,
         marginTop: 10,
-        color: '#333',
+        color: colors.textSecondary,
     },
     bannerPicker: {
         width: '100%',
         height: 180,
         borderRadius: 12,
         overflow: 'hidden',
-        backgroundColor: '#f5f5f5',
+        backgroundColor: colors.surface2,
         borderWidth: 2,
-        borderColor: '#ddd',
+        borderColor: colors.border,
         borderStyle: 'dashed',
     },
     bannerPreview: {
@@ -249,18 +257,18 @@ const styles = StyleSheet.create({
     bannerPlaceholderText: {
         marginTop: 10,
         fontSize: 16,
-        color: '#666',
+        color: colors.textSecondary,
         fontWeight: '600',
     },
     bannerHint: {
         marginTop: 5,
         fontSize: 12,
-        color: '#999',
+        color: colors.textMuted,
     },
     removeBannerButton: {
         marginTop: 10,
         padding: 12,
-        backgroundColor: '#ff3b30',
+        backgroundColor: colors.accentRed,
         borderRadius: 8,
         alignItems: 'center',
         flexDirection: 'row',
@@ -274,12 +282,14 @@ const styles = StyleSheet.create({
     },
     input: {
         minHeight: 40,
-        borderColor: 'gray',
+        borderColor: colors.border,
         borderWidth: 1,
         marginBottom: 12,
         paddingHorizontal: 10,
         paddingVertical: 10,
         borderRadius: 5,
+        color: colors.text,
+        backgroundColor: colors.surface,
     },
     map: {
         width: '100%',
@@ -295,15 +305,15 @@ const styles = StyleSheet.create({
         paddingVertical: 8,
         paddingHorizontal: 15,
         borderRadius: 20,
-        backgroundColor: '#eee',
+        backgroundColor: colors.surface2,
         marginRight: 10,
         marginBottom: 10
     },
     selectedOption: {
-        backgroundColor: '#007AFF'
+        backgroundColor: colors.accent
     },
     optionText: {
-        color: 'black'
+        color: colors.text
     },
     selectedOptionText: {
         color: 'white'

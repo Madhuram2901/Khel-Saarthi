@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useMemo } from 'react';
 import {
   View,
   StyleSheet,
@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import MapView, { Marker, Callout } from 'react-native-maps';
 import api from '../api/api';
 import AuthContext from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import StyledButton from '../components/StyledButton';
 import EventCard from '../components/EventCard';
 import HeroCard from '../components/HeroCard';
@@ -24,6 +25,8 @@ const HomeScreen = ({ navigation }) => {
   const [events, setEvents] = useState([]);
   const [filters, setFilters] = useState({ category: 'All' });
   const { user, logout } = useContext(AuthContext);
+  const { colors, isDark } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const categories = ['All', 'Cricket', 'Football', 'Badminton', 'Running', 'Basketball', 'Tennis', 'Kabaddi', 'Other'];
 
@@ -92,7 +95,7 @@ const HomeScreen = ({ navigation }) => {
             style={styles.searchButton}
             onPress={() => {/* TODO: Add search functionality */ }}
           >
-            <Ionicons name="search" size={24} color="#007AFF" />
+            <Ionicons name="search" size={24} color={colors.accent} />
           </TouchableOpacity>
         </View>
       </View>
@@ -120,7 +123,7 @@ const HomeScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#f5f5f5" />
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={colors.background} />
 
       {/* Header */}
       <View style={styles.header}>
@@ -228,7 +231,7 @@ const HomeScreen = ({ navigation }) => {
             />
           ) : (
             <View style={styles.noEventsContainer}>
-              <Ionicons name="calendar-outline" size={48} color="#8E8E93" />
+              <Ionicons name="calendar-outline" size={48} color={colors.textSecondary} />
               <Text style={styles.noEventsText}>No events found</Text>
               <Text style={styles.noEventsSubtext}>Try adjusting your filters</Text>
             </View>
@@ -270,10 +273,10 @@ const HomeScreen = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: colors.background,
   },
   fab: {
     position: 'absolute',
@@ -282,10 +285,10 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#4CAF50', // Sporty Green
+    backgroundColor: '#4CAF50',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: "#000",
+    shadowColor: colors.cardShadow,
     shadowOffset: {
       width: 0,
       height: 4,
@@ -305,11 +308,11 @@ const styles = StyleSheet.create({
   greeting: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#333',
+    color: colors.text,
   },
   subGreeting: {
     fontSize: 14,
-    color: '#666',
+    color: colors.textSecondary,
     marginTop: 4,
   },
   profilePic: {
@@ -330,21 +333,21 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#1D1D1F',
+    color: colors.text,
     paddingHorizontal: 20,
     marginBottom: 12,
   },
   viewAllText: {
     fontSize: 16,
-    color: '#007AFF',
+    color: colors.accent,
     fontWeight: '600',
   },
   aiRecommendation: {
     marginHorizontal: 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 16,
-    shadowColor: '#000',
+    shadowColor: colors.cardShadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -357,13 +360,13 @@ const styles = StyleSheet.create({
   aiRecommendationText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1D1D1F',
+    color: colors.text,
     marginLeft: 8,
     flex: 1,
   },
   aiRecommendationSubtext: {
     fontSize: 14,
-    color: '#007AFF',
+    color: colors.accent,
     fontWeight: '600',
   },
   map: {
@@ -383,12 +386,12 @@ const styles = StyleSheet.create({
   },
   calloutCategory: {
     fontSize: 12,
-    color: '#666',
+    color: colors.textSecondary,
     marginBottom: 4,
   },
   calloutTap: {
     fontSize: 11,
-    color: '#007AFF',
+    color: colors.accent,
   },
   eventsList: {
     paddingLeft: 12,
@@ -404,12 +407,12 @@ const styles = StyleSheet.create({
   noEventsText: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#8E8E93',
+    color: colors.textSecondary,
     marginTop: 12,
   },
   noEventsSubtext: {
     fontSize: 14,
-    color: '#8E8E93',
+    color: colors.textSecondary,
     marginTop: 4,
   },
   actionSection: {

@@ -1,11 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { View, Text, FlatList, Image, StyleSheet, ActivityIndicator, TouchableOpacity, Linking, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import api from '../api/api';
+import { useTheme } from '../context/ThemeContext';
 
 const NewsScreen = () => {
     const [news, setNews] = useState([]);
     const [loading, setLoading] = useState(true);
+    const { colors, isDark } = useTheme();
+    const styles = useMemo(() => makeStyles(colors, isDark), [colors, isDark]);
 
     useEffect(() => {
         fetchNews();
@@ -22,17 +25,18 @@ const NewsScreen = () => {
         }
     };
 
-    // Light color palette for cards
-    const colorPaletteLight = ['#FFFFFF', '#F8FAFC', '#EFF6FF', '#FFF7ED', '#F8FAFC', '#F5F3FF'];
+    // Color palettes adapt to theme
+    const colorPaletteLight = isDark
+        ? ['#1C1C1E', '#2C2C2E', '#1A1A3E', '#2E1A1A', '#1C2C2E', '#1A1A2E']
+        : ['#FFFFFF', '#F8FAFC', '#EFF6FF', '#FFF7ED', '#F8FAFC', '#F5F3FF'];
 
-    // Accent colors for badges and highlights
     const accentColors = [
-        ['#3B82F6', '#60A5FA'],  // Blue
-        ['#8B5CF6', '#A78BFA'],  // Purple
-        ['#EC4899', '#F472B6'],  // Pink
-        ['#F59E0B', '#FBBF24'],  // Amber
-        ['#10B981', '#34D399'],  // Green
-        ['#06B6D4', '#22D3EE'],  // Cyan
+        ['#3B82F6', '#60A5FA'],
+        ['#8B5CF6', '#A78BFA'],
+        ['#EC4899', '#F472B6'],
+        ['#F59E0B', '#FBBF24'],
+        ['#10B981', '#34D399'],
+        ['#06B6D4', '#22D3EE'],
     ];
 
     const NewsCard = ({ item, index }) => {
@@ -133,7 +137,7 @@ const NewsScreen = () => {
 
     return (
         <View style={styles.container}>
-            
+
             <FlatList
                 data={news}
                 keyExtractor={(item, index) => `${item.url}-${index}`}
@@ -145,10 +149,10 @@ const NewsScreen = () => {
     );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (colors, isDark) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#ffffffff',
+        backgroundColor: colors.background,
     },
     loadingContainer: {
         flex: 1,
@@ -190,12 +194,12 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         overflow: 'hidden',
         elevation: 4,
-        shadowColor: '#000',
+        shadowColor: colors.cardShadow,
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.08,
         shadowRadius: 8,
         borderWidth: 1,
-        borderColor: 'rgba(0, 0, 0, 0.05)',
+        borderColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.05)',
     },
     imageContainer: {
         position: 'relative',
@@ -237,19 +241,19 @@ const styles = StyleSheet.create({
     badgeText: {
         fontSize: 11,
         fontWeight: 'bold',
-        color: '#000000ff',
+        color: '#FFFFFF',
         letterSpacing: 1,
     },
     title: {
         fontSize: 20,
         fontWeight: 'bold',
-        color: '#1A1A2E',
+        color: colors.text,
         marginBottom: 10,
         lineHeight: 28,
     },
     description: {
         fontSize: 15,
-        color: '#4A5568',
+        color: colors.textSecondary,
         marginBottom: 16,
         lineHeight: 22,
     },
@@ -259,7 +263,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingTop: 12,
         borderTopWidth: 1,
-        borderTopColor: 'rgba(0, 0, 0, 0.06)',
+        borderTopColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.06)',
     },
     sourceContainer: {
         flexDirection: 'row',
@@ -273,7 +277,7 @@ const styles = StyleSheet.create({
     },
     source: {
         fontSize: 13,
-        color: '#718096',
+        color: colors.textSecondary,
         fontWeight: '600',
     },
     readMore: {

@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
 import api from '../api/api';
+import { useTheme } from '../context/ThemeContext';
 
 const MyBookingsScreen = () => {
     const [bookings, setBookings] = useState([]);
     const [loading, setLoading] = useState(true);
+    const { colors } = useTheme();
+    const styles = useMemo(() => makeStyles(colors), [colors]);
 
     useEffect(() => {
         const fetchBookings = async () => {
@@ -24,7 +27,7 @@ const MyBookingsScreen = () => {
         <View style={styles.card}>
             <View style={styles.header}>
                 <Text style={styles.venueName}>{item.venue?.name || 'Unknown Venue'}</Text>
-                <Text style={[styles.status, { color: item.status === 'confirmed' ? 'green' : 'orange' }]}>
+                <Text style={[styles.status, { color: item.status === 'confirmed' ? colors.accentGreen : '#FF9500' }]}>
                     {item.status.toUpperCase()}
                 </Text>
             </View>
@@ -34,7 +37,7 @@ const MyBookingsScreen = () => {
         </View>
     );
 
-    if (loading) return <ActivityIndicator size="large" style={styles.centered} />;
+    if (loading) return <ActivityIndicator size="large" style={styles.centered} color={colors.accent} />;
 
     return (
         <View style={styles.container}>
@@ -49,18 +52,18 @@ const MyBookingsScreen = () => {
     );
 };
 
-const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#f8f9fa' },
-    centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+const makeStyles = (colors) => StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    centered: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background },
     list: { padding: 15 },
-    card: { backgroundColor: '#fff', padding: 15, borderRadius: 10, marginBottom: 10, elevation: 2 },
+    card: { backgroundColor: colors.surface, padding: 15, borderRadius: 10, marginBottom: 10, elevation: 2, shadowColor: colors.cardShadow, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2 },
     header: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5 },
-    venueName: { fontSize: 16, fontWeight: 'bold' },
+    venueName: { fontSize: 16, fontWeight: 'bold', color: colors.text },
     status: { fontWeight: 'bold', fontSize: 12 },
-    date: { color: '#333', marginBottom: 2 },
-    time: { color: '#666', marginBottom: 5 },
-    amount: { fontWeight: 'bold', color: '#007AFF' },
-    empty: { textAlign: 'center', marginTop: 50, color: '#666' }
+    date: { color: colors.text, marginBottom: 2 },
+    time: { color: colors.textSecondary, marginBottom: 5 },
+    amount: { fontWeight: 'bold', color: colors.accent },
+    empty: { textAlign: 'center', marginTop: 50, color: colors.textSecondary }
 });
 
 export default MyBookingsScreen;

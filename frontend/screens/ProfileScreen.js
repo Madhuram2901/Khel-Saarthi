@@ -1,5 +1,5 @@
 
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useContext, useState, useEffect, useMemo } from 'react';
 import {
     View,
     Text,
@@ -10,11 +10,13 @@ import {
     Alert,
     Linking,
     StatusBar,
-    TouchableOpacity
+    TouchableOpacity,
+    Switch
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import AuthContext from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import StyledButton from '../components/StyledButton';
 import ProfileCard from '../components/ProfileCard';
 import { StatCard, StatRow } from '../components/StatCard';
@@ -24,6 +26,9 @@ import api from '../api/api';
 
 const ProfileScreen = ({ navigation }) => {
     const { user, logout, setUser } = useContext(AuthContext);
+    const { themeMode, setMode, colors, isDark } = useTheme();
+    const styles = useMemo(() => makeStyles(colors), [colors]);
+
     const badmintonProfile = user.profiles?.badminton || {};
     const [name, setName] = useState(user.name);
     const [email, setEmail] = useState(user.email);
@@ -112,7 +117,7 @@ const ProfileScreen = ({ navigation }) => {
                 await AsyncStorage.setItem('userToken', data.token);
                 api.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
             }
-            
+
             setUser(data);
             setImage(null);
             setEditMode(false);
@@ -132,7 +137,7 @@ const ProfileScreen = ({ navigation }) => {
         </View>
     );
 
-    const MenuItem = ({ icon, title, subtitle, onPress, rightElement, color = '#1D1D1F' }) => (
+    const MenuItem = ({ icon, title, subtitle, onPress, rightElement, color = colors.text }) => (
         <TouchableOpacity style={styles.menuItem} onPress={onPress}>
             <View style={styles.menuItemLeft}>
                 <View style={[styles.menuIcon, { backgroundColor: `${color}15` }]}>
@@ -143,14 +148,14 @@ const ProfileScreen = ({ navigation }) => {
                     {subtitle && <Text style={styles.menuItemSubtitle}>{subtitle}</Text>}
                 </View>
             </View>
-            {rightElement || <Ionicons name="chevron-forward" size={16} color="#8E8E93" />}
+            {rightElement || <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />}
         </TouchableOpacity>
     );
 
     if (editMode) {
         return (
             <SafeAreaView style={styles.container}>
-                <StatusBar barStyle="dark-content" backgroundColor="#F8F9FA" />
+                <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={colors.background} />
                 <View style={styles.editHeader}>
                     <TouchableOpacity onPress={() => setEditMode(false)}>
                         <Text style={styles.cancelButton}>Cancel</Text>
@@ -172,7 +177,7 @@ const ProfileScreen = ({ navigation }) => {
                                 <Image source={{ uri: user.profilePicture }} style={styles.editAvatar} />
                             ) : (
                                 <View style={styles.editAvatarPlaceholder}>
-                                    <Ionicons name="camera" size={32} color="#8E8E93" />
+                                    <Ionicons name="camera" size={32} color={colors.textSecondary} />
                                 </View>
                             )}
                             <View style={styles.editAvatarOverlay}>
@@ -190,7 +195,7 @@ const ProfileScreen = ({ navigation }) => {
                                 value={name}
                                 onChangeText={setName}
                                 placeholder="Enter your name"
-                                placeholderTextColor="#8E8E93"
+                                placeholderTextColor={colors.textSecondary}
                             />
                         </View>
 
@@ -201,7 +206,7 @@ const ProfileScreen = ({ navigation }) => {
                                 value={email}
                                 onChangeText={setEmail}
                                 placeholder="Enter your email"
-                                placeholderTextColor="#8E8E93"
+                                placeholderTextColor={colors.textSecondary}
                                 keyboardType="email-address"
                                 autoCapitalize="none"
                             />
@@ -214,7 +219,7 @@ const ProfileScreen = ({ navigation }) => {
 
     return (
         <SafeAreaView style={styles.container}>
-            <StatusBar barStyle="dark-content" backgroundColor="#F8F9FA" />
+            <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={colors.background} />
             <ScrollView style={styles.scrollView} contentContainerStyle={{ paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
                 <ProfileCard
                     user={user}
@@ -238,36 +243,58 @@ const ProfileScreen = ({ navigation }) => {
                                 badmintonProfile.skillLevel === 'Beginner'
                                     ? require('../assets/beginner.png')
                                     : badmintonProfile.skillLevel === 'Intermediate'
-                                    ? require('../assets/intermediate.png')
-                                    : badmintonProfile.skillLevel === 'Advanced'
-                                    ? require('../assets/advance.png')
-                                    : null
+                                        ? require('../assets/intermediate.png')
+                                        : badmintonProfile.skillLevel === 'Advanced'
+                                            ? require('../assets/advance.png')
+                                            : null
                             }
                             imageColor={
                                 badmintonProfile.skillLevel === 'Beginner'
-                                    ? '#E8F5E9'
+                                    ? (isDark ? '#1B3A1E' : '#E8F5E9')
                                     : badmintonProfile.skillLevel === 'Intermediate'
-                                    ? '#E3F2FD'
-                                    : badmintonProfile.skillLevel === 'Advanced'
-                                    ? '#FFF3E0'
-                                    : '#FFFFFF'
+                                        ? (isDark ? '#1A2A3A' : '#E3F2FD')
+                                        : badmintonProfile.skillLevel === 'Advanced'
+                                            ? (isDark ? '#3A2A1A' : '#FFF3E0')
+                                            : colors.surface
                             }
                         />
                     </StatRow>
-                    {/* <StatRow>
-                        <StatCard
-                            icon="people"
-                            title="Partners"
-                            value="8"
-                            color="#34C759"
-                        />
-                        <StatCard
-                            icon="time"
-                            title="Hours Played"
-                            value="45"
-                            color="#007AFF"
-                        />
-                    </StatRow> */}
+                </View>
+
+                {/* Appearance Section */}
+                <View style={styles.appearanceSection}>
+                    <Text style={styles.sectionTitle}>Appearance</Text>
+                    <View style={styles.appearanceCard}>
+                        {/* Auto toggle row */}
+                        <View style={styles.settingRow}>
+                            <View style={{ flex: 1 }}>
+                                <Text style={styles.settingLabel}>Auto Dark Mode</Text>
+                                <Text style={styles.settingSubLabel}>Switches at 7 PM · Reverts at 7 AM</Text>
+                            </View>
+                            <Switch
+                                value={themeMode === 'auto'}
+                                onValueChange={(val) => setMode(val ? 'auto' : (isDark ? 'dark' : 'light'))}
+                                trackColor={{ false: colors.border, true: colors.accent }}
+                                thumbColor="#FFFFFF"
+                            />
+                        </View>
+
+                        {/* Manual override row — only shown when auto is OFF */}
+                        {themeMode !== 'auto' && (
+                            <View style={[styles.settingRow, styles.settingRowBorder]}>
+                                <View style={{ flex: 1 }}>
+                                    <Text style={styles.settingLabel}>Dark Mode</Text>
+                                    <Text style={styles.settingSubLabel}>Manual override</Text>
+                                </View>
+                                <Switch
+                                    value={isDark}
+                                    onValueChange={(val) => setMode(val ? 'dark' : 'light')}
+                                    trackColor={{ false: colors.border, true: colors.accent }}
+                                    thumbColor="#FFFFFF"
+                                />
+                            </View>
+                        )}
+                    </View>
                 </View>
 
                 {/* Sports Profiles Section */}
@@ -295,14 +322,14 @@ const ProfileScreen = ({ navigation }) => {
                         title="Privacy & Security"
                         subtitle="Password, two-factor authentication"
                         onPress={() => {/* TODO: Navigate to privacy settings */ }}
-                        color="#007AFF"
+                        color={colors.accent}
                     />
                     <MenuItem
                         icon="help-circle"
                         title="Help & Support"
                         subtitle="FAQ, contact support"
                         onPress={() => {/* TODO: Navigate to help */ }}
-                        color="#34C759"
+                        color={colors.accentGreen}
                     />
                 </MenuSection>
 
@@ -312,7 +339,7 @@ const ProfileScreen = ({ navigation }) => {
                         icon="log-out"
                         title="Sign Out"
                         onPress={logout}
-                        color="#FF3B30"
+                        color={colors.accentRed}
                         rightElement={null}
                     />
                 </MenuSection>
@@ -323,10 +350,10 @@ const ProfileScreen = ({ navigation }) => {
     );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (colors) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#F8F9FA',
+        backgroundColor: colors.background,
     },
     scrollView: {
         flex: 1,
@@ -338,7 +365,7 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontSize: 20,
         fontWeight: 'bold',
-        color: '#1D1D1F',
+        color: colors.text,
         paddingHorizontal: 20,
         marginBottom: 16,
     },
@@ -349,7 +376,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        backgroundColor: '#FFFFFF',
+        backgroundColor: colors.surface,
         paddingVertical: 16,
         paddingHorizontal: 20,
         marginHorizontal: 20,
@@ -375,13 +402,46 @@ const styles = StyleSheet.create({
     menuItemTitle: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#1D1D1F',
+        color: colors.text,
         marginBottom: 2,
     },
     menuItemSubtitle: {
         fontSize: 14,
-        color: '#8E8E93',
+        color: colors.textSecondary,
     },
+    // Appearance section
+    appearanceSection: {
+        marginBottom: 32,
+    },
+    appearanceCard: {
+        backgroundColor: colors.surface,
+        borderRadius: 16,
+        padding: 16,
+        marginHorizontal: 20,
+    },
+    settingRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: 8,
+    },
+    settingRowBorder: {
+        borderTopWidth: StyleSheet.hairlineWidth,
+        borderTopColor: colors.border,
+        marginTop: 8,
+        paddingTop: 16,
+    },
+    settingLabel: {
+        fontSize: 16,
+        fontWeight: '500',
+        color: colors.text,
+    },
+    settingSubLabel: {
+        fontSize: 13,
+        marginTop: 2,
+        color: colors.textSecondary,
+    },
+    // Edit mode styles
     editHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -389,29 +449,29 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         paddingVertical: 16,
         borderBottomWidth: 1,
-        borderBottomColor: '#E5E5EA',
-        backgroundColor: '#FFFFFF',
+        borderBottomColor: colors.border,
+        backgroundColor: colors.surface,
     },
     cancelButton: {
         fontSize: 16,
-        color: '#8E8E93',
+        color: colors.textSecondary,
     },
     editTitle: {
         fontSize: 18,
         fontWeight: '600',
-        color: '#1D1D1F',
+        color: colors.text,
     },
     saveButton: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#007AFF',
+        color: colors.accent,
     },
     disabledButton: {
-        color: '#8E8E93',
+        color: colors.textSecondary,
     },
     editForm: {
         flex: 1,
-        backgroundColor: '#FFFFFF',
+        backgroundColor: colors.surface,
     },
     editAvatarSection: {
         alignItems: 'center',
@@ -429,7 +489,7 @@ const styles = StyleSheet.create({
         width: 120,
         height: 120,
         borderRadius: 60,
-        backgroundColor: '#F2F2F7',
+        backgroundColor: colors.surface2,
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -440,16 +500,16 @@ const styles = StyleSheet.create({
         width: 36,
         height: 36,
         borderRadius: 18,
-        backgroundColor: '#007AFF',
+        backgroundColor: colors.accent,
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 3,
-        borderColor: '#FFFFFF',
+        borderColor: colors.surface,
     },
     editAvatarText: {
         marginTop: 12,
         fontSize: 14,
-        color: '#8E8E93',
+        color: colors.textSecondary,
     },
     editInputSection: {
         paddingHorizontal: 20,
@@ -460,16 +520,16 @@ const styles = StyleSheet.create({
     editInputLabel: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#1D1D1F',
+        color: colors.text,
         marginBottom: 8,
     },
     editInput: {
-        backgroundColor: '#F2F2F7',
+        backgroundColor: colors.surface2,
         borderRadius: 12,
         paddingHorizontal: 16,
         paddingVertical: 16,
         fontSize: 16,
-        color: '#1D1D1F',
+        color: colors.text,
     },
     bottomPadding: {
         height: 40,

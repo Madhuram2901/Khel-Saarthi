@@ -1,14 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, TextInput, Alert, ScrollView, TouchableOpacity, Image } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../api/api';
+import { useTheme } from '../context/ThemeContext';
 import StyledButton from '../components/StyledButton';
 import { getSportImage } from '../utils/constants';
 
 const EditEventScreen = ({ route, navigation }) => {
     const { eventId } = route.params;
+    const { colors } = useTheme();
+    const styles = useMemo(() => makeStyles(colors), [colors]);
 
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
@@ -24,7 +27,6 @@ const EditEventScreen = ({ route, navigation }) => {
     const categories = ['Cricket', 'Football', 'Badminton', 'Running', 'Other'];
     const skillLevels = ['Beginner', 'Intermediate', 'Advanced', 'All Levels'];
 
-    // Request permissions
     useEffect(() => {
         (async () => {
             const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -97,7 +99,6 @@ const EditEventScreen = ({ route, navigation }) => {
             formData.append('skillLevel', skillLevel);
             formData.append('entryFee', entryFee);
 
-            // Add new banner image if selected
             if (bannerImage) {
                 formData.append('bannerImage', {
                     uri: bannerImage.uri,
@@ -120,7 +121,7 @@ const EditEventScreen = ({ route, navigation }) => {
         }
     };
 
-    if (loading) return <View style={styles.centered}><Text>Loading Event Data...</Text></View>;
+    if (loading) return <View style={styles.centered}><Text style={{ color: colors.text }}>Loading Event Data...</Text></View>;
 
     const displayBanner = bannerImage ? bannerImage.uri : (existingBanner || getSportImage(category));
 
@@ -128,17 +129,10 @@ const EditEventScreen = ({ route, navigation }) => {
         <ScrollView contentContainerStyle={[styles.container, { paddingBottom: 120 }]}>
             <Text style={styles.title}>Edit Event</Text>
 
-            {/* Banner Image Picker */}
             <View style={styles.bannerSection}>
                 <Text style={styles.label}>Event Banner</Text>
-                <TouchableOpacity
-                    style={styles.bannerPicker}
-                    onPress={pickBannerImage}
-                >
-                    <Image
-                        source={{ uri: displayBanner }}
-                        style={styles.bannerPreview}
-                    />
+                <TouchableOpacity style={styles.bannerPicker} onPress={pickBannerImage}>
+                    <Image source={{ uri: displayBanner }} style={styles.bannerPreview} />
                     <View style={styles.bannerOverlay}>
                         <Ionicons name="camera" size={32} color="#fff" />
                         <Text style={styles.bannerOverlayText}>Change Banner</Text>
@@ -147,10 +141,7 @@ const EditEventScreen = ({ route, navigation }) => {
                 {(bannerImage || existingBanner) && (
                     <TouchableOpacity
                         style={styles.removeBannerButton}
-                        onPress={() => {
-                            setBannerImage(null);
-                            setExistingBanner('');
-                        }}
+                        onPress={() => { setBannerImage(null); setExistingBanner(''); }}
                     >
                         <Ionicons name="close-circle" size={20} color="#fff" />
                         <Text style={styles.removeBannerText}>Remove Banner (Use Default)</Text>
@@ -158,19 +149,12 @@ const EditEventScreen = ({ route, navigation }) => {
                 )}
             </View>
 
-            <TextInput style={styles.input} placeholder="Event Title" value={title} onChangeText={setTitle} />
-            <TextInput
-                style={styles.input}
-                placeholder="Description"
-                value={description}
-                onChangeText={setDescription}
-                multiline
-                numberOfLines={3}
-            />
-            <TextInput style={styles.input} placeholder="Date (YYYY-MM-DD)" value={date} onChangeText={setDate} />
+            <TextInput style={styles.input} placeholder="Event Title" placeholderTextColor={colors.textSecondary} value={title} onChangeText={setTitle} />
+            <TextInput style={styles.input} placeholder="Description" placeholderTextColor={colors.textSecondary} value={description} onChangeText={setDescription} multiline numberOfLines={3} />
+            <TextInput style={styles.input} placeholder="Date (YYYY-MM-DD)" placeholderTextColor={colors.textSecondary} value={date} onChangeText={setDate} />
 
             <Text style={styles.label}>Entry Fee (₹)</Text>
-            <TextInput style={styles.input} placeholder="0 for free" value={entryFee} onChangeText={setEntryFee} keyboardType="numeric" />
+            <TextInput style={styles.input} placeholder="0 for free" placeholderTextColor={colors.textSecondary} value={entryFee} onChangeText={setEntryFee} keyboardType="numeric" />
 
             <Text style={styles.label}>Category</Text>
             <View style={styles.optionsContainer}>
@@ -199,63 +183,24 @@ const EditEventScreen = ({ route, navigation }) => {
     );
 };
 
-const styles = StyleSheet.create({
-    container: { padding: 20 },
-    centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    title: { fontSize: 24, fontWeight: 'bold', marginBottom: 20, textAlign: 'center' },
-    bannerSection: {
-        marginBottom: 20,
-    },
-    label: { fontSize: 16, fontWeight: '600', marginBottom: 10, marginTop: 10, color: '#333' },
-    bannerPicker: {
-        width: '100%',
-        height: 180,
-        borderRadius: 12,
-        overflow: 'hidden',
-        position: 'relative',
-    },
-    bannerPreview: {
-        width: '100%',
-        height: '100%',
-        resizeMode: 'cover',
-    },
-    bannerOverlay: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.4)',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    bannerOverlayText: {
-        color: '#fff',
-        fontSize: 14,
-        fontWeight: '600',
-        marginTop: 8,
-    },
-    removeBannerButton: {
-        marginTop: 10,
-        padding: 12,
-        backgroundColor: '#ff3b30',
-        borderRadius: 8,
-        alignItems: 'center',
-        flexDirection: 'row',
-        justifyContent: 'center',
-        gap: 8,
-    },
-    removeBannerText: {
-        color: '#fff',
-        fontWeight: '600',
-        fontSize: 14,
-    },
-    input: { minHeight: 40, borderColor: 'gray', borderWidth: 1, marginBottom: 12, paddingHorizontal: 10, paddingVertical: 10, borderRadius: 5 },
+const makeStyles = (colors) => StyleSheet.create({
+    container: { padding: 20, backgroundColor: colors.background },
+    centered: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background },
+    title: { fontSize: 24, fontWeight: 'bold', marginBottom: 20, textAlign: 'center', color: colors.text },
+    bannerSection: { marginBottom: 20 },
+    label: { fontSize: 16, fontWeight: '600', marginBottom: 10, marginTop: 10, color: colors.textSecondary },
+    bannerPicker: { width: '100%', height: 180, borderRadius: 12, overflow: 'hidden', position: 'relative' },
+    bannerPreview: { width: '100%', height: '100%', resizeMode: 'cover' },
+    bannerOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0, 0, 0, 0.4)', justifyContent: 'center', alignItems: 'center' },
+    bannerOverlayText: { color: '#fff', fontSize: 14, fontWeight: '600', marginTop: 8 },
+    removeBannerButton: { marginTop: 10, padding: 12, backgroundColor: colors.accentRed, borderRadius: 8, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8 },
+    removeBannerText: { color: '#fff', fontWeight: '600', fontSize: 14 },
+    input: { minHeight: 40, borderColor: colors.border, borderWidth: 1, marginBottom: 12, paddingHorizontal: 10, paddingVertical: 10, borderRadius: 5, color: colors.text, backgroundColor: colors.surface },
     map: { width: '100%', height: 300, marginBottom: 10 },
     optionsContainer: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 10 },
-    optionButton: { paddingVertical: 8, paddingHorizontal: 15, borderRadius: 20, backgroundColor: '#eee', marginRight: 10, marginBottom: 10 },
-    selectedOption: { backgroundColor: '#007AFF' },
-    optionText: { color: 'black' },
+    optionButton: { paddingVertical: 8, paddingHorizontal: 15, borderRadius: 20, backgroundColor: colors.surface2, marginRight: 10, marginBottom: 10 },
+    selectedOption: { backgroundColor: colors.accent },
+    optionText: { color: colors.text },
     selectedOptionText: { color: 'white' }
 });
 

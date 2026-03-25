@@ -1,11 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
     View,
     Text,
     StyleSheet,
     TextInput,
     Alert,
-    StatusBar,
     TouchableOpacity,
     KeyboardAvoidingView,
     Platform,
@@ -14,6 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../api/api';
+import { useTheme } from '../context/ThemeContext';
 import StyledButton from '../components/StyledButton';
 
 const RegisterScreen = ({ navigation }) => {
@@ -21,8 +21,10 @@ const RegisterScreen = ({ navigation }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
-    const [role, setRole] = useState('participant'); // 'participant', 'host', 'venue_manager'
+    const [role, setRole] = useState('participant');
     const [loading, setLoading] = useState(false);
+    const { colors } = useTheme();
+    const styles = useMemo(() => makeStyles(colors), [colors]);
 
     const handleRegister = async () => {
         if (!name || !email || !password) {
@@ -53,7 +55,6 @@ const RegisterScreen = ({ navigation }) => {
 
     return (
         <SafeAreaView style={styles.container}>
-            <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={styles.keyboardView}
@@ -64,12 +65,12 @@ const RegisterScreen = ({ navigation }) => {
                             style={styles.backButton}
                             onPress={() => navigation.goBack()}
                         >
-                            <Ionicons name="chevron-back" size={24} color="#007AFF" />
+                            <Ionicons name="chevron-back" size={24} color={colors.accent} />
                         </TouchableOpacity>
 
                         <View style={styles.headerContent}>
                             <View style={styles.logo}>
-                                <Ionicons name="person-add" size={48} color="#007AFF" />
+                                <Ionicons name="person-add" size={48} color={colors.accent} />
                             </View>
                             <Text style={styles.title}>Create Account</Text>
                             <Text style={styles.subtitle}>Join the sports community</Text>
@@ -79,11 +80,11 @@ const RegisterScreen = ({ navigation }) => {
                     <View style={styles.formContainer}>
                         <View style={styles.inputContainer}>
                             <View style={styles.inputWrapper}>
-                                <Ionicons name="person-outline" size={20} color="#8E8E93" style={styles.inputIcon} />
+                                <Ionicons name="person-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
                                 <TextInput
                                     style={styles.input}
                                     placeholder="Full Name"
-                                    placeholderTextColor="#8E8E93"
+                                    placeholderTextColor={colors.textSecondary}
                                     value={name}
                                     onChangeText={setName}
                                     autoCorrect={false}
@@ -91,11 +92,11 @@ const RegisterScreen = ({ navigation }) => {
                             </View>
 
                             <View style={styles.inputWrapper}>
-                                <Ionicons name="mail-outline" size={20} color="#8E8E93" style={styles.inputIcon} />
+                                <Ionicons name="mail-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
                                 <TextInput
                                     style={styles.input}
                                     placeholder="Email"
-                                    placeholderTextColor="#8E8E93"
+                                    placeholderTextColor={colors.textSecondary}
                                     value={email}
                                     onChangeText={setEmail}
                                     keyboardType="email-address"
@@ -105,11 +106,11 @@ const RegisterScreen = ({ navigation }) => {
                             </View>
 
                             <View style={styles.inputWrapper}>
-                                <Ionicons name="lock-closed-outline" size={20} color="#8E8E93" style={styles.inputIcon} />
+                                <Ionicons name="lock-closed-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
                                 <TextInput
                                     style={[styles.input, styles.passwordInput]}
                                     placeholder="Password"
-                                    placeholderTextColor="#8E8E93"
+                                    placeholderTextColor={colors.textSecondary}
                                     value={password}
                                     onChangeText={setPassword}
                                     secureTextEntry={!showPassword}
@@ -122,7 +123,7 @@ const RegisterScreen = ({ navigation }) => {
                                     <Ionicons
                                         name={showPassword ? "eye-off-outline" : "eye-outline"}
                                         size={20}
-                                        color="#8E8E93"
+                                        color={colors.textSecondary}
                                     />
                                 </TouchableOpacity>
                             </View>
@@ -136,7 +137,7 @@ const RegisterScreen = ({ navigation }) => {
                                 onPress={() => setRole('participant')}
                             >
                                 <View style={styles.roleIcon}>
-                                    <Ionicons name="person" size={24} color={role === 'participant' ? "#fff" : "#007AFF"} />
+                                    <Ionicons name="person" size={24} color={role === 'participant' ? "#fff" : colors.accent} />
                                 </View>
                                 <View style={styles.roleInfo}>
                                     <Text style={[styles.roleTitle, role === 'participant' && styles.roleTextSelected]}>User</Text>
@@ -150,7 +151,7 @@ const RegisterScreen = ({ navigation }) => {
                                 onPress={() => setRole('host')}
                             >
                                 <View style={styles.roleIcon}>
-                                    <Ionicons name="trophy" size={24} color={role === 'host' ? "#fff" : "#007AFF"} />
+                                    <Ionicons name="trophy" size={24} color={role === 'host' ? "#fff" : colors.accent} />
                                 </View>
                                 <View style={styles.roleInfo}>
                                     <Text style={[styles.roleTitle, role === 'host' && styles.roleTextSelected]}>Event Host</Text>
@@ -164,7 +165,7 @@ const RegisterScreen = ({ navigation }) => {
                                 onPress={() => setRole('venue_manager')}
                             >
                                 <View style={styles.roleIcon}>
-                                    <Ionicons name="business" size={24} color={role === 'venue_manager' ? "#fff" : "#007AFF"} />
+                                    <Ionicons name="business" size={24} color={role === 'venue_manager' ? "#fff" : colors.accent} />
                                 </View>
                                 <View style={styles.roleInfo}>
                                     <Text style={[styles.roleTitle, role === 'venue_manager' && styles.roleTextSelected]}>Venue Host</Text>
@@ -196,10 +197,10 @@ const RegisterScreen = ({ navigation }) => {
     );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (colors) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#FFFFFF',
+        backgroundColor: colors.background,
     },
     keyboardView: {
         flex: 1,
@@ -216,7 +217,7 @@ const styles = StyleSheet.create({
         width: 40,
         height: 40,
         borderRadius: 20,
-        backgroundColor: '#F2F2F7',
+        backgroundColor: colors.surface2,
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 20,
@@ -228,7 +229,7 @@ const styles = StyleSheet.create({
         width: 80,
         height: 80,
         borderRadius: 40,
-        backgroundColor: '#F2F8FF',
+        backgroundColor: colors.surface2,
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 24,
@@ -236,13 +237,13 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 28,
         fontWeight: 'bold',
-        color: '#1D1D1F',
+        color: colors.text,
         textAlign: 'center',
         marginBottom: 8,
     },
     subtitle: {
         fontSize: 16,
-        color: '#8E8E93',
+        color: colors.textSecondary,
         textAlign: 'center',
     },
     formContainer: {
@@ -255,7 +256,7 @@ const styles = StyleSheet.create({
     inputWrapper: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#F2F2F7',
+        backgroundColor: colors.surface2,
         borderRadius: 12,
         marginBottom: 16,
         paddingHorizontal: 16,
@@ -267,7 +268,7 @@ const styles = StyleSheet.create({
     input: {
         flex: 1,
         fontSize: 16,
-        color: '#1D1D1F',
+        color: colors.text,
     },
     passwordInput: {
         paddingRight: 40,
@@ -283,13 +284,13 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#1D1D1F',
+        color: colors.text,
         marginBottom: 12,
     },
     roleOption: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#F2F2F7',
+        backgroundColor: colors.surface2,
         borderRadius: 12,
         padding: 16,
         marginBottom: 12,
@@ -297,8 +298,8 @@ const styles = StyleSheet.create({
         borderColor: 'transparent',
     },
     roleOptionSelected: {
-        backgroundColor: '#007AFF',
-        borderColor: '#007AFF',
+        backgroundColor: colors.accent,
+        borderColor: colors.accent,
     },
     roleIcon: {
         marginRight: 16,
@@ -309,12 +310,12 @@ const styles = StyleSheet.create({
     roleTitle: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#1D1D1F',
+        color: colors.text,
         marginBottom: 4,
     },
     roleDescription: {
         fontSize: 13,
-        color: '#8E8E93',
+        color: colors.textSecondary,
     },
     roleTextSelected: {
         color: '#FFFFFF',
@@ -329,11 +330,11 @@ const styles = StyleSheet.create({
     },
     loginText: {
         fontSize: 16,
-        color: '#8E8E93',
+        color: colors.textSecondary,
         textAlign: 'center',
     },
     loginLink: {
-        color: '#007AFF',
+        color: colors.accent,
         fontWeight: '600',
     },
 });

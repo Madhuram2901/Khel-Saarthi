@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import {
   View,
   StyleSheet,
@@ -7,9 +7,10 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
-import { useLinkBuilder, useTheme } from '@react-navigation/native';
+import { useLinkBuilder } from '@react-navigation/native';
 import { Text, PlatformPressable } from '@react-navigation/elements';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../context/ThemeContext';
 
 // ─── icon + label map ────────────────────────────────────────────────────────
 const ROUTE_META = {
@@ -20,13 +21,11 @@ const ROUTE_META = {
   ProfileStack: { active: 'person', inactive: 'person-outline', label: 'Profile' },
 };
 
-const ACTIVE = '#007AFF';
-const INACTIVE = '#8E8E93';
-const FAB_GREEN = '#34C759';
-
 // ─── main component ──────────────────────────────────────────────────────────
 function FloatingTabBar({ state, descriptors, navigation }) {
   const { buildHref } = useLinkBuilder();
+  const { colors, isDark } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, isDark), [colors, isDark]);
 
   // One animated opacity value per tab (for the pill underline)
   const pillOpacities = useRef(
@@ -89,12 +88,12 @@ function FloatingTabBar({ state, descriptors, navigation }) {
           <Ionicons
             name={iconName}
             size={24}
-            color={isFocused ? ACTIVE : INACTIVE}
+            color={isFocused ? colors.accent : colors.textMuted}
           />
           <Text
             style={[
               styles.tabLabel,
-              { color: isFocused ? ACTIVE : INACTIVE },
+              { color: isFocused ? colors.accent : colors.textMuted },
             ]}
             numberOfLines={1}
           >
@@ -118,7 +117,7 @@ function FloatingTabBar({ state, descriptors, navigation }) {
     <View style={styles.container}>
       {/* Glass bar */}
       {Platform.OS === 'ios' ? (
-        <BlurView intensity={80} tint="light" style={styles.glassBar}>
+        <BlurView intensity={80} tint={isDark ? 'dark' : 'light'} style={styles.glassBar}>
           <View style={styles.glassOverlay} />
           {barContent}
         </BlurView>
@@ -132,17 +131,16 @@ function FloatingTabBar({ state, descriptors, navigation }) {
 }
 
 // ─── styles ──────────────────────────────────────────────────────────────────
-const styles = StyleSheet.create({
+const makeStyles = (colors, isDark) => StyleSheet.create({
   container: {
     position: 'absolute',
     bottom: 20,
     left: 16,
     right: 16,
     alignItems: 'center',
-    // outer floating shadow
     ...Platform.select({
       ios: {
-        shadowColor: '#000',
+        shadowColor: colors.cardShadow,
         shadowOffset: { width: 0, height: 6 },
         shadowOpacity: 0.08,
         shadowRadius: 24,
@@ -151,34 +149,30 @@ const styles = StyleSheet.create({
     }),
   },
 
-  // Glass pill shape
   glassBar: {
     width: '100%',
     borderRadius: 28,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.60)',
-    // semi-transparent white tint behind blur on iOS
-    backgroundColor: 'rgba(255,255,255,0.72)',
+    borderColor: colors.tabBarBorder,
+    backgroundColor: colors.tabBar,
   },
-  // Thin gloss overlay simulating glass reflection (iOS only)
   glassOverlay: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     height: 16,
-    backgroundColor: 'rgba(255,255,255,0.22)',
+    backgroundColor: isDark ? 'transparent' : 'rgba(255,255,255,0.22)',
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     zIndex: 1,
   },
   androidBar: {
-    backgroundColor: 'rgba(248,249,250,0.97)',
-    borderColor: 'rgba(220,220,220,0.80)',
+    backgroundColor: colors.tabBar,
+    borderColor: colors.tabBarBorder,
   },
 
-  // Inner row
   tabBar: {
     flexDirection: 'row',
     height: 64,
@@ -205,13 +199,12 @@ const styles = StyleSheet.create({
     letterSpacing: 0.1,
   },
 
-  // Small blue pill dot beneath the active icon
   pill: {
     marginTop: 3,
     width: 20,
     height: 3,
     borderRadius: 2,
-    backgroundColor: ACTIVE,
+    backgroundColor: colors.accent,
   },
 });
 

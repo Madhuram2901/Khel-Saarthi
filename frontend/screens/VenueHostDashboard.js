@@ -1,11 +1,14 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useMemo } from 'react';
 import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
 import api from '../api/api';
 import AuthContext from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 
 const VenueHostDashboard = ({ navigation }) => {
     const { user } = useContext(AuthContext);
+    const { colors } = useTheme();
+    const styles = useMemo(() => makeStyles(colors), [colors]);
     const [bookings, setBookings] = useState([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -44,7 +47,7 @@ const VenueHostDashboard = ({ navigation }) => {
                     <Text style={styles.time}>{item.startTime} - {item.endTime}</Text>
                 </View>
                 <View style={styles.statusBadge}>
-                    <Text style={[styles.statusText, { color: item.status === 'confirmed' ? 'green' : 'orange' }]}>
+                    <Text style={[styles.statusText, { color: item.status === 'confirmed' ? colors.accentGreen : '#FF9500' }]}>
                         {item.status.toUpperCase()}
                     </Text>
                 </View>
@@ -74,13 +77,13 @@ const VenueHostDashboard = ({ navigation }) => {
             <View style={styles.dashboardHeader}>
                 <Text style={styles.title}>Venue Dashboard</Text>
                 <TouchableOpacity onPress={() => navigation.navigate('AddVenue')} style={styles.addButton}>
-                    <Ionicons name="add-circle" size={24} color="#007AFF" />
+                    <Ionicons name="add-circle" size={24} color={colors.accent} />
                     <Text style={styles.addText}>Add Venue</Text>
                 </TouchableOpacity>
             </View>
 
             {loading ? (
-                <ActivityIndicator size="large" style={styles.loader} />
+                <ActivityIndicator size="large" style={styles.loader} color={colors.accent} />
             ) : (
                 <FlatList
                     data={bookings}
@@ -96,41 +99,41 @@ const VenueHostDashboard = ({ navigation }) => {
     );
 };
 
-const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#f8f9fa' },
+const makeStyles = (colors) => StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
     dashboardHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         padding: 20,
-        backgroundColor: '#fff',
+        backgroundColor: colors.surface,
         borderBottomWidth: 1,
-        borderBottomColor: '#eee'
+        borderBottomColor: colors.border
     },
-    title: { fontSize: 24, fontWeight: 'bold' },
+    title: { fontSize: 24, fontWeight: 'bold', color: colors.text },
     addButton: { flexDirection: 'row', alignItems: 'center' },
-    addText: { color: '#007AFF', fontWeight: '600', marginLeft: 5 },
+    addText: { color: colors.accent, fontWeight: '600', marginLeft: 5 },
     list: { padding: 15 },
-    sectionTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 15, color: '#666' },
-    card: { backgroundColor: '#fff', borderRadius: 12, marginBottom: 15, padding: 15, elevation: 2 },
+    sectionTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 15, color: colors.textSecondary },
+    card: { backgroundColor: colors.surface, borderRadius: 12, marginBottom: 15, padding: 15, elevation: 2, shadowColor: colors.cardShadow, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2 },
     header: { flexDirection: 'row', marginBottom: 15 },
     venueImage: { width: 60, height: 60, borderRadius: 8, marginRight: 15 },
     headerText: { flex: 1, justifyContent: 'center' },
-    venueName: { fontSize: 16, fontWeight: 'bold', marginBottom: 4 },
-    date: { fontSize: 14, color: '#666' },
-    time: { fontSize: 14, color: '#666' },
+    venueName: { fontSize: 16, fontWeight: 'bold', marginBottom: 4, color: colors.text },
+    date: { fontSize: 14, color: colors.textSecondary },
+    time: { fontSize: 14, color: colors.textSecondary },
     statusBadge: { justifyContent: 'center' },
     statusText: { fontWeight: 'bold', fontSize: 12 },
-    divider: { height: 1, backgroundColor: '#eee', marginBottom: 15 },
+    divider: { height: 1, backgroundColor: colors.border, marginBottom: 15 },
     customerInfo: { flexDirection: 'row', alignItems: 'center' },
     avatar: { width: 40, height: 40, borderRadius: 20, marginRight: 10 },
-    customerName: { fontWeight: '600', fontSize: 14 },
-    customerEmail: { fontSize: 12, color: '#888' },
+    customerName: { fontWeight: '600', fontSize: 14, color: colors.text },
+    customerEmail: { fontSize: 12, color: colors.textSecondary },
     amountContainer: { marginLeft: 'auto', alignItems: 'flex-end' },
-    amountLabel: { fontSize: 12, color: '#888' },
-    amount: { fontSize: 16, fontWeight: 'bold', color: '#007AFF' },
+    amountLabel: { fontSize: 12, color: colors.textSecondary },
+    amount: { fontSize: 16, fontWeight: 'bold', color: colors.accent },
     loader: { marginTop: 50 },
-    empty: { textAlign: 'center', marginTop: 50, color: '#666' }
+    empty: { textAlign: 'center', marginTop: 50, color: colors.textSecondary }
 });
 
 export default VenueHostDashboard;

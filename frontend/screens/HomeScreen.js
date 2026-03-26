@@ -8,7 +8,8 @@ import {
   FlatList,
   TouchableOpacity,
   StatusBar,
-  Image
+  Image,
+  Linking
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -23,6 +24,7 @@ import CategoryFilter from '../components/CategoryFilter';
 
 const HomeScreen = ({ navigation }) => {
   const [events, setEvents] = useState([]);
+  const [newsArticles, setNewsArticles] = useState([]);
   const [filters, setFilters] = useState({ category: 'All' });
   const { user } = useContext(AuthContext);
   const { colors, isDark } = useTheme();
@@ -48,6 +50,18 @@ const HomeScreen = ({ navigation }) => {
 
     fetchEvents();
   }, [filters]);
+
+  useEffect(() => {
+    const fetchNews = async () => {
+      try {
+        const response = await api.get('/news');
+        setNewsArticles(response.data.articles.slice(0, 3));
+      } catch (error) {
+        console.error('Error fetching news:', error);
+      }
+    };
+    fetchNews();
+  }, []);
 
   const getCurrentDate = () => {
     const date = new Date();
@@ -171,16 +185,6 @@ const HomeScreen = ({ navigation }) => {
           icon="trophy"
         />
 
-        <View style={{ marginTop: 16 }}>
-          <HeroCard
-            title="AI Gym Trainer"
-            subtitle="Real-time form analysis & rep counting"
-            onPress={() => navigation.navigate('AiGymTrainer')}
-            icon="body"
-            image="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600&h=300&fit=crop"
-          />
-        </View>
-
         {/* AI Recommendation Section */}
         <AIRecommendationSection />
 
@@ -271,6 +275,42 @@ const HomeScreen = ({ navigation }) => {
               icon="add-circle"
               size="large"
             />
+          </View>
+        )}
+
+        {/* Sports News Section */}
+        {newsArticles.length > 0 && (
+          <View style={styles.newsSection}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Sports News</Text>
+              <TouchableOpacity onPress={() => navigation.navigate('News')}>
+                <Text style={styles.viewAllText}>View All</Text>
+              </TouchableOpacity>
+            </View>
+            {newsArticles.map((article, index) => (
+              <TouchableOpacity
+                key={`${article.url}-${index}`}
+                style={styles.newsCard}
+                onPress={() => Linking.openURL(article.url)}
+                activeOpacity={0.7}
+              >
+                <Image
+                  source={{ uri: article.urlToImage || 'https://via.placeholder.com/60' }}
+                  style={styles.newsImage}
+                />
+                <View style={styles.newsCardText}>
+                  <Text style={styles.newsTitle} numberOfLines={2}>{article.title}</Text>
+                  <Text style={styles.newsSource}>{article.source?.name || 'Sports'}</Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+            <TouchableOpacity
+              style={styles.viewAllNewsButton}
+              onPress={() => navigation.navigate('News')}
+            >
+              <Text style={styles.viewAllNewsText}>View All News</Text>
+              <Ionicons name="chevron-forward" size={16} color={colors.accent} />
+            </TouchableOpacity>
           </View>
         )}
       </ScrollView>
@@ -427,6 +467,54 @@ const makeStyles = (colors) => StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 8,
     marginBottom: 24,
+  },
+  newsSection: {
+    marginBottom: 32,
+  },
+  newsCard: {
+    flexDirection: 'row',
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: colors.surface,
+    marginBottom: 10,
+    marginHorizontal: 20,
+    alignItems: 'center',
+  },
+  newsImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 8,
+  },
+  newsCardText: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  newsTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  newsSource: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  viewAllNewsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    marginHorizontal: 20,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginTop: 4,
+  },
+  viewAllNewsText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.accent,
+    marginRight: 4,
   },
   quickActionsSection: {
     marginBottom: 24,

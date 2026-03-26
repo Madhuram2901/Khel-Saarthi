@@ -67,6 +67,7 @@ function HomeStack() {
             <Stack.Screen name="BadmintonProfile" component={BadmintonProfileScreen} options={{ title: 'Badminton Profile' }} />
             <Stack.Screen name="AiChat" component={AiChatScreen} options={{ headerShown: false }} />
             <Stack.Screen name="AiGymTrainer" component={AiGymTrainerScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="News" component={NewsScreen} options={{ title: 'Sports News' }} />
         </Stack.Navigator>
     );
 }
@@ -209,6 +210,7 @@ const AppNavigator = () => {
             'BadmintonProfile',
             'AiChat',
             'AiGymTrainer',
+            'News',
             'VenueDetails',
             'AddVenue',
             'EditVenue',

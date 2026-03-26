@@ -13,6 +13,8 @@ import api from '../api/api';
 import AuthContext from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import AppCard from '../components/AppCard';
+import TournamentCard from '../components/TournamentCard';
+import { SPACING, TYPOGRAPHY } from '../theme/designSystem';
 
 const TournamentListScreen = ({ navigation }) => {
     const { user } = useContext(AuthContext);
@@ -38,108 +40,12 @@ const TournamentListScreen = ({ navigation }) => {
         }
     };
 
-    const formatDate = (dateString) => {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
-        });
-    };
-
-    const getFormatBadgeColor = (format) => {
-        switch (format) {
-            case 'KNOCKOUT':
-                return '#FF6B6B';
-            case 'ROUND_ROBIN':
-                return '#4ECDC4';
-            case 'GROUPS_PLUS_KNOCKOUT':
-                return '#FFD93D';
-            default:
-                return '#95A5A6';
-        }
-    };
-
-    const renderTournamentCard = ({ item }) => {
-        const isHost = item.host._id === user._id;
-
-        return (
-            <TouchableOpacity
-                activeOpacity={0.7}
-                onPress={() => navigation.navigate('TournamentDashboard', { tournamentId: item._id })}
-            >
-                <AppCard style={styles.card}>
-                    <View style={styles.cardHeader}>
-                        <View style={styles.headerLeft}>
-                            <Text style={styles.tournamentName}>{item.name}</Text>
-                            <Text style={styles.sport}>{item.sport}</Text>
-                        </View>
-                        <View
-                            style={[
-                                styles.formatBadge,
-                                { backgroundColor: getFormatBadgeColor(item.format) },
-                            ]}
-                        >
-                            <Text style={styles.formatText}>
-                                {item.format.replace(/_/g, ' ')}
-                            </Text>
-                        </View>
-                    </View>
-
-                    <View style={styles.cardBody}>
-                        <View style={styles.infoRow}>
-                            <Ionicons name="calendar-outline" size={16} color={colors.textSecondary} />
-                            <Text style={styles.infoText}>
-                                {formatDate(item.startDate)} - {formatDate(item.endDate)}
-                            </Text>
-                        </View>
-
-                        <View style={styles.infoRow}>
-                            <Ionicons name="person-outline" size={16} color={colors.textSecondary} />
-                            <Text style={styles.infoText}>
-                                {isHost ? 'You' : item.host.name}
-                            </Text>
-                        </View>
-
-                        <View style={styles.statusRow}>
-                            <View
-                                style={[
-                                    styles.statusBadge,
-                                    item.status === 'PUBLISHED'
-                                        ? styles.publishedBadge
-                                        : styles.draftBadge,
-                                ]}
-                            >
-                                <Text
-                                    style={[
-                                        styles.statusText,
-                                        item.status === 'PUBLISHED'
-                                            ? styles.publishedText
-                                            : styles.draftText,
-                                    ]}
-                                >
-                                    {item.status}
-                                </Text>
-                            </View>
-
-                            {item.isPublic && (
-                                <View style={styles.publicBadge}>
-                                    <Ionicons name="globe-outline" size={14} color={colors.accent} />
-                                    <Text style={styles.publicText}>Public</Text>
-                                </View>
-                            )}
-                        </View>
-                    </View>
-
-                    {isHost && (
-                        <View style={styles.cardFooter}>
-                            <Ionicons name="chevron-forward" size={20} color={colors.accent} />
-                        </View>
-                    )}
-                </AppCard>
-            </TouchableOpacity>
-        );
-    };
+    const renderTournamentCard = ({ item }) => (
+        <TournamentCard
+            tournament={item}
+            onPress={() => navigation.navigate('TournamentDashboard', { tournamentId: item._id })}
+        />
+    );
 
     return (
         <View style={styles.container}>
@@ -187,7 +93,7 @@ const makeStyles = (colors) => StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingHorizontal: 20,
+        paddingHorizontal: SPACING.screenHorizontal,
         paddingTop: 50,
         paddingBottom: 16,
         backgroundColor: colors.surface,
@@ -195,8 +101,7 @@ const makeStyles = (colors) => StyleSheet.create({
         borderBottomColor: colors.border,
     },
     title: {
-        fontSize: 28,
-        fontWeight: '700',
+        ...TYPOGRAPHY.screenTitle,
         color: colors.text,
     },
     createButton: {
@@ -213,106 +118,9 @@ const makeStyles = (colors) => StyleSheet.create({
         elevation: 4,
     },
     listContainer: {
-        padding: 16,
-    },
-    card: {
-        backgroundColor: colors.surface,
-        borderRadius: 16,
-        padding: 16,
-        marginBottom: 16,
-        shadowColor: colors.cardShadow,
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-        elevation: 3,
-    },
-    cardHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        marginBottom: 12,
-    },
-    headerLeft: {
-        flex: 1,
-    },
-    tournamentName: {
-        fontSize: 20,
-        fontWeight: '700',
-        color: colors.text,
-        marginBottom: 4,
-    },
-    sport: {
-        fontSize: 14,
-        color: colors.textSecondary,
-    },
-    formatBadge: {
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 12,
-        marginLeft: 12,
-    },
-    formatText: {
-        fontSize: 11,
-        fontWeight: '600',
-        color: '#FFF',
-        textTransform: 'uppercase',
-    },
-    cardBody: {
-        marginBottom: 12,
-    },
-    infoRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 8,
-    },
-    infoText: {
-        fontSize: 14,
-        color: colors.textSecondary,
-        marginLeft: 8,
-    },
-    statusRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginTop: 8,
-    },
-    statusBadge: {
-        paddingHorizontal: 12,
-        paddingVertical: 4,
-        borderRadius: 8,
-        marginRight: 8,
-    },
-    publishedBadge: {
-        backgroundColor: '#E8F5E9',
-    },
-    draftBadge: {
-        backgroundColor: '#FFF3E0',
-    },
-    statusText: {
-        fontSize: 12,
-        fontWeight: '600',
-    },
-    publishedText: {
-        color: '#4CAF50',
-    },
-    draftText: {
-        color: '#FF9800',
-    },
-    publicBadge: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: 8,
-        paddingVertical: 4,
-        backgroundColor: colors.surface2,
-        borderRadius: 8,
-    },
-    publicText: {
-        fontSize: 12,
-        color: colors.accent,
-        marginLeft: 4,
-        fontWeight: '600',
-    },
-    cardFooter: {
-        alignItems: 'flex-end',
+        paddingHorizontal: SPACING.screenHorizontal,
+        paddingTop: 16,
+        paddingBottom: 16,
     },
     emptyContainer: {
         alignItems: 'center',

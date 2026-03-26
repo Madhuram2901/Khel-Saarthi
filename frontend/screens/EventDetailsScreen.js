@@ -30,11 +30,9 @@ const EventDetailsScreen = ({ route, navigation }) => {
     useEffect(() => {
         const fetchEventDetails = async () => {
             try {
-                setLoading(true);
                 const { data } = await api.get(`/events/${eventId}`);
                 setEvent(data);
             } catch (error) {
-                console.error(error);
                 Alert.alert('Error', 'Could not fetch event details.');
             } finally {
                 setLoading(false);
@@ -45,22 +43,13 @@ const EventDetailsScreen = ({ route, navigation }) => {
     }, [eventId]);
 
     const handleRegister = async () => {
-        if (!user.profiles?.badminton?.skillLevel) {
-            Alert.alert(
-                'Profile Incomplete',
-                'Please complete your Badminton profile before registering for an event.',
-                [{ text: 'OK', onPress: () => navigation.navigate('ProfileStack', { screen: 'BadmintonProfile' }) }]
-            );
-            return;
-        }
         try {
             await api.post(`/events/${eventId}/register`);
-            Alert.alert('Success', 'You have successfully registered for this event!');
+            Alert.alert('Success', 'You are registered!');
             const { data } = await api.get(`/events/${eventId}`);
             setEvent(data);
         } catch (error) {
-            const message = error.response?.data?.message || 'Could not register for the event. You may already be registered.';
-            Alert.alert('Registration Failed', message);
+            Alert.alert('Error', 'Registration failed');
         }
     };
 
@@ -91,7 +80,7 @@ const EventDetailsScreen = ({ route, navigation }) => {
 
     return (
         <SafeAreaView style={styles.container}>
-            <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+            <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
             {/* Header Image */}
             <ImageBackground
@@ -101,35 +90,31 @@ const EventDetailsScreen = ({ route, navigation }) => {
             >
                 <View style={styles.headerOverlay}>
                     <View style={styles.headerTop}>
-                        <TouchableOpacity
-                            style={styles.backButton}
-                            onPress={() => navigation.goBack()}
-                        >
-                            <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
+                        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+                            <Ionicons name="chevron-back" size={24} color="#FFF" />
                         </TouchableOpacity>
 
                         <TouchableOpacity style={styles.favoriteButton}>
-                            <Ionicons name="heart-outline" size={24} color="#FFFFFF" />
+                            <Ionicons name="heart-outline" size={24} color="#FFF" />
                         </TouchableOpacity>
                     </View>
                 </View>
             </ImageBackground>
 
-            <ScrollView style={styles.contentContainer} contentContainerStyle={{ paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
-                {/* Event Header */}
+            <ScrollView
+                style={styles.contentContainer}
+                contentContainerStyle={{ paddingBottom: 120 }}
+                showsVerticalScrollIndicator={false}
+            >
+                {/* Title */}
                 <View style={styles.eventHeader}>
-                    <View style={styles.eventTitleRow}>
-                        <Text style={styles.eventTitle}>{event.title}</Text>
-                        <View style={styles.sportsIndicator}>
-                            <Ionicons name="logo-github" size={16} color={colors.accent} />
-                        </View>
-                    </View>
+                    <Text style={styles.eventTitle}>{event.title}</Text>
 
                     <View style={styles.eventMeta}>
                         <View style={styles.metaItem}>
                             <Ionicons name="location-outline" size={16} color={colors.textSecondary} />
                             <Text style={styles.metaText}>
-                                {event.location?.address || 'IIT Bhopal University Ground'}
+                                {event.location?.address || 'Location TBD'}
                             </Text>
                         </View>
 
@@ -142,122 +127,61 @@ const EventDetailsScreen = ({ route, navigation }) => {
                     </View>
                 </View>
 
-                {/* Price and Register Button */}
+                {/* Price + Register */}
                 <View style={styles.priceSection}>
-                    <View style={styles.priceInfo}>
-                        <Text style={styles.priceLabel}>Free</Text>
-                        <View style={styles.shareButton}>
-                            <Ionicons name="share-outline" size={20} color={colors.accent} />
-                        </View>
-                    </View>
+                    <Text style={styles.priceLabel}>Free</Text>
 
-                    {!isHost && !isRegistered && (
-                        <StyledButton
-                            title="Register"
-                            onPress={handleRegister}
-                            variant="primary"
-                            size="large"
-                            style={styles.registerButton}
-                        />
-                    )}
-
-                    {isRegistered && (
-                        <View style={styles.registeredContainer}>
-                            <Ionicons name="checkmark-circle" size={24} color={colors.accentGreen} />
-                            <Text style={styles.registeredText}>You're registered!</Text>
-                        </View>
+                    {!isHost && (
+                        <>
+                            {hoursLeft <= 0 ? (
+                                <View style={styles.eventStartedContainer}>
+                                    <Ionicons name="time" size={20} color="#FF9500" />
+                                    <Text style={styles.eventStartedText}>Event Started</Text>
+                                </View>
+                            ) : isRegistered ? (
+                                <View style={styles.registeredContainer}>
+                                    <Ionicons name="checkmark-circle" size={24} color={colors.accentGreen} />
+                                    <Text style={styles.registeredText}>You're registered!</Text>
+                                </View>
+                            ) : (
+                                <StyledButton
+                                    title="Register"
+                                    onPress={handleRegister}
+                                    variant="primary"
+                                    size="large"
+                                />
+                            )}
+                        </>
                     )}
                 </View>
 
-                {/* Participants Info */}
+                {/* Participants */}
                 <View style={styles.participantsSection}>
-                    <View style={styles.participantsMeta}>
-                        <View style={styles.participantsCount}>
-                            <Ionicons name="people" size={18} color={colors.accent} />
-                            <Text style={styles.participantsText}>
-                                {event.registeredParticipants.length} Registered
-                            </Text>
-                        </View>
-
-                        <View style={styles.playersPerTeam}>
-                            <Ionicons name="person" size={18} color={colors.accent} />
-                            <Text style={styles.participantsText}>
-                                7 Players Per Team
-                            </Text>
-                        </View>
-                    </View>
-
-                    <View style={styles.timeInfo}>
-                        <Ionicons name="time" size={18} color="#FF9500" />
-                        <Text style={styles.timeText}>
-                            {hoursLeft > 0 ? `${hoursLeft} Hours Left` : 'Event Started'}
-                        </Text>
-                    </View>
+                    <Text style={styles.participantsText}>
+                        {event.registeredParticipants.length} Registered • 7 Players Per Team
+                    </Text>
                 </View>
 
                 {/* Description */}
                 <View style={styles.descriptionSection}>
                     <Text style={styles.sectionTitle}>Description</Text>
                     <Text style={styles.descriptionText}>
-                        {event.description ||
-                            'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec auctor tellus sed rutrum venenatis. Maecenas blandit sem. Sed a lorem eget tellus pulvinar dapibus sagittis vel tellus. Mauris convallis mauris tellus.'}
+                        {event.description || 'No description available.'}
                     </Text>
-                    <TouchableOpacity>
-                        <Text style={styles.readMoreText}>Read More</Text>
-                    </TouchableOpacity>
                 </View>
 
-                {/* Features */}
-                <View style={styles.featuresSection}>
-                    <Text style={styles.sectionTitle}>Features</Text>
-                    <View style={styles.featuresList}>
-                        <View style={[styles.featureTag, { backgroundColor: isDark ? 'rgba(52,199,89,0.15)' : '#E8F5E8' }]}>
-                            <Text style={[styles.featureText, { color: colors.accentGreen }]}>Beginner Friendly</Text>
-                        </View>
-                        <View style={[styles.featureTag, { backgroundColor: isDark ? 'rgba(255,59,48,0.15)' : '#FFE8E8' }]}>
-                            <Text style={[styles.featureText, { color: colors.accentRed }]}>Official Tournament</Text>
-                        </View>
-                        <View style={[styles.featureTag, { backgroundColor: isDark ? 'rgba(0,122,255,0.15)' : '#E8F4FD' }]}>
-                            <Text style={[styles.featureText, { color: colors.accent }]}>Inter-College</Text>
-                        </View>
-                    </View>
-                </View>
-
-                {/* Host Actions */}
-                {isHost && (
-                    <View style={styles.hostActions}>
-                        <StyledButton
-                            title={`View Participants (${event.registeredParticipants.length})`}
-                            onPress={() => navigation.navigate('Participants', { eventId: event._id })}
-                            variant="secondary"
-                            icon="people"
-                            style={styles.actionButton}
-                        />
-
-                        <StyledButton
-                            title="Edit Event"
-                            onPress={() => navigation.navigate('EditEvent', { eventId: event._id })}
-                            variant="outline"
-                            icon="create"
-                            style={styles.actionButton}
-                        />
-                    </View>
-                )}
-
-                {/* Chat Button */}
+                {/* Chat */}
                 {(isHost || isRegistered) && (
                     <View style={styles.chatSection}>
                         <StyledButton
                             title="Go to Event Chat"
-                            onPress={() => navigation.navigate('Chat', { eventId: event._id, eventTitle: event.title })}
+                            onPress={() => navigation.navigate('Chat', { eventId: event._id })}
                             variant="success"
                             icon="chatbubbles"
                             size="large"
                         />
                     </View>
                 )}
-
-                <View style={styles.bottomPadding} />
             </ScrollView>
         </SafeAreaView>
     );
@@ -279,28 +203,26 @@ const makeStyles = (colors, isDark) => StyleSheet.create({
         color: colors.textSecondary,
     },
     headerImage: {
-        height: 250,
-        justifyContent: 'space-between',
+        height: 260,
     },
     headerImageStyle: {
         backgroundColor: colors.surface2,
     },
     headerOverlay: {
         flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.3)',
-        padding: 20,
-        paddingTop: 50,
+        backgroundColor: 'rgba(0,0,0,0.3)',
+        padding: 16,
+        paddingTop: 60,
     },
     headerTop: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: 'center',
     },
     backButton: {
         width: 40,
         height: 40,
         borderRadius: 20,
-        backgroundColor: 'rgba(0, 0, 0, 0.3)',
+        backgroundColor: 'rgba(0,0,0,0.3)',
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -308,130 +230,81 @@ const makeStyles = (colors, isDark) => StyleSheet.create({
         width: 40,
         height: 40,
         borderRadius: 20,
-        backgroundColor: 'rgba(0, 0, 0, 0.3)',
+        backgroundColor: 'rgba(0,0,0,0.3)',
         justifyContent: 'center',
         alignItems: 'center',
     },
     contentContainer: {
-        flex: 1,
-        marginTop: -20,
+        marginTop: -30,
         borderTopLeftRadius: 24,
         borderTopRightRadius: 24,
         backgroundColor: colors.background,
     },
     eventHeader: {
         padding: 20,
-        paddingBottom: 16,
-    },
-    eventTitleRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        marginBottom: 12,
     },
     eventTitle: {
-        fontSize: 28,
+        fontSize: 26,
         fontWeight: 'bold',
         color: colors.text,
-        flex: 1,
-        marginRight: 12,
-    },
-    sportsIndicator: {
-        width: 32,
-        height: 32,
-        borderRadius: 16,
-        backgroundColor: colors.surface2,
-        justifyContent: 'center',
-        alignItems: 'center',
+        marginBottom: 10,
     },
     eventMeta: {
-        gap: 8,
+        gap: 6,
     },
     metaItem: {
         flexDirection: 'row',
         alignItems: 'center',
     },
     metaText: {
-        fontSize: 14,
-        color: colors.textSecondary,
         marginLeft: 8,
+        color: colors.textSecondary,
     },
     priceSection: {
         paddingHorizontal: 20,
         paddingBottom: 20,
     },
-    priceInfo: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 16,
-    },
     priceLabel: {
-        fontSize: 24,
+        fontSize: 22,
         fontWeight: 'bold',
         color: colors.text,
-    },
-    shareButton: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
-        backgroundColor: colors.surface2,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    registerButton: {
-        backgroundColor: colors.text,
+        marginBottom: 10,
     },
     registeredContainer: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        paddingVertical: 16,
+        paddingVertical: 14,
         backgroundColor: isDark ? 'rgba(52,199,89,0.15)' : '#F2F8F2',
         borderRadius: 12,
     },
     registeredText: {
-        fontSize: 16,
+        marginLeft: 8,
         fontWeight: '600',
         color: colors.accentGreen,
+    },
+    eventStartedContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 14,
+        backgroundColor: 'rgba(255,149,0,0.15)',
+        borderRadius: 12,
+    },
+    eventStartedText: {
         marginLeft: 8,
+        fontWeight: '600',
+        color: '#FF9500',
     },
     participantsSection: {
-        paddingHorizontal: 20,
-        paddingVertical: 16,
-        backgroundColor: colors.surface,
+        padding: 20,
         borderTopWidth: 1,
         borderBottomWidth: 1,
         borderColor: colors.border,
     },
-    participantsMeta: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: 12,
-    },
-    participantsCount: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    playersPerTeam: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
     participantsText: {
-        fontSize: 14,
-        fontWeight: '600',
         color: colors.text,
-        marginLeft: 6,
-    },
-    timeInfo: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    timeText: {
-        fontSize: 14,
         fontWeight: '600',
-        color: '#FF9500',
-        marginLeft: 6,
     },
     descriptionSection: {
         padding: 20,
@@ -440,49 +313,14 @@ const makeStyles = (colors, isDark) => StyleSheet.create({
         fontSize: 20,
         fontWeight: 'bold',
         color: colors.text,
-        marginBottom: 12,
+        marginBottom: 10,
     },
     descriptionText: {
-        fontSize: 16,
         color: colors.textSecondary,
-        lineHeight: 24,
-        marginBottom: 8,
-    },
-    readMoreText: {
-        fontSize: 16,
-        color: colors.accent,
-        fontWeight: '600',
-    },
-    featuresSection: {
-        paddingHorizontal: 20,
-        paddingBottom: 20,
-    },
-    featuresList: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: 8,
-    },
-    featureTag: {
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 16,
-    },
-    featureText: {
-        fontSize: 12,
-        fontWeight: '600',
-    },
-    hostActions: {
-        paddingHorizontal: 20,
-        gap: 12,
-    },
-    actionButton: {
-        marginVertical: 0,
+        lineHeight: 22,
     },
     chatSection: {
         padding: 20,
-    },
-    bottomPadding: {
-        height: 20,
     },
 });
 

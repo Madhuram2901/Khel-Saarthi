@@ -1,9 +1,12 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ImageBackground } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { getSportImage, formatEventDate } from '../utils/constants';
+import { useTheme } from '../context/ThemeContext';
 
 const EventCard = ({ event, onPress, style = {} }) => {
+  const { colors, isDark } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, isDark), [colors, isDark]);
   const { day, month } = formatEventDate(event.date);
 
   const priceText =
@@ -66,14 +69,27 @@ const EventCard = ({ event, onPress, style = {} }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const withAlpha = (hex, alpha) => {
+  if (!hex || typeof hex !== 'string') return `rgba(0,0,0,${alpha})`;
+  const normalized = hex.replace('#', '');
+  const full = normalized.length === 3
+    ? normalized.split('').map((c) => c + c).join('')
+    : normalized;
+  const r = parseInt(full.slice(0, 2), 16);
+  const g = parseInt(full.slice(2, 4), 16);
+  const b = parseInt(full.slice(4, 6), 16);
+  if ([r, g, b].some((v) => Number.isNaN(v))) return `rgba(0,0,0,${alpha})`;
+  return `rgba(${r},${g},${b},${alpha})`;
+};
+
+const makeStyles = (colors, isDark) => StyleSheet.create({
   container: {
     borderRadius: 16,
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
+    shadowOpacity: isDark ? 0.4 : 0.2,
+    shadowRadius: 8,
     elevation: 4,
   },
   imageBackground: {
@@ -87,7 +103,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 14,
     justifyContent: 'space-between',
-    backgroundColor: 'rgba(0,0,0,0.35)',
+    backgroundColor: 'rgba(0,0,0,0.45)',
   },
   header: {
     flexDirection: 'row',
@@ -95,7 +111,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   dateContainer: {
-    backgroundColor: 'rgba(255,255,255,0.95)',
+    backgroundColor: withAlpha(colors.surface, 0.92),
     borderRadius: 8,
     paddingVertical: 6,
     paddingHorizontal: 8,
@@ -105,17 +121,17 @@ const styles = StyleSheet.create({
   day: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#222',
+    color: colors.text,
     lineHeight: 18,
   },
   month: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#666',
+    color: colors.textSecondary,
     lineHeight: 12,
   },
   categoryBadge: {
-    backgroundColor: '#FF6B35',
+    backgroundColor: colors.accent,
     borderRadius: 12,
     paddingHorizontal: 10,
     paddingVertical: 5,

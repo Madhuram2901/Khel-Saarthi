@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -10,8 +10,8 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import EventCard from '../components/EventCard';
-import EventDetailsScreen from './EventDetailsScreen';
 import api from '../api/api';
+import { useTheme } from '../context/ThemeContext';
 
 const sports = ['All', 'Cricket', 'Football', 'Badminton', 'Tennis', 'Basketball'];
 
@@ -20,6 +20,8 @@ const EventsScreen = ({ navigation }) => {
   const [filteredEvents, setFilteredEvents] = useState([]);
   const [selectedSport, setSelectedSport] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   useEffect(() => {
     fetchEvents();
@@ -35,8 +37,8 @@ const EventsScreen = ({ navigation }) => {
       const sortedEvents = res.data.sort(
         (a, b) => new Date(a.date) - new Date(b.date)
       );
-      setEvents(res.data);
-      setFilteredEvents(res.data);
+      setEvents(sortedEvents);
+      setFilteredEvents(sortedEvents);
     } catch (error) {
       console.log('Error fetching events', error);
     }
@@ -54,8 +56,8 @@ const EventsScreen = ({ navigation }) => {
         e.title.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
-    filtered.sort((a, b) => new Date(a.date) - new Date(b.date));
 
+    filtered.sort((a, b) => new Date(a.date) - new Date(b.date));
     setFilteredEvents(filtered);
   };
 
@@ -64,23 +66,34 @@ const EventsScreen = ({ navigation }) => {
       event={item}
       onPress={() =>
         navigation.navigate('EventsStack', {
-            screen: 'EventDetails',
-            params: { eventId: item._id }
+          screen: 'EventDetails',
+          params: { eventId: item._id }
         })
       }
-      style={{ width: '48%', marginBottom: 12 }}
+      style={{ width: '48%', marginBottom: 14 }}
     />
   );
 
   const renderHeader = () => (
-    <View style={{  paddingBottom: 12 }}>
-      <Text style={styles.header}>Events</Text>
+    <View style={styles.headerContainer}>
+      {/* Header Row */}
+      <View style={styles.headerRow}>
+        <Text style={styles.headerTitle}>Events</Text>
+
+        <TouchableOpacity
+          style={styles.addButton}
+          onPress={() => navigation.navigate('CreateEvent')}
+        >
+          <Ionicons name="add" size={26} color="#FFF" />
+        </TouchableOpacity>
+      </View>
 
       {/* Search */}
       <View style={styles.searchContainer}>
         <Ionicons name="search-outline" size={18} color="#888" />
         <TextInput
           placeholder="Search events..."
+          placeholderTextColor="#888"
           style={styles.searchInput}
           value={searchQuery}
           onChangeText={setSearchQuery}
@@ -93,7 +106,7 @@ const EventsScreen = ({ navigation }) => {
         horizontal
         showsHorizontalScrollIndicator={false}
         keyExtractor={(item) => item}
-        contentContainerStyle={{ paddingBottom: 16 }} 
+        contentContainerStyle={{ paddingVertical: 6 }}
         renderItem={({ item }) => (
           <TouchableOpacity
             style={[
@@ -117,7 +130,7 @@ const EventsScreen = ({ navigation }) => {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <FlatList
         data={filteredEvents}
         keyExtractor={(item) => item._id}
@@ -128,7 +141,8 @@ const EventsScreen = ({ navigation }) => {
         ListHeaderComponent={renderHeader}
         contentContainerStyle={{
           paddingHorizontal: 16,
-          paddingBottom: 120
+          paddingBottom: 120,
+          paddingTop: 10
         }}
       />
     </SafeAreaView>
@@ -137,45 +151,81 @@ const EventsScreen = ({ navigation }) => {
 
 export default EventsScreen;
 
-const styles = StyleSheet.create({
+const makeStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7F7F7',
   },
-  header: {
-    fontSize: 26,
-    fontWeight: '700',
-    marginBottom: 10,
+
+  headerContainer: {
+    paddingHorizontal: 16,
+    paddingBottom: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginTop: 10,
+    marginBottom: 16,
   },
+
+  headerTitle: {
+    fontSize: 34,
+    fontWeight: '700',
+    color: colors.text,
+  },
+
+  addButton: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.accent,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: colors.accent,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.7,
+    shadowRadius: 12,
+    elevation: 10,
+  },
+
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#ECECEC',
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    height: 44,
+    backgroundColor: colors.inputBackground,
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    height: 46,
     marginBottom: 12,
   },
+
   searchInput: {
     marginLeft: 8,
     flex: 1,
     fontSize: 14,
+    color: colors.text,
   },
+
   filterChip: {
-    paddingHorizontal: 14,
-    height: 32,
-    backgroundColor: '#EAEAEA',
-    borderRadius: 16,
+    paddingHorizontal: 16,
+    height: 34,
+    borderRadius: 17,
     marginRight: 8,
     justifyContent: 'center',
+    backgroundColor: colors.surface2,
   },
+
   filterChipActive: {
-    backgroundColor: '#007AFF',
+    backgroundColor: colors.accent,
   },
+
   filterText: {
     fontSize: 13,
+    color: colors.text,
   },
+
   filterTextActive: {
     color: '#FFF',
     fontWeight: '600',

@@ -44,6 +44,7 @@ const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 const VenueStack = createStackNavigator();
 const TournamentStack = createStackNavigator();
+const EventStack = createStackNavigator();
 
 function HomeStack() {
     const { colors } = useTheme();
@@ -88,10 +89,10 @@ function ProfileStack() {
     );
 }
 
-function NewsStack() {
+function EventsStackScreen() {
     const { colors } = useTheme();
     return (
-        <Stack.Navigator
+        <EventStack.Navigator
             screenOptions={{
                 headerStyle: { backgroundColor: colors.surface, elevation: 0, shadowOpacity: 0, borderBottomWidth: 1, borderBottomColor: colors.border },
                 headerTitleStyle: { fontSize: 18, fontWeight: '600', color: colors.text },
@@ -100,8 +101,13 @@ function NewsStack() {
                 cardStyle: { backgroundColor: colors.background },
             }}
         >
-            <Stack.Screen name="News" component={NewsScreen} options={{ title: 'Sports News' }} />
-        </Stack.Navigator>
+            <EventStack.Screen name="EventList" component={HomeScreen} options={{ headerShown: false }} />
+            <EventStack.Screen name="CreateEvent" component={CreateEventScreen} options={{ title: 'Create Event' }} />
+            <EventStack.Screen name="EditEvent" component={EditEventScreen} options={{ title: 'Edit Event' }} />
+            <EventStack.Screen name="EventDetails" component={EventDetailsScreen} options={{ title: 'Event Details' }} />
+            <EventStack.Screen name="Participants" component={ParticipantsScreen} options={{ title: 'Participants' }} />
+            <EventStack.Screen name="Chat" component={ChatScreen} options={({ route }) => ({ title: route.params?.eventTitle || 'Chat' })} />
+        </EventStack.Navigator>
     );
 }
 
@@ -231,8 +237,8 @@ const AppNavigator = () => {
 
                             if (route.name === 'HomeStack') iconName = focused ? 'home' : 'home-outline';
                             else if (route.name === 'TournamentStack') iconName = focused ? 'trophy' : 'trophy-outline';
-                            else if (route.name === 'VenueStack') iconName = focused ? 'calendar' : 'calendar-outline';
-                            else if (route.name === 'NewsStack') iconName = focused ? 'newspaper' : 'newspaper-outline';
+                            else if (route.name === 'EventsStack') iconName = focused ? 'calendar' : 'calendar-outline';
+                            else if (route.name === 'VenueStack') iconName = focused ? 'location' : 'location-outline';
                             else if (route.name === 'ProfileStack') iconName = focused ? 'person' : 'person-outline';
 
                             return <Ionicons name={iconName} size={size} color={color} />;
@@ -255,18 +261,21 @@ const AppNavigator = () => {
                     />
 
                     <Tab.Screen
+                        name="EventsStack"
+                        component={EventsStackScreen}
+                        options={({ route }) => ({
+                            title: 'Events',
+                            tabBarStyle: { display: getTabBarVisibility(route) },
+                        })}
+                    />
+
+                    <Tab.Screen
                         name="VenueStack"
                         component={VenueStackScreen}
                         options={({ route }) => ({
                             title: 'Venues',
                             tabBarStyle: { display: getTabBarVisibility(route) },
                         })}
-                    />
-
-                    <Tab.Screen
-                        name="NewsStack"
-                        component={NewsStack}
-                        options={{ title: 'News' }}
                     />
 
                     <Tab.Screen

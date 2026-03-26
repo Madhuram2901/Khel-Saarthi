@@ -127,16 +127,8 @@ const HomeScreen = ({ navigation }) => {
 
       {/* Header */}
       <View style={styles.header}>
-        <View>
-          <Text style={styles.greeting}>Hello, {user?.name || 'Athlete'}! 👋</Text>
-          <Text style={styles.subGreeting}>Ready to play today?</Text>
-        </View>
-        <TouchableOpacity onPress={() => navigation.navigate('ProfileStack')}>
-          <Image
-            source={{ uri: user?.profilePicture || 'https://via.placeholder.com/100' }}
-            style={styles.profilePic}
-          />
-        </TouchableOpacity>
+        <Text style={styles.greeting}>Hello, {user?.name || 'Athlete'}! 👋</Text>
+        <Text style={styles.subGreeting}>Ready to play today?</Text>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scrollContent, { paddingBottom: 120 }]}>
@@ -299,26 +291,20 @@ const makeStyles = (colors) => StyleSheet.create({
     zIndex: 1000,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    justifyContent: 'flex-start',
     paddingHorizontal: 20,
     paddingVertical: 15,
+    marginBottom: 4,
   },
   greeting: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: '700',
     color: colors.text,
   },
   subGreeting: {
     fontSize: 14,
     color: colors.textSecondary,
     marginTop: 4,
-  },
-  profilePic: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
   },
   sectionContainer: {
     marginVertical: 12,

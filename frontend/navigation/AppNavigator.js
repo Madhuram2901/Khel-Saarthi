@@ -23,6 +23,9 @@ import ParticipantsScreen from '../screens/ParticipantsScreen';
 import ChatScreen from '../screens/ChatScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import BadmintonProfileScreen from '../screens/BadmintonProfileScreen';
+import CreateSportsProfileScreen from '../screens/CreateSportsProfileScreen';
+import SportsProfileDetailsScreen from '../screens/SportsProfileDetailsScreen';
+import EditSportsProfileScreen from '../screens/EditSportsProfileScreen';
 import AiChatScreen from '../screens/AiChatScreen';
 import NewsScreen from '../screens/NewsScreen';
 import VenueListScreen from '../screens/VenueListScreen';
@@ -226,74 +229,82 @@ const AppNavigator = () => {
         return hiddenScreens.includes(routeName) ? 'none' : 'flex';
     };
 
+    const MainTabNavigator = () => (
+        <Tab.Navigator
+            tabBar={(props) => <FloatingTabBar {...props} />}
+            screenOptions={({ route }) => ({
+                headerShown: false,
+                tabBarIcon: ({ focused, color, size }) => {
+                    let iconName;
+
+                    if (route.name === 'HomeStack') iconName = focused ? 'home' : 'home-outline';
+                    else if (route.name === 'TournamentStack') iconName = focused ? 'trophy' : 'trophy-outline';
+                    else if (route.name === 'EventsStack') iconName = focused ? 'calendar' : 'calendar-outline';
+                    else if (route.name === 'VenueStack') iconName = focused ? 'location' : 'location-outline';
+                    else if (route.name === 'ProfileStack') iconName = focused ? 'person' : 'person-outline';
+
+                    return <Ionicons name={iconName} size={size} color={color} />;
+                },
+            })}
+        >
+            <Tab.Screen
+                name="HomeStack"
+                component={HomeStack}
+                options={({ route }) => ({
+                    title: 'Home',
+                    tabBarStyle: { display: getTabBarVisibility(route) },
+                })}
+            />
+
+            <Tab.Screen
+                name="TournamentStack"
+                component={TournamentStackScreen}
+                options={{ title: 'Tournaments' }}
+            />
+
+            <Tab.Screen
+                name="EventsStack"
+                component={EventsStackScreen}
+                options={({ route }) => ({
+                    title: 'Events',
+                    tabBarStyle: { display: getTabBarVisibility(route) },
+                    tabBarIcon: ({ color, size }) => (
+                        <Ionicons name="calendar-outline" size={size} color={color} />
+                    ),
+                })}
+            />
+
+            <Tab.Screen
+                name="VenueStack"
+                component={VenueStackScreen}
+                options={({ route }) => ({
+                    title: 'Venues',
+                    tabBarStyle: { display: getTabBarVisibility(route) },
+                })}
+            />
+
+            <Tab.Screen
+                name="ProfileStack"
+                component={ProfileStack}
+                options={({ route }) => ({
+                    title: 'Profile',
+                    tabBarStyle: { display: getTabBarVisibility(route) },
+                })}
+            />
+        </Tab.Navigator>
+    );
+
 
 
     return (
         <NavigationContainer>
             {user ? (
-                <Tab.Navigator
-                    tabBar={(props) => <FloatingTabBar {...props} />}
-                    screenOptions={({ route }) => ({
-                        headerShown: false,
-                        tabBarIcon: ({ focused, color, size }) => {
-                            let iconName;
-
-                            if (route.name === 'HomeStack') iconName = focused ? 'home' : 'home-outline';
-                            else if (route.name === 'TournamentStack') iconName = focused ? 'trophy' : 'trophy-outline';
-                            else if (route.name === 'EventsStack') iconName = focused ? 'calendar' : 'calendar-outline';
-                            else if (route.name === 'VenueStack') iconName = focused ? 'location' : 'location-outline';
-                            else if (route.name === 'ProfileStack') iconName = focused ? 'person' : 'person-outline';
-
-                            return <Ionicons name={iconName} size={size} color={color} />;
-                        },
-                    })}
-                >
-                    <Tab.Screen
-                        name="HomeStack"
-                        component={HomeStack}
-                        options={({ route }) => ({
-                            title: 'Home',
-                            tabBarStyle: { display: getTabBarVisibility(route) },
-                        })}
-                    />
-
-                    <Tab.Screen
-                        name="TournamentStack"
-                        component={TournamentStackScreen}
-                        options={{ title: 'Tournaments' }}
-                    />
-
-                    <Tab.Screen
-                        name="EventsStack"
-                        component={EventsStackScreen}
-                        options={({ route }) => ({
-                            title: 'Events',
-                            tabBarStyle: { display: getTabBarVisibility(route) },
-                            tabBarIcon: ({ color, size }) => (
-                                <Ionicons name="calendar-outline" size={size} color={color} />
-                            ),
-                        })}
-                    />
-
-                    <Tab.Screen
-                        name="VenueStack"
-                        component={VenueStackScreen}
-                        options={({ route }) => ({
-                            title: 'Venues',
-                            tabBarStyle: { display: getTabBarVisibility(route) },
-                        })}
-                    />
-
-                    <Tab.Screen
-                        name="ProfileStack"
-                        component={ProfileStack}
-                        options={({ route }) => ({
-                            title: 'Profile',
-                            tabBarStyle: { display: getTabBarVisibility(route) },
-                        })}
-                    />
-                </Tab.Navigator>
-
+                <Stack.Navigator screenOptions={{ headerShown: false, cardStyle: { backgroundColor: colors.background } }}>
+                    <Stack.Screen name="MainTabs" component={MainTabNavigator} />
+                    <Stack.Screen name="CreateSportsProfile" component={CreateSportsProfileScreen} />
+                    <Stack.Screen name="SportsProfileDetails" component={SportsProfileDetailsScreen} />
+                    <Stack.Screen name="EditSportsProfile" component={EditSportsProfileScreen} />
+                </Stack.Navigator>
             ) : (
                 <Stack.Navigator screenOptions={{ headerShown: false, cardStyle: { backgroundColor: colors.background } }}>
                     <Stack.Screen name="Login" component={LoginScreen} />

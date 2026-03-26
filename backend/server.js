@@ -13,11 +13,18 @@ const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
         origin: "*",
-        methods: ["GET", "POST"]
+        methods: ["GET", "POST", "PUT", "DELETE"]
     }
 });
 
-app.use(cors());
+// Enhanced CORS configuration for Expo app
+app.use(cors({
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: false
+}));
+
 app.use(express.json());
 
 connectDB();
@@ -31,6 +38,7 @@ const venueRoutes = require('./routes/venueRoutes');
 const bookingRoutes = require('./routes/bookingRoutes');
 const tournamentRoutes = require('./routes/tournamentRoutes');
 const matchRoutes = require('./routes/matchRoutes');
+const sportsProfileRoutes = require('./routes/sportsProfileRoutes');
 
 // API Routes
 app.get('/', (req, res) => {
@@ -45,12 +53,13 @@ app.use('/api/venues', venueRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/tournaments', tournamentRoutes);
 app.use('/api/matches', matchRoutes);
+app.use('/api/sports-profiles', sportsProfileRoutes);
 
 // Initialize our socket logic
 initializeSocket(io);
 
 const PORT = process.env.PORT || 5001;
 
-server.listen(PORT, () => {
+server.listen(PORT, '0.0.0.0', () => {
     console.log(`Server is running on port ${PORT}`);
 });

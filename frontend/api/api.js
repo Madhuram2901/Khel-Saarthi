@@ -1,21 +1,17 @@
 import axios from 'axios';
-import Constants from 'expo-constants';
 
-// Get the host URI from the Expo constants
-const { hostUri } = Constants.expoConfig;
+// Backend server address - Update this IP to match your backend server
+// or use environment variables for different environments
+const API_BASE_URL = 'http://172.25.255.27:5001/api';
 
-// Extract the IP address from the host URI. 
-// The host URI is typically in the format '192.168.1.5:8081'.
-// We need to split it at the colon and take the first part.
-const ipAddress = hostUri.split(':')[0];
-
-// Construct the base URL for your backend server
-const API_URL = `http://${ipAddress}:5001/api`;
-
-console.log(`Connecting to API at: ${API_URL}`); // This will log the URL in your terminal
+console.log(`Connecting to API at: ${API_BASE_URL}`);
 
 const api = axios.create({
-    baseURL: API_URL,
+  baseURL: API_BASE_URL,
+  timeout: 15000, // 15 second timeout
+  headers: {
+    'Content-Type': 'application/json',
+  },
 });
 
 export default api;

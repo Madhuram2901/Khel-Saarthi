@@ -1,5 +1,6 @@
 
-import React, { useContext, useState, useEffect, useMemo } from 'react';
+import React, { useContext, useState, useEffect, useMemo, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
     View,
     Text,
@@ -23,6 +24,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../api/api';
 import AppCard from '../components/AppCard';
 import { CARD_SHADOW, RADII, SIZES, SPACING, TYPOGRAPHY } from '../theme/designSystem';
+import { getSportEmoji, getSkillLevelLabel } from '../utils/sportsHelper';
 
 const ProfileScreen = ({ navigation }) => {
     const { user, logout, setUser } = useContext(AuthContext);
@@ -36,6 +38,8 @@ const ProfileScreen = ({ navigation }) => {
     const [loading, setLoading] = useState(false);
     const [editMode, setEditMode] = useState(false);
     const [eventsJoined, setEventsJoined] = useState(0);
+    const [sportsProfiles, setSportsProfiles] = useState([]);
+    const [loadingProfiles, setLoadingProfiles] = useState(false);
 
     useEffect(() => {
         const fetchEventsJoined = async () => {
@@ -48,6 +52,25 @@ const ProfileScreen = ({ navigation }) => {
         };
         fetchEventsJoined();
     }, []);
+
+    useFocusEffect(
+        useCallback(() => {
+            fetchSportsProfiles();
+        }, [])
+    );
+
+    const fetchSportsProfiles = async () => {
+        try {
+            setLoadingProfiles(true);
+            const res = await api.get('/sports-profiles');
+            setSportsProfiles(res.data || []);
+        } catch (error) {
+            console.error('Error fetching sports profiles:', error);
+            setSportsProfiles([]);
+        } finally {
+            setLoadingProfiles(false);
+        }
+    };
 
 
     const requestMediaLibraryPermission = async () => {
@@ -334,14 +357,58 @@ const ProfileScreen = ({ navigation }) => {
                 {/* Sports Profiles Section */}
                 <MenuSection title="Sports Profiles">
                     <View style={[styles.listCard, { backgroundColor: colors.surface }]}>
-                        <MenuItem
-                            icon="tennisball-outline"
-                            title="Badminton Profile"
-                            subtitle={badmintonProfile.skillLevel ? `${badmintonProfile.skillLevel} Level` : "Not set up"}
-                            onPress={() => navigation.navigate('BadmintonProfile')}
-                            color={colors.accent}
-                        />
+                        {loadingProfiles ? (
+                            <View style={styles.menuItem}>
+                                <Text style={[styles.menuItemTitle, { color: colors.textSecondary }]}>Loading profiles...</Text>
+                            </View>
+                        ) : sportsProfiles.length > 0 ? (
+                            sportsProfiles.map((profile, index) => (
+                                <View key={profile._id}>
+                                    <TouchableOpacity
+                                        style={styles.menuItem}
+                                        onPress={() =>
+                                            navigation.navigate('SportsProfileDetails', { profileId: profile._id })
+                                        }
+                                        activeOpacity={0.85}
+                                    >
+                                        <View style={styles.menuItemLeft}>
+                                            <View style={[styles.menuIcon, { backgroundColor: `${colors.accent}15` }]}>
+                                                <Text style={styles.sportEmoji}>{getSportEmoji(profile.sportName)}</Text>
+                                            </View>
+                                            <View style={styles.menuItemContent}>
+                                                <Text style={[styles.menuItemTitle, { color: colors.text }]}>
+                                                    {profile.sportName}
+                                                </Text>
+                                                <Text style={[styles.menuItemSubtitle, { color: colors.textSecondary }]}>
+                                                    {getSkillLevelLabel(profile.skillLevel)} · {profile.playstyle}
+                                                </Text>
+                                            </View>
+                                        </View>
+                                        <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
+                                    </TouchableOpacity>
+                                    {index < sportsProfiles.length - 1 && (
+                                        <View style={[styles.divider, { backgroundColor: colors.border }]} />
+                                    )}
+                                </View>
+                            ))
+                        ) : (
+                            <View style={styles.menuItem}>
+                                <Text style={[styles.menuItemTitle, { color: colors.textSecondary }]}>
+                                    No sports profiles yet
+                                </Text>
+                            </View>
+                        )}
                     </View>
+
+                    {/* Add New Profile Button */}
+                    <TouchableOpacity
+                        style={[styles.addProfileButton, { backgroundColor: colors.accent }]}
+                        onPress={() => navigation.navigate('CreateSportsProfile')}
+                        activeOpacity={0.8}
+                    >
+                        <Ionicons name="add-circle" size={20} color="#FFF" />
+                        <Text style={styles.addProfileButtonText}>Add New Sport Profile</Text>
+                    </TouchableOpacity>
                 </MenuSection>
 
                 {/* Settings Section */}
@@ -663,6 +730,24 @@ const makeStyles = (colors) => StyleSheet.create({
     },
     bottomPadding: {
         height: 40,
+    },
+    sportEmoji: {
+        fontSize: 20,
+    },
+    addProfileButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        marginHorizontal: SPACING.screenHorizontal,
+        marginTop: SPACING.sectionBottom,
+        paddingVertical: 12,
+        borderRadius: RADII.button,
+    },
+    addProfileButtonText: {
+        color: '#FFF',
+        fontSize: 15,
+        fontWeight: '600',
     },
 });
 

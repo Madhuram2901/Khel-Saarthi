@@ -74,63 +74,62 @@ const EventsScreen = ({ navigation }) => {
     />
   );
 
-  const renderHeader = () => (
-    <View style={styles.headerContainer}>
-      {/* Header Row */}
-      <View style={styles.headerRow}>
-        <Text style={styles.headerTitle}>Events</Text>
+  return (
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* Header Container */}
+      <View style={styles.headerContainer}>
+        {/* Header Row */}
+        <View style={styles.headerRow}>
+          <Text style={styles.headerTitle}>Events</Text>
 
-        <TouchableOpacity
-          style={styles.addButton}
-          onPress={() => navigation.navigate('CreateEvent')}
-        >
-          <Ionicons name="add" size={26} color="#FFF" />
-        </TouchableOpacity>
-      </View>
+          <TouchableOpacity
+            style={styles.addButton}
+            onPress={() => navigation.navigate('CreateEvent')}
+          >
+            <Ionicons name="add" size={26} color="#FFF" />
+          </TouchableOpacity>
+        </View>
 
-      {/* Search */}
-      <View style={styles.searchContainer}>
-        <Ionicons name="search-outline" size={18} color="#888" />
-        <TextInput
-          placeholder="Search events..."
-          placeholderTextColor="#888"
-          style={styles.searchInput}
-          value={searchQuery}
-          onChangeText={setSearchQuery}
+        {/* Search */}
+        <View style={styles.searchContainer}>
+          <Ionicons name="search-outline" size={18} color="#888" />
+          <TextInput
+            placeholder="Search events..."
+            placeholderTextColor="#888"
+            style={styles.searchInput}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+        </View>
+
+        {/* Filters */}
+        <FlatList
+          data={sports}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          keyExtractor={(item) => item}
+          contentContainerStyle={{ paddingVertical: 6 }}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={[
+                styles.filterChip,
+                selectedSport === item && styles.filterChipActive
+              ]}
+              onPress={() => setSelectedSport(item)}
+            >
+              <Text
+                style={[
+                  styles.filterText,
+                  selectedSport === item && styles.filterTextActive
+                ]}
+              >
+                {item}
+              </Text>
+            </TouchableOpacity>
+          )}
         />
       </View>
 
-      {/* Filters */}
-      <FlatList
-        data={sports}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        keyExtractor={(item) => item}
-        contentContainerStyle={{ paddingVertical: 6 }}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={[
-              styles.filterChip,
-              selectedSport === item && styles.filterChipActive
-            ]}
-            onPress={() => setSelectedSport(item)}
-          >
-            <Text
-              style={[
-                styles.filterText,
-                selectedSport === item && styles.filterTextActive
-              ]}
-            >
-              {item}
-            </Text>
-          </TouchableOpacity>
-        )}
-      />
-    </View>
-  );
-
-  return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <FlatList
         data={filteredEvents}
         keyExtractor={(item) => item._id}
@@ -138,11 +137,9 @@ const EventsScreen = ({ navigation }) => {
         numColumns={2}
         showsVerticalScrollIndicator={false}
         columnWrapperStyle={{ justifyContent: 'space-between' }}
-        ListHeaderComponent={renderHeader}
         contentContainerStyle={{
           paddingHorizontal: 16,
-          paddingBottom: 120,
-          paddingTop: 10
+          paddingBottom: 120
         }}
       />
     </SafeAreaView>
@@ -158,6 +155,7 @@ const makeStyles = (colors) => StyleSheet.create({
 
   headerContainer: {
     paddingHorizontal: 16,
+    paddingTop: 10,
     paddingBottom: 14,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
@@ -167,8 +165,7 @@ const makeStyles = (colors) => StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 10,
-    marginBottom: 16,
+    marginBottom: 14,
   },
 
   headerTitle: {
@@ -178,17 +175,12 @@ const makeStyles = (colors) => StyleSheet.create({
   },
 
   addButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     backgroundColor: colors.accent,
     justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: colors.accent,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.7,
-    shadowRadius: 12,
-    elevation: 10,
+    alignItems: 'center'
   },
 
   searchContainer: {

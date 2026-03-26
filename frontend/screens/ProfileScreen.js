@@ -23,6 +23,7 @@ import { StatCard, StatRow } from '../components/StatCard';
 import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../api/api';
+import AppCard from '../components/AppCard';
 
 const ProfileScreen = ({ navigation }) => {
     const { user, logout, setUser } = useContext(AuthContext);
@@ -264,7 +265,7 @@ const ProfileScreen = ({ navigation }) => {
                 {/* Appearance Section */}
                 <View style={styles.appearanceSection}>
                     <Text style={styles.sectionTitle}>Appearance</Text>
-                    <View style={styles.appearanceCard}>
+                    <AppCard style={styles.appearanceCard}>
                         {/* Auto toggle row */}
                         <View style={styles.settingRow}>
                             <View style={{ flex: 1 }}>
@@ -294,7 +295,7 @@ const ProfileScreen = ({ navigation }) => {
                                 />
                             </View>
                         )}
-                    </View>
+                    </AppCard>
                 </View>
 
                 {/* Sports Profiles Section */}

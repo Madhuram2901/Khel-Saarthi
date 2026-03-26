@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import api from '../api/api';
 import AuthContext from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import AppCard from '../components/AppCard';
 
 const TournamentListScreen = ({ navigation }) => {
     const { user } = useContext(AuthContext);
@@ -64,76 +65,78 @@ const TournamentListScreen = ({ navigation }) => {
 
         return (
             <TouchableOpacity
-                style={styles.card}
+                activeOpacity={0.7}
                 onPress={() => navigation.navigate('TournamentDashboard', { tournamentId: item._id })}
             >
-                <View style={styles.cardHeader}>
-                    <View style={styles.headerLeft}>
-                        <Text style={styles.tournamentName}>{item.name}</Text>
-                        <Text style={styles.sport}>{item.sport}</Text>
-                    </View>
-                    <View
-                        style={[
-                            styles.formatBadge,
-                            { backgroundColor: getFormatBadgeColor(item.format) },
-                        ]}
-                    >
-                        <Text style={styles.formatText}>
-                            {item.format.replace(/_/g, ' ')}
-                        </Text>
-                    </View>
-                </View>
-
-                <View style={styles.cardBody}>
-                    <View style={styles.infoRow}>
-                        <Ionicons name="calendar-outline" size={16} color={colors.textSecondary} />
-                        <Text style={styles.infoText}>
-                            {formatDate(item.startDate)} - {formatDate(item.endDate)}
-                        </Text>
-                    </View>
-
-                    <View style={styles.infoRow}>
-                        <Ionicons name="person-outline" size={16} color={colors.textSecondary} />
-                        <Text style={styles.infoText}>
-                            {isHost ? 'You' : item.host.name}
-                        </Text>
-                    </View>
-
-                    <View style={styles.statusRow}>
+                <AppCard style={styles.card}>
+                    <View style={styles.cardHeader}>
+                        <View style={styles.headerLeft}>
+                            <Text style={styles.tournamentName}>{item.name}</Text>
+                            <Text style={styles.sport}>{item.sport}</Text>
+                        </View>
                         <View
                             style={[
-                                styles.statusBadge,
-                                item.status === 'PUBLISHED'
-                                    ? styles.publishedBadge
-                                    : styles.draftBadge,
+                                styles.formatBadge,
+                                { backgroundColor: getFormatBadgeColor(item.format) },
                             ]}
                         >
-                            <Text
-                                style={[
-                                    styles.statusText,
-                                    item.status === 'PUBLISHED'
-                                        ? styles.publishedText
-                                        : styles.draftText,
-                                ]}
-                            >
-                                {item.status}
+                            <Text style={styles.formatText}>
+                                {item.format.replace(/_/g, ' ')}
+                            </Text>
+                        </View>
+                    </View>
+
+                    <View style={styles.cardBody}>
+                        <View style={styles.infoRow}>
+                            <Ionicons name="calendar-outline" size={16} color={colors.textSecondary} />
+                            <Text style={styles.infoText}>
+                                {formatDate(item.startDate)} - {formatDate(item.endDate)}
                             </Text>
                         </View>
 
-                        {item.isPublic && (
-                            <View style={styles.publicBadge}>
-                                <Ionicons name="globe-outline" size={14} color={colors.accent} />
-                                <Text style={styles.publicText}>Public</Text>
-                            </View>
-                        )}
-                    </View>
-                </View>
+                        <View style={styles.infoRow}>
+                            <Ionicons name="person-outline" size={16} color={colors.textSecondary} />
+                            <Text style={styles.infoText}>
+                                {isHost ? 'You' : item.host.name}
+                            </Text>
+                        </View>
 
-                {isHost && (
-                    <View style={styles.cardFooter}>
-                        <Ionicons name="chevron-forward" size={20} color={colors.accent} />
+                        <View style={styles.statusRow}>
+                            <View
+                                style={[
+                                    styles.statusBadge,
+                                    item.status === 'PUBLISHED'
+                                        ? styles.publishedBadge
+                                        : styles.draftBadge,
+                                ]}
+                            >
+                                <Text
+                                    style={[
+                                        styles.statusText,
+                                        item.status === 'PUBLISHED'
+                                            ? styles.publishedText
+                                            : styles.draftText,
+                                    ]}
+                                >
+                                    {item.status}
+                                </Text>
+                            </View>
+
+                            {item.isPublic && (
+                                <View style={styles.publicBadge}>
+                                    <Ionicons name="globe-outline" size={14} color={colors.accent} />
+                                    <Text style={styles.publicText}>Public</Text>
+                                </View>
+                            )}
+                        </View>
                     </View>
-                )}
+
+                    {isHost && (
+                        <View style={styles.cardFooter}>
+                            <Ionicons name="chevron-forward" size={20} color={colors.accent} />
+                        </View>
+                    )}
+                </AppCard>
             </TouchableOpacity>
         );
     };

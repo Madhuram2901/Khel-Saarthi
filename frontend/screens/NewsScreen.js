@@ -3,6 +3,7 @@ import { View, Text, FlatList, Image, StyleSheet, ActivityIndicator, TouchableOp
 import { LinearGradient } from 'expo-linear-gradient';
 import api from '../api/api';
 import { useTheme } from '../context/ThemeContext';
+import AppCard from '../components/AppCard';
 
 const NewsScreen = () => {
     const [news, setNews] = useState([]);
@@ -69,7 +70,7 @@ const NewsScreen = () => {
                     onPressOut={handlePressOut}
                     onPress={() => Linking.openURL(item.url)}
                 >
-                    <View style={[styles.card, { backgroundColor }]}>
+                    <AppCard style={[styles.card, { backgroundColor }]}>
                         {item.urlToImage ? (
                             <View style={styles.imageContainer}>
                                 <Image source={{ uri: item.urlToImage }} style={styles.image} />
@@ -117,7 +118,7 @@ const NewsScreen = () => {
                                 <Text style={[styles.readMore, { color: accentGradient[0] }]}>Read More →</Text>
                             </View>
                         </View>
-                    </View>
+                    </AppCard>
                 </TouchableOpacity>
             </Animated.View>
         );

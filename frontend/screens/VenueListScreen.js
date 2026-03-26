@@ -8,6 +8,7 @@ import { useTheme } from '../context/ThemeContext';
 import MyBookingsScreen from './MyBookingsScreen';
 import VenueHostDashboard from './VenueHostDashboard';
 import Constants from 'expo-constants';
+import AppCard from '../components/AppCard';
 
 const VenueListScreen = () => {
     const navigation = useNavigation();
@@ -41,31 +42,33 @@ const VenueListScreen = () => {
 
     const renderVenue = ({ item }) => (
         <TouchableOpacity
-            style={styles.card}
+            activeOpacity={0.7}
             onPress={() => navigation.navigate('VenueDetails', { venueId: item._id })}
         >
-            <Image
-                source={{ uri: item.images[0] || 'https://images.unsplash.com/photo-1522778119026-d647f0565c6a' }}
-                style={styles.image}
-            />
-            <View style={styles.info}>
-                <Text style={styles.name}>{item.name}</Text>
-                <Text style={styles.address}>{item.city}, {item.state}</Text>
-                <View style={styles.row}>
-                    <Text style={styles.price}>₹{item.pricePerHour}/hr</Text>
-                    <View style={styles.rating}>
-                        <Ionicons name="star" size={14} color="#FFD700" />
-                        <Text style={styles.ratingText}>{item.rating} ({item.numReviews})</Text>
+            <AppCard style={styles.card}>
+                <Image
+                    source={{ uri: item.images[0] || 'https://images.unsplash.com/photo-1522778119026-d647f0565c6a' }}
+                    style={styles.image}
+                />
+                <View style={styles.info}>
+                    <Text style={styles.name}>{item.name}</Text>
+                    <Text style={styles.address}>{item.city}, {item.state}</Text>
+                    <View style={styles.row}>
+                        <Text style={styles.price}>₹{item.pricePerHour}/hr</Text>
+                        <View style={styles.rating}>
+                            <Ionicons name="star" size={14} color="#FFD700" />
+                            <Text style={styles.ratingText}>{item.rating} ({item.numReviews})</Text>
+                        </View>
+                    </View>
+                    <View style={styles.tags}>
+                        {item.sportTypes.map((sport, index) => (
+                            <View key={index} style={styles.tag}>
+                                <Text style={styles.tagText}>{sport}</Text>
+                            </View>
+                        ))}
                     </View>
                 </View>
-                <View style={styles.tags}>
-                    {item.sportTypes.map((sport, index) => (
-                        <View key={index} style={styles.tag}>
-                            <Text style={styles.tagText}>{sport}</Text>
-                        </View>
-                    ))}
-                </View>
-            </View>
+            </AppCard>
         </TouchableOpacity>
     );
 

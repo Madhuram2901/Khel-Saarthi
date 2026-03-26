@@ -21,6 +21,7 @@ import StyledButton from '../components/StyledButton';
 import EventCard from '../components/EventCard';
 import HeroCard from '../components/HeroCard';
 import CategoryFilter from '../components/CategoryFilter';
+import AppCard from '../components/AppCard';
 
 const HomeScreen = ({ navigation }) => {
   const [events, setEvents] = useState([]);
@@ -290,18 +291,19 @@ const HomeScreen = ({ navigation }) => {
             {newsArticles.map((article, index) => (
               <TouchableOpacity
                 key={`${article.url}-${index}`}
-                style={styles.newsCard}
                 onPress={() => Linking.openURL(article.url)}
                 activeOpacity={0.7}
               >
-                <Image
-                  source={{ uri: article.urlToImage || 'https://via.placeholder.com/60' }}
-                  style={styles.newsImage}
-                />
-                <View style={styles.newsCardText}>
-                  <Text style={styles.newsTitle} numberOfLines={2}>{article.title}</Text>
-                  <Text style={styles.newsSource}>{article.source?.name || 'Sports'}</Text>
-                </View>
+                <AppCard style={styles.newsCard}>
+                  <Image
+                    source={{ uri: article.urlToImage || 'https://via.placeholder.com/60' }}
+                    style={styles.newsImage}
+                  />
+                  <View style={styles.newsCardText}>
+                    <Text style={styles.newsTitle} numberOfLines={2}>{article.title}</Text>
+                    <Text style={styles.newsSource}>{article.source?.name || 'Sports'}</Text>
+                  </View>
+                </AppCard>
               </TouchableOpacity>
             ))}
             <TouchableOpacity

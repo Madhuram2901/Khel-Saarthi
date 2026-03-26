@@ -113,7 +113,7 @@ exports.updateProfile = async (req, res) => {
     // Check if another profile with same sport name exists
     if (sportName.toLowerCase() !== profile.sportName.toLowerCase()) {
       const existingProfile = await SportsProfile.findOne({
-        userId,
+        user: req.user._id,
         _id: { $ne: id },
         sportName: { $regex: `^${sportName}$`, $options: 'i' },
       });

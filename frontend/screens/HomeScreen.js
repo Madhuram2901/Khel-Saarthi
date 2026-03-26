@@ -132,6 +132,37 @@ const HomeScreen = ({ navigation }) => {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scrollContent, { paddingBottom: 120 }]}>
+        {/* Quick Actions */}
+        <View style={styles.quickActionsSection}>
+          <Text style={styles.sectionTitle}>Quick Actions</Text>
+          <View style={styles.quickActionsRow}>
+            <TouchableOpacity style={styles.quickActionItem} onPress={() => navigation.navigate('CreateEvent')}>
+              <View style={styles.quickActionCircle}>
+                <Ionicons name="add" size={26} color={colors.accent} />
+              </View>
+              <Text style={styles.quickActionLabel}>Create Event</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.quickActionItem} onPress={() => navigation.navigate('TournamentStack', { screen: 'CreateTournament' })}>
+              <View style={styles.quickActionCircle}>
+                <Ionicons name="trophy" size={26} color={colors.accent} />
+              </View>
+              <Text style={styles.quickActionLabel}>Tournament</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.quickActionItem} onPress={() => navigation.navigate('VenueStack', { screen: 'VenueList' })}>
+              <View style={styles.quickActionCircle}>
+                <Ionicons name="business" size={26} color={colors.accent} />
+              </View>
+              <Text style={styles.quickActionLabel}>Book Venue</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.quickActionItem} onPress={() => navigation.navigate('AiGymTrainer')}>
+              <View style={styles.quickActionCircle}>
+                <Ionicons name="fitness" size={26} color={colors.accent} />
+              </View>
+              <Text style={styles.quickActionLabel}>AI Coach</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
         {/* Hero Section */}
         <HeroCard
           title="Discover Sports Events Near You"
@@ -396,6 +427,33 @@ const makeStyles = (colors) => StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 8,
     marginBottom: 24,
+  },
+  quickActionsSection: {
+    marginBottom: 24,
+  },
+  quickActionsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  quickActionItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  quickActionCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.surface2,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  quickActionLabel: {
+    fontSize: 12,
+    textAlign: 'center',
+    marginTop: 6,
+    color: colors.text,
   },
 });
 

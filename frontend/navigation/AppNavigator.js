@@ -30,6 +30,7 @@ import VenueDetailsScreen from '../screens/VenueDetailsScreen';
 import MyBookingsScreen from '../screens/MyBookingsScreen';
 import AddVenueScreen from '../screens/AddVenueScreen';
 import EditVenueScreen from '../screens/EditVenueScreen';
+import EventsScreen from '../screens/EventsScreen';
 // Tournament Screens
 import TournamentListScreen from '../screens/TournamentListScreen';
 import CreateTournamentScreen from '../screens/CreateTournamentScreen';
@@ -102,7 +103,7 @@ function EventsStackScreen() {
                 cardStyle: { backgroundColor: colors.background },
             }}
         >
-            <EventStack.Screen name="EventList" component={HomeScreen} options={{ headerShown: false }} />
+            <EventStack.Screen name="Events" component={EventsScreen} options={{ headerShown: false }} />
             <EventStack.Screen name="CreateEvent" component={CreateEventScreen} options={{ title: 'Create Event' }} />
             <EventStack.Screen name="EditEvent" component={EditEventScreen} options={{ title: 'Edit Event' }} />
             <EventStack.Screen name="EventDetails" component={EventDetailsScreen} options={{ title: 'Event Details' }} />
@@ -268,6 +269,9 @@ const AppNavigator = () => {
                         options={({ route }) => ({
                             title: 'Events',
                             tabBarStyle: { display: getTabBarVisibility(route) },
+                            tabBarIcon: ({ color, size }) => (
+                                <Ionicons name="calendar-outline" size={size} color={color} />
+                            ),
                         })}
                     />
 

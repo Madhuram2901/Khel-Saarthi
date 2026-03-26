@@ -24,7 +24,7 @@ import CategoryFilter from '../components/CategoryFilter';
 const HomeScreen = ({ navigation }) => {
   const [events, setEvents] = useState([]);
   const [filters, setFilters] = useState({ category: 'All' });
-  const { user, logout } = useContext(AuthContext);
+  const { user } = useContext(AuthContext);
   const { colors, isDark } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
@@ -231,8 +231,8 @@ const HomeScreen = ({ navigation }) => {
         </View>
 
         {/* Action Buttons Section */}
-        <View style={styles.actionSection}>
-          {user?.role === 'host' && (
+        {user?.role === 'host' && (
+          <View style={styles.actionSection}>
             <StyledButton
               title="Create New Event"
               onPress={() => navigation.navigate('CreateEvent')}
@@ -240,17 +240,8 @@ const HomeScreen = ({ navigation }) => {
               icon="add-circle"
               size="large"
             />
-          )}
-          <StyledButton
-            title="Sign Out"
-            onPress={logout}
-            variant="outline"
-            icon="log-out"
-            size="medium"
-          />
-        </View>
-
-        <View style={{ height: 80 }} />
+          </View>
+        )}
       </ScrollView>
 
       {/* Floating AI Button */}
@@ -402,8 +393,9 @@ const makeStyles = (colors) => StyleSheet.create({
     marginTop: 4,
   },
   actionSection: {
-    padding: 20,
-    paddingBottom: 40,
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    marginBottom: 24,
   },
 });
 

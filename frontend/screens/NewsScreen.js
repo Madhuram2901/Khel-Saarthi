@@ -1,290 +1,225 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { View, Text, FlatList, Image, StyleSheet, ActivityIndicator, TouchableOpacity, Linking, Animated } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import api from '../api/api';
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  TouchableOpacity,
+  StatusBar,
+  SafeAreaView,
+  Linking,
+  Image,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
-import AppCard from '../components/AppCard';
+import api from '../api/api';
+import { SPACING, RADII, TYPOGRAPHY, CARD_SHADOW } from '../theme/designSystem';
 
-const NewsScreen = () => {
-    const [news, setNews] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const { colors, isDark } = useTheme();
-    const styles = useMemo(() => makeStyles(colors, isDark), [colors, isDark]);
+const NewsScreen = ({ navigation }) => {
+  const [news, setNews] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const { colors, isDark } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, isDark), [colors, isDark]);
 
-    useEffect(() => {
-        fetchNews();
-    }, []);
+  useEffect(() => {
+    fetchNews();
+  }, []);
 
-    const fetchNews = async () => {
-        try {
-            const response = await api.get('/news');
-            setNews(response.data.articles);
-        } catch (error) {
-            console.error('Error fetching news:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // Color palettes adapt to theme
-    const colorPaletteLight = isDark
-        ? ['#1C1C1E', '#2C2C2E', '#1A1A3E', '#2E1A1A', '#1C2C2E', '#1A1A2E']
-        : ['#FFFFFF', '#F8FAFC', '#EFF6FF', '#FFF7ED', '#F8FAFC', '#F5F3FF'];
-
-    const accentColors = [
-        ['#3B82F6', '#60A5FA'],
-        ['#8B5CF6', '#A78BFA'],
-        ['#EC4899', '#F472B6'],
-        ['#F59E0B', '#FBBF24'],
-        ['#10B981', '#34D399'],
-        ['#06B6D4', '#22D3EE'],
-    ];
-
-    const NewsCard = ({ item, index }) => {
-        const scaleAnim = new Animated.Value(1);
-
-        const handlePressIn = () => {
-            Animated.spring(scaleAnim, {
-                toValue: 0.97,
-                useNativeDriver: true,
-            }).start();
-        };
-
-        const handlePressOut = () => {
-            Animated.spring(scaleAnim, {
-                toValue: 1,
-                friction: 3,
-                tension: 40,
-                useNativeDriver: true,
-            }).start();
-        };
-
-        const backgroundColor = colorPaletteLight[index % colorPaletteLight.length];
-        const accentGradient = accentColors[index % accentColors.length];
-
-        return (
-            <Animated.View style={[styles.cardWrapper, { transform: [{ scale: scaleAnim }] }]}>
-                <TouchableOpacity
-                    activeOpacity={0.9}
-                    onPressIn={handlePressIn}
-                    onPressOut={handlePressOut}
-                    onPress={() => Linking.openURL(item.url)}
-                >
-                    <AppCard style={[styles.card, { backgroundColor }]}>
-                        {item.urlToImage ? (
-                            <View style={styles.imageContainer}>
-                                <Image source={{ uri: item.urlToImage }} style={styles.image} />
-                                <LinearGradient
-                                    colors={['transparent', 'rgba(0,0,0,0.5)']}
-                                    style={styles.imageGradient}
-                                />
-                            </View>
-                        ) : (
-                            <LinearGradient
-                                colors={accentGradient}
-                                start={{ x: 0, y: 0 }}
-                                end={{ x: 1, y: 1 }}
-                                style={styles.placeholderGradient}
-                            >
-                                <Text style={styles.placeholderIcon}>📰</Text>
-                            </LinearGradient>
-                        )}
-
-                        <View style={styles.content}>
-                            <View style={styles.categoryBadge}>
-                                <LinearGradient
-                                    colors={accentGradient}
-                                    start={{ x: 0, y: 0 }}
-                                    end={{ x: 1, y: 0 }}
-                                    style={styles.badgeGradient}
-                                >
-                                    <Text style={styles.badgeText}>SPORTS</Text>
-                                </LinearGradient>
-                            </View>
-
-                            <Text style={styles.title} numberOfLines={2}>{item.title}</Text>
-
-                            {item.description && (
-                                <Text style={styles.description} numberOfLines={3}>
-                                    {item.description}
-                                </Text>
-                            )}
-
-                            <View style={styles.footer}>
-                                <View style={styles.sourceContainer}>
-                                    <View style={[styles.sourceDot, { backgroundColor: accentGradient[0] }]} />
-                                    <Text style={styles.source}>{item.source.name}</Text>
-                                </View>
-                                <Text style={[styles.readMore, { color: accentGradient[0] }]}>Read More →</Text>
-                            </View>
-                        </View>
-                    </AppCard>
-                </TouchableOpacity>
-            </Animated.View>
-        );
-    };
-
-    if (loading) {
-        return (
-            <LinearGradient
-                colors={['#3B82F6', '#8B5CF6']}
-                style={styles.loadingContainer}
-            >
-                <ActivityIndicator size="large" color="#FFFFFF" />
-                <Text style={styles.loadingText}>Loading Sports News...</Text>
-            </LinearGradient>
-        );
+  const fetchNews = async () => {
+    try {
+      const response = await api.get('/news');
+      setNews(response.data.articles);
+    } catch (error) {
+      console.error('Error fetching news:', error);
+    } finally {
+      setLoading(false);
     }
+  };
 
+  const NewsCard = ({ item }) => {
     return (
-        <View style={styles.container}>
-
-            <FlatList
-                data={news}
-                keyExtractor={(item, index) => `${item.url}-${index}`}
-                renderItem={({ item, index }) => <NewsCard item={item} index={index} />}
-                contentContainerStyle={styles.list}
-                showsVerticalScrollIndicator={false}
+      <TouchableOpacity
+        style={styles.card}
+        onPress={() => Linking.openURL(item.url)}
+        activeOpacity={0.9}
+      >
+        {/* Image section */}
+        <View style={styles.imageContainer}>
+          {item.urlToImage ? (
+            <Image
+              source={{ uri: item.urlToImage }}
+              style={styles.cardImage}
+              resizeMode="cover"
             />
+          ) : (
+            <View style={[styles.cardImage, styles.imagePlaceholder]}>
+              <Ionicons name="newspaper-outline" size={40} color={colors.textMuted} />
+            </View>
+          )}
         </View>
+
+        {/* Content section */}
+        <View style={styles.cardContent}>
+          {/* Category pill — overlaps image via negative marginTop */}
+          <View style={styles.categoryPill}>
+            <Text style={styles.categoryText}>SPORTS</Text>
+          </View>
+
+          {/* Title */}
+          <Text style={styles.cardTitle} numberOfLines={2}>
+            {item.title}
+          </Text>
+
+          {/* Description — 2 lines max */}
+          <Text style={styles.cardDescription} numberOfLines={3}>
+            {item.description}
+          </Text>
+
+          {/* Footer: source dot + Read More */}
+          <View style={styles.cardFooter}>
+            <View style={styles.sourceDot} />
+            <Text style={styles.sourceText} numberOfLines={1}>
+              {item.source?.name ?? item.url}
+            </Text>
+            <Text style={styles.readMore}>Read More →</Text>
+          </View>
+        </View>
+      </TouchableOpacity>
     );
+  };
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={colors.background} />
+
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Ionicons name="chevron-back" size={24} color={colors.accent} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Sports News</Text>
+        <View style={{ width: 24 }} />
+      </View>
+
+      {/* News List */}
+      <FlatList
+        data={news}
+        keyExtractor={(item, index) => index.toString()}
+        renderItem={({ item }) => <NewsCard item={item} />}
+        contentContainerStyle={styles.listContainer}
+        showsVerticalScrollIndicator={false}
+      />
+    </SafeAreaView>
+  );
 };
 
 const makeStyles = (colors, isDark) => StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: colors.background,
-    },
-    loadingContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    loadingText: {
-        marginTop: 16,
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#FFFFFF',
-    },
-    header: {
-        paddingTop: 60,
-        paddingBottom: 24,
-        paddingHorizontal: 20,
-        borderBottomLeftRadius: 30,
-        borderBottomRightRadius: 30,
-    },
-    headerTitle: {
-        fontSize: 32,
-        fontWeight: 'bold',
-        color: '#FFFFFF',
-        marginBottom: 4,
-    },
-    headerSubtitle: {
-        fontSize: 16,
-        color: 'rgba(255, 255, 255, 0.9)',
-        fontWeight: '500',
-    },
-    list: {
-        padding: 16,
-        paddingTop: 20,
-    },
-    cardWrapper: {
-        marginBottom: 20,
-    },
-    card: {
-        borderRadius: 20,
-        overflow: 'hidden',
-        elevation: 4,
-        shadowColor: colors.cardShadow,
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 8,
-        borderWidth: 1,
-        borderColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.05)',
-    },
-    imageContainer: {
-        position: 'relative',
-    },
-    image: {
-        width: '100%',
-        height: 220,
-        resizeMode: 'cover',
-    },
-    imageGradient: {
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        height: 100,
-    },
-    placeholderGradient: {
-        width: '100%',
-        height: 220,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    placeholderIcon: {
-        fontSize: 64,
-    },
-    content: {
-        padding: 20,
-    },
-    categoryBadge: {
-        alignSelf: 'flex-start',
-        marginBottom: 12,
-        borderRadius: 20,
-        overflow: 'hidden',
-    },
-    badgeGradient: {
-        paddingHorizontal: 14,
-        paddingVertical: 6,
-    },
-    badgeText: {
-        fontSize: 11,
-        fontWeight: 'bold',
-        color: '#FFFFFF',
-        letterSpacing: 1,
-    },
-    title: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        color: colors.text,
-        marginBottom: 10,
-        lineHeight: 28,
-    },
-    description: {
-        fontSize: 15,
-        color: colors.textSecondary,
-        marginBottom: 16,
-        lineHeight: 22,
-    },
-    footer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingTop: 12,
-        borderTopWidth: 1,
-        borderTopColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.06)',
-    },
-    sourceContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    sourceDot: {
-        width: 8,
-        height: 8,
-        borderRadius: 4,
-        marginRight: 8,
-    },
-    source: {
-        fontSize: 13,
-        color: colors.textSecondary,
-        fontWeight: '600',
-    },
-    readMore: {
-        fontSize: 14,
-        fontWeight: '700',
-    },
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: SPACING.screenHorizontal,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  headerTitle: {
+    ...TYPOGRAPHY.h1,
+    color: colors.text,
+    fontSize: 28,
+    fontWeight: '700',
+  },
+  listContainer: {
+    paddingTop: 12,
+    paddingBottom: 100,
+  },
+  card: {
+    backgroundColor: colors.surface,
+    borderRadius: 20,
+    marginHorizontal: 16,
+    marginBottom: 20,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: isDark ? 0.5 : 0.1,
+    shadowRadius: 16,
+    elevation: 6,
+  },
+  imageContainer: {
+    width: '100%',
+    height: 220,
+    backgroundColor: colors.surface2,
+  },
+  cardImage: {
+    width: '100%',
+    height: '100%',
+  },
+  imagePlaceholder: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.surface2,
+  },
+  cardContent: {
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    paddingTop: 0,
+  },
+  categoryPill: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#34C759',
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 20,
+    marginTop: -16,        // pulls pill up to overlap image bottom
+    marginBottom: 12,
+    zIndex: 10,
+  },
+  categoryText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 1,
+  },
+  cardTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.text,
+    lineHeight: 26,
+    marginBottom: 8,
+  },
+  cardDescription: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    lineHeight: 20,
+    marginBottom: 14,
+  },
+  cardFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  sourceDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: colors.accent,
+    flexShrink: 0,
+  },
+  sourceText: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    flex: 1,
+  },
+  readMore: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.accent,
+    flexShrink: 0,
+  },
 });
 
 export default NewsScreen;

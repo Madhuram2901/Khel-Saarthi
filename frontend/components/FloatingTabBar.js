@@ -16,8 +16,8 @@ import { useTheme } from '../context/ThemeContext';
 const ROUTE_META = {
   HomeStack: { active: 'home', inactive: 'home-outline', label: 'Home' },
   TournamentStack: { active: 'trophy', inactive: 'trophy-outline', label: 'Tournaments' },
-  VenueStack: { active: 'calendar', inactive: 'calendar-outline', label: 'Venues' },
-  NewsStack: { active: 'newspaper', inactive: 'newspaper-outline', label: 'News' },
+  EventsStack: { active: 'calendar', inactive: 'calendar-outline', label: 'Events' },
+  VenueStack: { active: 'location', inactive: 'location-outline', label: 'Venues' },
   ProfileStack: { active: 'person', inactive: 'person-outline', label: 'Profile' },
 };
 
@@ -155,7 +155,9 @@ const makeStyles = (colors, isDark) => StyleSheet.create({
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: colors.tabBarBorder,
-    backgroundColor: colors.tabBar,
+    backgroundColor: isDark
+      ? 'rgba(18, 18, 18, 0.85)'
+      : 'rgba(255, 255, 255, 0.72)',
   },
   glassOverlay: {
     position: 'absolute',
@@ -169,7 +171,9 @@ const makeStyles = (colors, isDark) => StyleSheet.create({
     zIndex: 1,
   },
   androidBar: {
-    backgroundColor: colors.tabBar,
+    backgroundColor: isDark
+      ? 'rgba(18, 18, 18, 0.85)'
+      : 'rgba(255, 255, 255, 0.72)',
     borderColor: colors.tabBarBorder,
   },
 

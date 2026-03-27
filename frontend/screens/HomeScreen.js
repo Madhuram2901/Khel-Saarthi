@@ -7,9 +7,7 @@ import {
   ScrollView,
   FlatList,
   TouchableOpacity,
-  StatusBar,
-  Image,
-  Linking
+  StatusBar
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -22,6 +20,7 @@ import EventCard from '../components/EventCard';
 import CategoryFilter from '../components/CategoryFilter';
 import AppCard from '../components/AppCard';
 import SectionHeader from '../components/SectionHeader';
+import NewsCard from '../components/NewsCard';
 
 const HomeScreen = ({ navigation }) => {
   const [events, setEvents] = useState([]);
@@ -56,7 +55,7 @@ const HomeScreen = ({ navigation }) => {
     const fetchNews = async () => {
       try {
         const response = await api.get('/news');
-        setNewsArticles(response.data.articles.slice(0, 3));
+        setNewsArticles(response.data.articles);
       } catch (error) {
         console.error('Error fetching news:', error);
       }
@@ -201,30 +200,14 @@ const HomeScreen = ({ navigation }) => {
         {/* Sports News Section */}
         {newsArticles.length > 0 && (
           <View style={[styles.sectionContainer, styles.newsSection]}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Sports News</Text>
-              <TouchableOpacity onPress={() => navigation.navigate('News')}>
-                <Text style={styles.viewAllText}>View All</Text>
-              </TouchableOpacity>
-            </View>
-            {newsArticles.map((article, index) => (
-              <TouchableOpacity
-                key={`${article.url}-${index}`}
-                onPress={() => Linking.openURL(article.url)}
-                activeOpacity={0.7}
-              >
-                <AppCard style={styles.newsCard}>
-                  <Image
-                    source={{ uri: article.urlToImage || 'https://via.placeholder.com/60' }}
-                    style={styles.newsImage}
-                  />
-                  <View style={styles.newsCardText}>
-                    <Text style={styles.newsTitle} numberOfLines={2}>{article.title}</Text>
-                    <Text style={styles.newsSource}>{article.source?.name || 'Sports'}</Text>
-                  </View>
-                </AppCard>
-              </TouchableOpacity>
-            ))}
+            <Text style={styles.sectionTitle}>Sports News</Text>
+            <FlatList
+              data={newsArticles}
+              keyExtractor={(item, index) => index.toString()}
+              renderItem={({ item }) => <NewsCard item={item} />}
+              scrollEnabled={false}
+              contentContainerStyle={{ paddingBottom: 20 }}
+            />
           </View>
         )}
 
@@ -371,34 +354,6 @@ const makeStyles = (colors) => StyleSheet.create({
   },
   newsSection: {
     marginBottom: 32,
-  },
-  newsCard: {
-    flexDirection: 'row',
-    padding: 12,
-    borderRadius: 12,
-    backgroundColor: colors.surface,
-    marginBottom: 10,
-    marginHorizontal: 16,
-    alignItems: 'center',
-  },
-  newsImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 8,
-  },
-  newsCardText: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  newsTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.text,
-  },
-  newsSource: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    marginTop: 2,
   },
   quickActionsSection: {
     marginBottom: 24,

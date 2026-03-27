@@ -309,9 +309,15 @@ const ProfileScreen = ({ navigation }) => {
                         <View style={[styles.statCard, { backgroundColor: colors.surface }]}>
                             <Ionicons name="star-outline" size={18} color={colors.accent} />
                             <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Rating / Level</Text>
-                            <Text style={[styles.statValue, { color: colors.text }]} numberOfLines={1}>
-                                {badmintonProfile.skillLevel || '—'}
-                            </Text>
+                            {badmintonProfile.skillLevel ? (
+                                <View style={[styles.skillBadge, { backgroundColor: colors.surface2 }]}>
+                                    <Text style={[styles.skillBadgeText, { color: colors.text }]}>
+                                        {badmintonProfile.skillLevel.toUpperCase()}
+                                    </Text>
+                                </View>
+                            ) : (
+                                <Text style={[styles.statValue, { color: colors.text }]}>—</Text>
+                            )}
                         </View>
                     </View>
                 </View>
@@ -637,6 +643,18 @@ const makeStyles = (colors) => StyleSheet.create({
     statValue: {
         ...TYPOGRAPHY.sectionTitle,
         marginTop: 6,
+    },
+    skillBadge: {
+        marginTop: 6,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: RADII.pill,
+        alignSelf: 'flex-start',
+    },
+    skillBadgeText: {
+        ...TYPOGRAPHY.small,
+        fontWeight: '700',
+        letterSpacing: 0.5,
     },
     // Edit mode styles
     editHeader: {

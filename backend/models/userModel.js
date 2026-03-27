@@ -30,6 +30,14 @@ const userSchema = mongoose.Schema(
             type: String,
             default: '', // Cloudinary public_id for deletion/replacement
         },
+        height: {
+            type: Number,
+            default: null,
+        },
+        weight: {
+            type: Number,
+            default: null,
+        },
         profiles: {
             badminton: {
                 skillLevel: { type: String, enum: ['Beginner', 'Intermediate', 'Advanced'] },

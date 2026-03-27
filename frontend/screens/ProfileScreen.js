@@ -1,42 +1,30 @@
 
-import React, { useContext, useState, useEffect, useMemo, useCallback } from 'react';
-import { useFocusEffect } from '@react-navigation/native';
+import React, { useContext, useState, useEffect, useMemo } from 'react';
 import {
     View,
     Text,
     StyleSheet,
     ScrollView,
-    TextInput,
     Image,
-    Alert,
-    Linking,
     StatusBar,
     TouchableOpacity,
-    Switch
+    Switch,
+    useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import AuthContext from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import StyledButton from '../components/StyledButton';
-import * as ImagePicker from 'expo-image-picker';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../api/api';
-import AppCard from '../components/AppCard';
 import { CARD_SHADOW, RADII, SIZES, SPACING, TYPOGRAPHY } from '../theme/designSystem';
 import { getSportEmoji, getSkillLevelLabel } from '../utils/sportsHelper';
 
 const ProfileScreen = ({ navigation }) => {
-    const { user, logout, setUser } = useContext(AuthContext);
+    const { user, logout } = useContext(AuthContext);
     const { themeMode, setMode, colors, isDark } = useTheme();
     const styles = useMemo(() => makeStyles(colors), [colors]);
+    const { width } = useWindowDimensions();
 
-    const badmintonProfile = user.profiles?.badminton || {};
-    const [name, setName] = useState(user.name);
-    const [email, setEmail] = useState(user.email);
-    const [image, setImage] = useState(null);
-    const [loading, setLoading] = useState(false);
-    const [editMode, setEditMode] = useState(false);
     const [eventsJoined, setEventsJoined] = useState(0);
     const [sportsProfiles, setSportsProfiles] = useState([]);
     const [loadingProfiles, setLoadingProfiles] = useState(false);
@@ -53,12 +41,6 @@ const ProfileScreen = ({ navigation }) => {
         fetchEventsJoined();
     }, []);
 
-    useFocusEffect(
-        useCallback(() => {
-            fetchSportsProfiles();
-        }, [])
-    );
-
     const fetchSportsProfiles = async () => {
         try {
             setLoadingProfiles(true);
@@ -72,86 +54,29 @@ const ProfileScreen = ({ navigation }) => {
         }
     };
 
+    useEffect(() => {
+        fetchSportsProfiles();
+    }, []);
 
-    const requestMediaLibraryPermission = async () => {
-        try {
-            const { status, granted, canAskAgain } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-            if (granted) return true;
-            if (!canAskAgain) {
-                Alert.alert(
-                    'Permission required',
-                    'Please allow photo library access in Settings to change your profile picture.',
-                    [
-                        { text: 'Cancel', style: 'cancel' },
-                        { text: 'Open Settings', onPress: () => Linking.openSettings && Linking.openSettings() },
-                    ]
-                );
-                return false;
-            }
-            return false;
-        } catch (e) {
-            return false;
-        }
+    const calculateBMI = () => {
+        const numericHeight = Number(user.height);
+        const numericWeight = Number(user.weight);
+        if (!numericHeight || !numericWeight) return null;
+        const h = numericHeight / 100;
+        const bmi = numericWeight / (h * h);
+        return bmi.toFixed(1);
+    };
+    const getBMIColor = (bmi) => {
+        if (!bmi) return colors.textSecondary;
+        if (bmi < 18.5) return '#FF9500';
+        if (bmi < 25) return colors.accentGreen;
+        if (bmi < 30) return '#FF9500';
+        return colors.accentRed;
     };
 
-    const pickImage = async () => {
-        const ok = await requestMediaLibraryPermission();
-        if (!ok) return;
-        try {
-            const result = await ImagePicker.launchImageLibraryAsync({
-                allowsEditing: true,
-                aspect: [1, 1],
-                quality: 0.8,
-            });
-            if (!result.canceled && result.assets && result.assets[0]) {
-                setImage(result.assets[0].uri);
-            }
-        } catch (e) {
-            Alert.alert('Error', 'Could not pick image');
-        }
-    };
-
-    const updateProfile = async () => {
-        if (!name.trim() || !email.trim()) {
-            Alert.alert('Error', 'Name and email are required');
-            return;
-        }
-
-        setLoading(true);
-        try {
-            const formData = new FormData();
-            formData.append('name', name);
-            formData.append('email', email);
-
-            if (image) {
-                formData.append('profilePicture', {
-                    uri: image,
-                    type: 'image/jpeg',
-                    name: 'profile.jpg',
-                });
-            }
-
-            const { data } = await api.put('/users/update', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' },
-            });
-
-            // Update token and fetch fresh user data
-            if (data.token) {
-                await AsyncStorage.setItem('userToken', data.token);
-                api.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
-            }
-
-            setUser(data);
-            setImage(null);
-            setEditMode(false);
-            Alert.alert('Success', 'Profile updated successfully');
-        } catch (error) {
-            console.error(error);
-            Alert.alert('Error', 'Could not update profile');
-        } finally {
-            setLoading(false);
-        }
-    };
+    const bmiValue = calculateBMI();
+    const bmiNumber = bmiValue ? parseFloat(bmiValue) : null;
+    const statsCardWidth = Math.max((width - 40) / 4, 88);
 
     const MenuSection = ({ title, children }) => (
         <View style={styles.section}>
@@ -175,73 +100,8 @@ const ProfileScreen = ({ navigation }) => {
         </TouchableOpacity>
     );
 
-    if (editMode) {
-        return (
-            <SafeAreaView style={styles.container}>
-                <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={colors.background} />
-                <View style={styles.editHeader}>
-                    <TouchableOpacity onPress={() => setEditMode(false)}>
-                        <Text style={styles.cancelButton}>Cancel</Text>
-                    </TouchableOpacity>
-                    <Text style={styles.editTitle}>Edit Profile</Text>
-                    <TouchableOpacity onPress={updateProfile} disabled={loading}>
-                        <Text style={[styles.saveButton, loading && styles.disabledButton]}>
-                            {loading ? 'Saving...' : 'Save'}
-                        </Text>
-                    </TouchableOpacity>
-                </View>
-
-                <ScrollView style={styles.editForm}>
-                    <View style={styles.editAvatarSection}>
-                        <TouchableOpacity onPress={pickImage} style={styles.editAvatarContainer}>
-                            {image ? (
-                                <Image source={{ uri: image }} style={styles.editAvatar} />
-                            ) : user.profilePicture ? (
-                                <Image source={{ uri: user.profilePicture }} style={styles.editAvatar} />
-                            ) : (
-                                <View style={styles.editAvatarPlaceholder}>
-                                    <Ionicons name="camera" size={32} color={colors.textSecondary} />
-                                </View>
-                            )}
-                            <View style={styles.editAvatarOverlay}>
-                                <Ionicons name="camera" size={20} color="#FFFFFF" />
-                            </View>
-                        </TouchableOpacity>
-                        <Text style={styles.editAvatarText}>Tap to change photo</Text>
-                    </View>
-
-                    <View style={styles.editInputSection}>
-                        <View style={styles.editInputGroup}>
-                            <Text style={styles.editInputLabel}>Name</Text>
-                            <TextInput
-                                style={styles.editInput}
-                                value={name}
-                                onChangeText={setName}
-                                placeholder="Enter your name"
-                                placeholderTextColor={colors.textSecondary}
-                            />
-                        </View>
-
-                        <View style={styles.editInputGroup}>
-                            <Text style={styles.editInputLabel}>Email</Text>
-                            <TextInput
-                                style={styles.editInput}
-                                value={email}
-                                onChangeText={setEmail}
-                                placeholder="Enter your email"
-                                placeholderTextColor={colors.textSecondary}
-                                keyboardType="email-address"
-                                autoCapitalize="none"
-                            />
-                        </View>
-                    </View>
-                </ScrollView>
-            </SafeAreaView>
-        );
-    }
-
     return (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView style={styles.container} edges={['left', 'right']}>
             <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={colors.background} />
             <ScrollView
                 style={styles.scrollView}
@@ -249,11 +109,11 @@ const ProfileScreen = ({ navigation }) => {
                 showsVerticalScrollIndicator={false}
             >
                 {/* Profile Header Card */}
-                <View style={styles.section}>
+                <View style={styles.headerSection}>
                     <View style={[styles.profileHeaderCard, { backgroundColor: colors.surface }]}>
                         <View style={styles.profileTopRow}>
                             <TouchableOpacity
-                                onPress={pickImage}
+                                onPress={() => navigation.navigate('EditProfile')}
                                 activeOpacity={0.85}
                                 style={[styles.avatarWrap, { backgroundColor: colors.surface2 }]}
                             >
@@ -282,7 +142,7 @@ const ProfileScreen = ({ navigation }) => {
                             </View>
 
                             <TouchableOpacity
-                                onPress={() => setEditMode(true)}
+                                onPress={() => navigation.navigate('EditProfile')}
                                 activeOpacity={0.85}
                                 style={[styles.editButton, { borderColor: colors.border }]}
                             >
@@ -300,28 +160,35 @@ const ProfileScreen = ({ navigation }) => {
                 {/* Statistics Cards Row */}
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Statistics</Text>
-                    <View style={styles.statsRow}>
-                        <View style={[styles.statCard, { backgroundColor: colors.surface }]}>
-                            <Ionicons name="trophy-outline" size={18} color={colors.accent} />
-                            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Events Joined</Text>
-                            <Text style={[styles.statValue, { color: colors.text }]}>{eventsJoined}</Text>
+                    <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={styles.statsContainer}
+                    >
+                        <View style={[styles.statsRow, { minWidth: width - 32 }]}>
+                            <View style={[styles.statCard, styles.centeredStatCard, { backgroundColor: colors.surface, minWidth: statsCardWidth }]}>
+                                <Ionicons name="trophy-outline" size={24} color={colors.accent} />
+                                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Events Joined</Text>
+                                <Text style={[styles.statValue, { color: colors.text }]}>{eventsJoined}</Text>
+                            </View>
+                            <View style={[styles.statCard, { backgroundColor: colors.surface, minWidth: statsCardWidth }]}>
+                                <Ionicons name="resize-outline" size={24} color={colors.accent} />
+                                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Height (cm)</Text>
+                                <Text style={[styles.statValue, { color: colors.text }]}>{user.height != null ? user.height : '--'}</Text>
+                            </View>
+                            <View style={[styles.statCard, { backgroundColor: colors.surface, minWidth: statsCardWidth }]}>
+                                <Ionicons name="barbell-outline" size={24} color={colors.accent} />
+                                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Weight (kg)</Text>
+                                <Text style={[styles.statValue, { color: colors.text }]}>{user.weight != null ? user.weight : '--'}</Text>
+                            </View>
+                            <View style={[styles.statCard, { backgroundColor: colors.surface, minWidth: statsCardWidth }]}>
+                                <Ionicons name="fitness-outline" size={24} color={colors.accent} />
+                                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>BMI</Text>
+                                <Text style={[styles.statValue, { color: bmiNumber !== null ? getBMIColor(bmiNumber) : colors.textSecondary }]}>{bmiValue || '--'}</Text>
+                            </View>
                         </View>
-                        <View style={[styles.statCard, { backgroundColor: colors.surface }]}>
-                            <Ionicons name="star-outline" size={18} color={colors.accent} />
-                            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Rating / Level</Text>
-                            {badmintonProfile.skillLevel ? (
-                                <View style={[styles.skillBadge, { backgroundColor: colors.surface2 }]}>
-                                    <Text style={[styles.skillBadgeText, { color: colors.text }]}>
-                                        {badmintonProfile.skillLevel.toUpperCase()}
-                                    </Text>
-                                </View>
-                            ) : (
-                                <Text style={[styles.statValue, { color: colors.text }]}>—</Text>
-                            )}
-                        </View>
-                    </View>
+                    </ScrollView>
                 </View>
-
                 {/* Appearance Section */}
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Appearance</Text>
@@ -472,6 +339,9 @@ const makeStyles = (colors) => StyleSheet.create({
     },
     scrollView: {
         flex: 1,
+    },
+    headerSection: {
+        marginTop: 16,
     },
     section: {
         marginTop: SPACING.sectionTop,
@@ -624,25 +494,39 @@ const makeStyles = (colors) => StyleSheet.create({
         paddingHorizontal: 2,
     },
     // Stats
+    statsContainer: {
+        paddingHorizontal: 16,
+    },
     statsRow: {
         flexDirection: 'row',
-        gap: SPACING.cardGap,
-        paddingHorizontal: SPACING.screenHorizontal,
+        gap: 8,
     },
     statCard: {
         flex: 1,
         borderRadius: RADII.card,
-        padding: 16,
+        paddingVertical: 16,
+        alignItems: 'center',
+        justifyContent: 'center',
         ...CARD_SHADOW,
+    },
+    centeredStatCard: {
+        alignItems: 'center',
     },
     statLabel: {
         ...TYPOGRAPHY.small,
         marginTop: 8,
         fontWeight: '600',
+        textAlign: 'center',
     },
     statValue: {
         ...TYPOGRAPHY.sectionTitle,
         marginTop: 6,
+        textAlign: 'center',
+    },
+    statSub: {
+        ...TYPOGRAPHY.small,
+        marginTop: 4,
+        textAlign: 'center',
     },
     skillBadge: {
         marginTop: 6,
@@ -655,96 +539,6 @@ const makeStyles = (colors) => StyleSheet.create({
         ...TYPOGRAPHY.small,
         fontWeight: '700',
         letterSpacing: 0.5,
-    },
-    // Edit mode styles
-    editHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingHorizontal: 20,
-        paddingVertical: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: colors.border,
-        backgroundColor: colors.surface,
-    },
-    cancelButton: {
-        fontSize: 16,
-        color: colors.textSecondary,
-    },
-    editTitle: {
-        fontSize: 18,
-        fontWeight: '600',
-        color: colors.text,
-    },
-    saveButton: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: colors.accent,
-    },
-    disabledButton: {
-        color: colors.textSecondary,
-    },
-    editForm: {
-        flex: 1,
-        backgroundColor: colors.surface,
-    },
-    editAvatarSection: {
-        alignItems: 'center',
-        paddingVertical: 32,
-    },
-    editAvatarContainer: {
-        position: 'relative',
-    },
-    editAvatar: {
-        width: 120,
-        height: 120,
-        borderRadius: 60,
-    },
-    editAvatarPlaceholder: {
-        width: 120,
-        height: 120,
-        borderRadius: 60,
-        backgroundColor: colors.surface2,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    editAvatarOverlay: {
-        position: 'absolute',
-        bottom: 8,
-        right: 8,
-        width: 36,
-        height: 36,
-        borderRadius: 18,
-        backgroundColor: colors.accent,
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderWidth: 3,
-        borderColor: colors.surface,
-    },
-    editAvatarText: {
-        marginTop: 12,
-        fontSize: 14,
-        color: colors.textSecondary,
-    },
-    editInputSection: {
-        paddingHorizontal: 20,
-    },
-    editInputGroup: {
-        marginBottom: 24,
-    },
-    editInputLabel: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: colors.text,
-        marginBottom: 8,
-    },
-    editInput: {
-        backgroundColor: colors.surface2,
-        borderRadius: 12,
-        paddingHorizontal: 16,
-        height: SIZES.inputHeight,
-        fontSize: 16,
-        color: colors.text,
     },
     bottomPadding: {
         height: 40,
@@ -770,3 +564,4 @@ const makeStyles = (colors) => StyleSheet.create({
 });
 
 export default ProfileScreen;
+

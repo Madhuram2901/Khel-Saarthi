@@ -22,6 +22,7 @@ import EventDetailsScreen from '../screens/EventDetailsScreen';
 import ParticipantsScreen from '../screens/ParticipantsScreen';
 import ChatScreen from '../screens/ChatScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import EditProfileScreen from '../screens/EditProfileScreen';
 import BadmintonProfileScreen from '../screens/BadmintonProfileScreen';
 import CreateSportsProfileScreen from '../screens/CreateSportsProfileScreen';
 import SportsProfileDetailsScreen from '../screens/SportsProfileDetailsScreen';
@@ -89,6 +90,7 @@ function ProfileStack() {
             }}
         >
             <Stack.Screen name="Profile" component={ProfileScreen} options={{ title: 'Profile' }} />
+            <Stack.Screen name="EditProfile" component={EditProfileScreen} />
             <Stack.Screen name="BadmintonProfile" component={BadmintonProfileScreen} options={{ title: 'Badminton Profile', headerBackTitle: 'Profile' }} />
         </Stack.Navigator>
     );
@@ -151,7 +153,10 @@ function TournamentStackScreen() {
         >
             <TournamentStack.Screen name="TournamentList" component={TournamentListScreen} options={{ headerShown: false }} />
             <TournamentStack.Screen name="CreateTournament" component={CreateTournamentScreen} options={{ title: 'Create Tournament' }} />
-            <TournamentStack.Screen name="TournamentDashboard" component={TournamentDashboardScreen} options={{ title: 'Tournament' }} />
+            <TournamentStack.Screen name="TournamentDashboard" component={TournamentDashboardScreen} options={{
+                title: 'Tournament',
+                headerBackTitle: ' ',
+            }} />
             <TournamentStack.Screen name="ManageTeams" component={ManageTeamsScreen} options={{ title: 'Manage Teams' }} />
             <TournamentStack.Screen name="GenerateFixtures" component={GenerateFixturesScreen} options={{ title: 'Generate Fixtures' }} />
             <TournamentStack.Screen name="MatchDetails" component={MatchDetailsScreen} options={{ title: 'Match Details' }} />
@@ -258,7 +263,10 @@ const AppNavigator = () => {
             <Tab.Screen
                 name="TournamentStack"
                 component={TournamentStackScreen}
-                options={{ title: 'Tournaments' }}
+                options={({ route }) => ({
+                    title: 'Tourneys',
+                    tabBarStyle: { display: getTabBarVisibility(route) },
+                })}
             />
 
             <Tab.Screen

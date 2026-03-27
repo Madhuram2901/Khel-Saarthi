@@ -99,7 +99,7 @@ const TournamentDashboardScreen = ({ route, navigation }) => {
                         <View style={styles.statsGrid}>
                             <View style={styles.statCard}><Ionicons name="people" size={32} color={colors.accent} /><Text style={styles.statValue}>{teams.length}</Text><Text style={styles.statLabel}>Teams</Text></View>
                             <View style={styles.statCard}><Ionicons name="calendar" size={32} color="#FF6B6B" /><Text style={styles.statValue}>{matches.length}</Text><Text style={styles.statLabel}>Matches</Text></View>
-                            <View style={styles.statCard}><Ionicons name="trophy" size={32} color="#FFD93D" /><Text style={styles.statValue}>{tournament.format.replace(/_/g, ' ')}</Text><Text style={styles.statLabel}>Format</Text></View>
+                            <View style={styles.statCard}><Ionicons name="trophy" size={32} color="#FFD93D" /><Text style={styles.statValue} adjustsFontSizeToFit={true} numberOfLines={2} minimumFontScale={0.6}>{tournament.format.replace(/_/g, ' ')}</Text><Text style={styles.statLabel}>Format</Text></View>
                         </View>
                         {isHost && teams.length > 0 && matches.length === 0 && (
                             <TouchableOpacity style={styles.actionButton} onPress={() => navigation.navigate('GenerateFixtures', { tournamentId })}>
@@ -180,8 +180,8 @@ const makeStyles = (colors, isDark) => StyleSheet.create({
     content: { flex: 1 },
     overviewContainer: { padding: 16 },
     statsGrid: { flexDirection: 'row', marginBottom: 20 },
-    statCard: { flex: 1, backgroundColor: colors.surface, borderRadius: 12, padding: 16, alignItems: 'center', marginHorizontal: 4, shadowColor: colors.cardShadow, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 },
-    statValue: { fontSize: 20, fontWeight: '700', color: colors.text, marginTop: 8 },
+    statCard: { flex: 1, backgroundColor: colors.surface, borderRadius: 12, paddingVertical: 16, paddingHorizontal: 8, alignItems: 'center', marginHorizontal: 4, shadowColor: colors.cardShadow, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2, overflow: 'hidden' },
+    statValue: { fontSize: 16, fontWeight: '700', color: colors.text, marginTop: 8, textAlign: 'center' },
     statLabel: { fontSize: 12, color: colors.textSecondary, marginTop: 4 },
     actionButton: { flexDirection: 'row', backgroundColor: colors.accent, borderRadius: 12, padding: 16, alignItems: 'center', justifyContent: 'center', marginBottom: 20 },
     actionButtonText: { color: '#FFF', fontSize: 16, fontWeight: '600', marginLeft: 8 },

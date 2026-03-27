@@ -153,17 +153,20 @@ const CreateTournamentScreen = ({ navigation }) => {
                 </View>
 
                 {showStartPicker && (
-                    <DateTimePicker
-                        value={formData.startDate}
-                        mode="date"
-                        display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                        onChange={(event, selectedDate) => {
-                            setShowStartPicker(false);
-                            if (selectedDate) {
-                                setFormData({ ...formData, startDate: selectedDate });
-                            }
-                        }}
-                    />
+                    <View style={{ backgroundColor: isDark ? '#121212' : '#FFFFFF' }}>
+                        <DateTimePicker
+                            value={formData.startDate}
+                            mode="date"
+                            display="spinner"
+                            themeVariant={isDark ? 'dark' : 'light'}
+                            onChange={(event, selectedDate) => {
+                                setShowStartPicker(false);
+                                if (selectedDate) {
+                                    setFormData({ ...formData, startDate: selectedDate });
+                                }
+                            }}
+                        />
+                    </View>
                 )}
 
                 <View style={styles.inputGroup}>
@@ -178,18 +181,21 @@ const CreateTournamentScreen = ({ navigation }) => {
                 </View>
 
                 {showEndPicker && (
-                    <DateTimePicker
-                        value={formData.endDate}
-                        mode="date"
-                        display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                        minimumDate={formData.startDate}
-                        onChange={(event, selectedDate) => {
-                            setShowEndPicker(false);
-                            if (selectedDate) {
-                                setFormData({ ...formData, endDate: selectedDate });
-                            }
-                        }}
-                    />
+                    <View style={{ backgroundColor: isDark ? '#121212' : '#FFFFFF' }}>
+                        <DateTimePicker
+                            value={formData.endDate}
+                            mode="date"
+                            display="spinner"
+                            themeVariant={isDark ? 'dark' : 'light'}
+                            minimumDate={formData.startDate}
+                            onChange={(event, selectedDate) => {
+                                setShowEndPicker(false);
+                                if (selectedDate) {
+                                    setFormData({ ...formData, endDate: selectedDate });
+                                }
+                            }}
+                        />
+                    </View>
                 )}
             </View>
 

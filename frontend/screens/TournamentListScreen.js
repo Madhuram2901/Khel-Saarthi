@@ -9,6 +9,7 @@ import {
     Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import api from '../api/api';
 import AuthContext from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -23,9 +24,11 @@ const TournamentListScreen = ({ navigation }) => {
     const [tournaments, setTournaments] = useState([]);
     const [loading, setLoading] = useState(false);
 
-    useEffect(() => {
-        fetchTournaments();
-    }, []);
+    useFocusEffect(
+        React.useCallback(() => {
+            fetchTournaments();
+        }, [])
+    );
 
     const fetchTournaments = async () => {
         try {

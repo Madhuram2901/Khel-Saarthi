@@ -5,6 +5,14 @@ const Event = require('../models/eventModel');
 const { uploadToCloudinary, deleteFromCloudinary } = require('../utils/cloudinaryUpload');
 const fs = require('fs');
 
+const normalizeOptionalNumber = (value) => {
+    if (value === undefined) return undefined;
+    if (value === null || value === '' || value === 'null') return null;
+
+    const parsedValue = Number(value);
+    return Number.isFinite(parsedValue) ? parsedValue : null;
+};
+
 // @desc    Update user info (name, email, profile picture)
 // @route   PUT /api/users/update
 // @access  Private
@@ -35,8 +43,13 @@ const updateUserInfo = asyncHandler(async (req, res) => {
             throw new Error('Email already in use');
         }
     }
+    const nextHeight = normalizeOptionalNumber(req.body.height);
+    const nextWeight = normalizeOptionalNumber(req.body.weight);
+
     if (wantsNameChange) user.name = name;
     if (wantsEmailChange) user.email = email;
+    if (nextHeight !== undefined) user.height = nextHeight;
+    if (nextWeight !== undefined) user.weight = nextWeight;
 
     // Handle profile picture upload (expects a file upload middleware to set req.file)
     if (req.file && req.file.path) {
@@ -63,6 +76,8 @@ const updateUserInfo = asyncHandler(async (req, res) => {
         email: updatedUser.email,
         role: updatedUser.role,
         profilePicture: updatedUser.profilePicture,
+        height: updatedUser.height,
+        weight: updatedUser.weight,
         profiles: updatedUser.profiles,
         token: generateToken(updatedUser._id),
     });
@@ -95,6 +110,8 @@ const registerUser = asyncHandler(async (req, res) => {
             email: user.email,
             role: user.role,
             profilePicture: user.profilePicture,
+            height: user.height,
+            weight: user.weight,
             token: generateToken(user._id),
         });
     } else {
@@ -118,6 +135,8 @@ const loginUser = asyncHandler(async (req, res) => {
             email: user.email,
             role: user.role,
             profilePicture: user.profilePicture,
+            height: user.height,
+            weight: user.weight,
             token: generateToken(user._id),
         });
     } else {
@@ -162,6 +181,8 @@ const updateUserProfile = asyncHandler(async (req, res) => {
             name: updatedUser.name,
             email: updatedUser.email,
             role: updatedUser.role,
+            height: updatedUser.height,
+            weight: updatedUser.weight,
             profiles: updatedUser.profiles, // Include the updated profiles
             token: generateToken(updatedUser._id), // Send a new token if needed
         });
@@ -186,6 +207,8 @@ const getMyProfile = asyncHandler(async (req, res) => {
         email: user.email,
         role: user.role,
         profilePicture: user.profilePicture,
+        height: user.height,
+        weight: user.weight,
         profiles: user.profiles,
     });
 });

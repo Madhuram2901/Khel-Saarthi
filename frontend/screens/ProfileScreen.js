@@ -5,37 +5,29 @@ import {
     Text,
     StyleSheet,
     ScrollView,
-    TextInput,
     Image,
-    Alert,
-    Linking,
     StatusBar,
     TouchableOpacity,
-    Switch
+    Switch,
+    useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import AuthContext from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import StyledButton from '../components/StyledButton';
-import ProfileCard from '../components/ProfileCard';
-import { StatCard, StatRow } from '../components/StatCard';
-import * as ImagePicker from 'expo-image-picker';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../api/api';
+import { CARD_SHADOW, RADII, SIZES, SPACING, TYPOGRAPHY } from '../theme/designSystem';
+import { getSportEmoji, getSkillLevelLabel } from '../utils/sportsHelper';
 
 const ProfileScreen = ({ navigation }) => {
-    const { user, logout, setUser } = useContext(AuthContext);
+    const { user, logout } = useContext(AuthContext);
     const { themeMode, setMode, colors, isDark } = useTheme();
     const styles = useMemo(() => makeStyles(colors), [colors]);
+    const { width } = useWindowDimensions();
 
-    const badmintonProfile = user.profiles?.badminton || {};
-    const [name, setName] = useState(user.name);
-    const [email, setEmail] = useState(user.email);
-    const [image, setImage] = useState(null);
-    const [loading, setLoading] = useState(false);
-    const [editMode, setEditMode] = useState(false);
     const [eventsJoined, setEventsJoined] = useState(0);
+    const [sportsProfiles, setSportsProfiles] = useState([]);
+    const [loadingProfiles, setLoadingProfiles] = useState(false);
 
     useEffect(() => {
         const fetchEventsJoined = async () => {
@@ -49,96 +41,52 @@ const ProfileScreen = ({ navigation }) => {
         fetchEventsJoined();
     }, []);
 
-
-    const requestMediaLibraryPermission = async () => {
+    const fetchSportsProfiles = async () => {
         try {
-            const { status, granted, canAskAgain } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-            if (granted) return true;
-            if (!canAskAgain) {
-                Alert.alert(
-                    'Permission required',
-                    'Please allow photo library access in Settings to change your profile picture.',
-                    [
-                        { text: 'Cancel', style: 'cancel' },
-                        { text: 'Open Settings', onPress: () => Linking.openSettings && Linking.openSettings() },
-                    ]
-                );
-                return false;
-            }
-            return false;
-        } catch (e) {
-            return false;
-        }
-    };
-
-    const pickImage = async () => {
-        const ok = await requestMediaLibraryPermission();
-        if (!ok) return;
-        try {
-            const result = await ImagePicker.launchImageLibraryAsync({
-                allowsEditing: true,
-                aspect: [1, 1],
-                quality: 0.8,
-            });
-            if (!result.canceled && result.assets && result.assets[0]) {
-                setImage(result.assets[0].uri);
-            }
-        } catch (e) {
-            Alert.alert('Error', 'Could not pick image');
-        }
-    };
-
-    const updateProfile = async () => {
-        if (!name.trim() || !email.trim()) {
-            Alert.alert('Error', 'Name and email are required');
-            return;
-        }
-
-        setLoading(true);
-        try {
-            const formData = new FormData();
-            formData.append('name', name);
-            formData.append('email', email);
-
-            if (image) {
-                formData.append('profilePicture', {
-                    uri: image,
-                    type: 'image/jpeg',
-                    name: 'profile.jpg',
-                });
-            }
-
-            const { data } = await api.put('/users/update', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' },
-            });
-
-            // Update token and fetch fresh user data
-            if (data.token) {
-                await AsyncStorage.setItem('userToken', data.token);
-                api.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
-            }
-
-            setUser(data);
-            setImage(null);
-            setEditMode(false);
-            Alert.alert('Success', 'Profile updated successfully');
+            setLoadingProfiles(true);
+            const res = await api.get('/sports-profiles');
+            setSportsProfiles(res.data || []);
         } catch (error) {
-            console.error(error);
-            Alert.alert('Error', 'Could not update profile');
+            console.error('Error fetching sports profiles:', error);
+            setSportsProfiles([]);
         } finally {
-            setLoading(false);
+            setLoadingProfiles(false);
         }
     };
+
+    useEffect(() => {
+        fetchSportsProfiles();
+    }, []);
+
+    const calculateBMI = () => {
+        const numericHeight = Number(user.height);
+        const numericWeight = Number(user.weight);
+        if (!numericHeight || !numericWeight) return null;
+        const h = numericHeight / 100;
+        const bmi = numericWeight / (h * h);
+        return bmi.toFixed(1);
+    };
+    const getBMIColor = (bmi) => {
+        if (!bmi) return colors.textSecondary;
+        if (bmi < 18.5) return '#FF9500';
+        if (bmi < 25) return colors.accentGreen;
+        if (bmi < 30) return '#FF9500';
+        return colors.accentRed;
+    };
+
+    const bmiValue = calculateBMI();
+    const bmiNumber = bmiValue ? parseFloat(bmiValue) : null;
+    const statsCardWidth = Math.max((width - 40) / 4, 88);
 
     const MenuSection = ({ title, children }) => (
-        <View style={styles.menuSection}>
+        <View style={styles.section}>
             <Text style={styles.sectionTitle}>{title}</Text>
             {children}
         </View>
     );
 
     const MenuItem = ({ icon, title, subtitle, onPress, rightElement, color = colors.text }) => (
-        <TouchableOpacity style={styles.menuItem} onPress={onPress}>
+        <TouchableOpacity style={styles.menuItem} onPress={onPress} activeOpacity={0.85}>
             <View style={styles.menuItemLeft}>
                 <View style={[styles.menuIcon, { backgroundColor: `${color}15` }]}>
                     <Ionicons name={icon} size={20} color={color} />
@@ -152,124 +100,105 @@ const ProfileScreen = ({ navigation }) => {
         </TouchableOpacity>
     );
 
-    if (editMode) {
-        return (
-            <SafeAreaView style={styles.container}>
-                <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={colors.background} />
-                <View style={styles.editHeader}>
-                    <TouchableOpacity onPress={() => setEditMode(false)}>
-                        <Text style={styles.cancelButton}>Cancel</Text>
-                    </TouchableOpacity>
-                    <Text style={styles.editTitle}>Edit Profile</Text>
-                    <TouchableOpacity onPress={updateProfile} disabled={loading}>
-                        <Text style={[styles.saveButton, loading && styles.disabledButton]}>
-                            {loading ? 'Saving...' : 'Save'}
-                        </Text>
-                    </TouchableOpacity>
-                </View>
-
-                <ScrollView style={styles.editForm}>
-                    <View style={styles.editAvatarSection}>
-                        <TouchableOpacity onPress={pickImage} style={styles.editAvatarContainer}>
-                            {image ? (
-                                <Image source={{ uri: image }} style={styles.editAvatar} />
-                            ) : user.profilePicture ? (
-                                <Image source={{ uri: user.profilePicture }} style={styles.editAvatar} />
-                            ) : (
-                                <View style={styles.editAvatarPlaceholder}>
-                                    <Ionicons name="camera" size={32} color={colors.textSecondary} />
-                                </View>
-                            )}
-                            <View style={styles.editAvatarOverlay}>
-                                <Ionicons name="camera" size={20} color="#FFFFFF" />
-                            </View>
-                        </TouchableOpacity>
-                        <Text style={styles.editAvatarText}>Tap to change photo</Text>
-                    </View>
-
-                    <View style={styles.editInputSection}>
-                        <View style={styles.editInputGroup}>
-                            <Text style={styles.editInputLabel}>Name</Text>
-                            <TextInput
-                                style={styles.editInput}
-                                value={name}
-                                onChangeText={setName}
-                                placeholder="Enter your name"
-                                placeholderTextColor={colors.textSecondary}
-                            />
-                        </View>
-
-                        <View style={styles.editInputGroup}>
-                            <Text style={styles.editInputLabel}>Email</Text>
-                            <TextInput
-                                style={styles.editInput}
-                                value={email}
-                                onChangeText={setEmail}
-                                placeholder="Enter your email"
-                                placeholderTextColor={colors.textSecondary}
-                                keyboardType="email-address"
-                                autoCapitalize="none"
-                            />
-                        </View>
-                    </View>
-                </ScrollView>
-            </SafeAreaView>
-        );
-    }
-
     return (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView style={styles.container} edges={['left', 'right']}>
             <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={colors.background} />
-            <ScrollView style={styles.scrollView} contentContainerStyle={{ paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
-                <ProfileCard
-                    user={user}
-                    onEditPress={() => setEditMode(true)}
-                    onImagePress={pickImage}
-                />
+            <ScrollView
+                style={styles.scrollView}
+                contentContainerStyle={{ paddingBottom: 120 }}
+                showsVerticalScrollIndicator={false}
+            >
+                {/* Profile Header Card */}
+                <View style={styles.headerSection}>
+                    <View style={[styles.profileHeaderCard, { backgroundColor: colors.surface }]}>
+                        <View style={styles.profileTopRow}>
+                            <TouchableOpacity
+                                onPress={() => navigation.navigate('EditProfile')}
+                                activeOpacity={0.85}
+                                style={[styles.avatarWrap, { backgroundColor: colors.surface2 }]}
+                            >
+                                {user?.profilePicture ? (
+                                    <Image source={{ uri: user.profilePicture }} style={styles.avatar} />
+                                ) : (
+                                    <View style={styles.avatarPlaceholder}>
+                                        <Text style={[styles.avatarInitial, { color: colors.text }]}>
+                                            {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+                                        </Text>
+                                    </View>
+                                )}
+                            </TouchableOpacity>
 
-                {/* Stats Section */}
-                <View style={styles.statsSection}>
-                    <Text style={styles.sectionTitle}>Statistics</Text>
-                    <StatRow>
-                        <StatCard
-                            icon="trophy"
-                            title="Events Joined"
-                            value={eventsJoined.toString()}
-                            color="#FF6B35"
-                        />
-                        <StatCard
-                            title="Rating"
-                            image={
-                                badmintonProfile.skillLevel === 'Beginner'
-                                    ? require('../assets/beginner.png')
-                                    : badmintonProfile.skillLevel === 'Intermediate'
-                                        ? require('../assets/intermediate.png')
-                                        : badmintonProfile.skillLevel === 'Advanced'
-                                            ? require('../assets/advance.png')
-                                            : null
-                            }
-                            imageColor={
-                                badmintonProfile.skillLevel === 'Beginner'
-                                    ? (isDark ? '#1B3A1E' : '#E8F5E9')
-                                    : badmintonProfile.skillLevel === 'Intermediate'
-                                        ? (isDark ? '#1A2A3A' : '#E3F2FD')
-                                        : badmintonProfile.skillLevel === 'Advanced'
-                                            ? (isDark ? '#3A2A1A' : '#FFF3E0')
-                                            : colors.surface
-                            }
-                        />
-                    </StatRow>
+                            <View style={styles.profileMeta}>
+                                <Text style={[styles.profileName, { color: colors.text }]} numberOfLines={1}>
+                                    {user?.name || 'User'}
+                                </Text>
+                                <View style={styles.roleRow}>
+                                    <View style={[styles.roleBadge, { backgroundColor: colors.surface2 }]}>
+                                        <Text style={[styles.roleText, { color: colors.textSecondary }]} numberOfLines={1}>
+                                            {user?.role === 'host' ? 'Host' : 'Participant'}
+                                        </Text>
+                                    </View>
+                                </View>
+                            </View>
+
+                            <TouchableOpacity
+                                onPress={() => navigation.navigate('EditProfile')}
+                                activeOpacity={0.85}
+                                style={[styles.editButton, { borderColor: colors.border }]}
+                            >
+                                <Ionicons name="create-outline" size={18} color={colors.accent} />
+                                <Text style={[styles.editButtonText, { color: colors.accent }]}>Edit</Text>
+                            </TouchableOpacity>
+                        </View>
+
+                        <Text style={[styles.profileSub, { color: colors.textSecondary }]} numberOfLines={1}>
+                            {user?.email || ''}
+                        </Text>
+                    </View>
                 </View>
 
+                {/* Statistics Cards Row */}
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>Statistics</Text>
+                    <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={styles.statsContainer}
+                    >
+                        <View style={[styles.statsRow, { minWidth: width - 32 }]}>
+                            <View style={[styles.statCard, styles.centeredStatCard, { backgroundColor: colors.surface, minWidth: statsCardWidth }]}>
+                                <Ionicons name="trophy-outline" size={24} color={colors.accent} />
+                                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Events Joined</Text>
+                                <Text style={[styles.statValue, { color: colors.text }]}>{eventsJoined}</Text>
+                            </View>
+                            <View style={[styles.statCard, { backgroundColor: colors.surface, minWidth: statsCardWidth }]}>
+                                <Ionicons name="resize-outline" size={24} color={colors.accent} />
+                                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Height (cm)</Text>
+                                <Text style={[styles.statValue, { color: colors.text }]}>{user.height != null ? user.height : '--'}</Text>
+                            </View>
+                            <View style={[styles.statCard, { backgroundColor: colors.surface, minWidth: statsCardWidth }]}>
+                                <Ionicons name="barbell-outline" size={24} color={colors.accent} />
+                                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Weight (kg)</Text>
+                                <Text style={[styles.statValue, { color: colors.text }]}>{user.weight != null ? user.weight : '--'}</Text>
+                            </View>
+                            <View style={[styles.statCard, { backgroundColor: colors.surface, minWidth: statsCardWidth }]}>
+                                <Ionicons name="fitness-outline" size={24} color={colors.accent} />
+                                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>BMI</Text>
+                                <Text style={[styles.statValue, { color: bmiNumber !== null ? getBMIColor(bmiNumber) : colors.textSecondary }]}>{bmiValue || '--'}</Text>
+                            </View>
+                        </View>
+                    </ScrollView>
+                </View>
                 {/* Appearance Section */}
-                <View style={styles.appearanceSection}>
+                <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Appearance</Text>
-                    <View style={styles.appearanceCard}>
-                        {/* Auto toggle row */}
+                    <View style={[styles.card, { backgroundColor: colors.surface }]}>
                         <View style={styles.settingRow}>
                             <View style={{ flex: 1 }}>
-                                <Text style={styles.settingLabel}>Auto Dark Mode</Text>
-                                <Text style={styles.settingSubLabel}>Switches at 7 PM · Reverts at 7 AM</Text>
+                                <Text style={[styles.settingLabel, { color: colors.text }]}>Auto Dark Mode</Text>
+                                <Text style={[styles.settingSubLabel, { color: colors.textSecondary }]}>
+                                    Switches at 7 PM · Reverts at 7 AM
+                                </Text>
                             </View>
                             <Switch
                                 value={themeMode === 'auto'}
@@ -279,12 +208,13 @@ const ProfileScreen = ({ navigation }) => {
                             />
                         </View>
 
-                        {/* Manual override row — only shown when auto is OFF */}
                         {themeMode !== 'auto' && (
-                            <View style={[styles.settingRow, styles.settingRowBorder]}>
+                            <View style={[styles.settingRow, styles.settingRowBorder, { borderTopColor: colors.border }]}>
                                 <View style={{ flex: 1 }}>
-                                    <Text style={styles.settingLabel}>Dark Mode</Text>
-                                    <Text style={styles.settingSubLabel}>Manual override</Text>
+                                    <Text style={[styles.settingLabel, { color: colors.text }]}>Dark Mode</Text>
+                                    <Text style={[styles.settingSubLabel, { color: colors.textSecondary }]}>
+                                        Manual override
+                                    </Text>
                                 </View>
                                 <Switch
                                     value={isDark}
@@ -299,49 +229,101 @@ const ProfileScreen = ({ navigation }) => {
 
                 {/* Sports Profiles Section */}
                 <MenuSection title="Sports Profiles">
-                    <MenuItem
-                        icon="tennisball"
-                        title="Badminton Profile"
-                        subtitle={badmintonProfile.skillLevel ? `${badmintonProfile.skillLevel} Level` : "Not set up"}
-                        onPress={() => navigation.navigate('BadmintonProfile')}
-                        color="#AF52DE"
-                    />
+                    <View style={[styles.listCard, { backgroundColor: colors.surface }]}>
+                        {loadingProfiles ? (
+                            <View style={styles.menuItem}>
+                                <Text style={[styles.menuItemTitle, { color: colors.textSecondary }]}>Loading profiles...</Text>
+                            </View>
+                        ) : sportsProfiles.length > 0 ? (
+                            sportsProfiles.map((profile, index) => (
+                                <View key={profile._id}>
+                                    <TouchableOpacity
+                                        style={styles.menuItem}
+                                        onPress={() =>
+                                            navigation.navigate('SportsProfileDetails', { profileId: profile._id })
+                                        }
+                                        activeOpacity={0.85}
+                                    >
+                                        <View style={styles.menuItemLeft}>
+                                            <View style={[styles.menuIcon, { backgroundColor: `${colors.accent}15` }]}>
+                                                <Text style={styles.sportEmoji}>{getSportEmoji(profile.sportName)}</Text>
+                                            </View>
+                                            <View style={styles.menuItemContent}>
+                                                <Text style={[styles.menuItemTitle, { color: colors.text }]}>
+                                                    {profile.sportName}
+                                                </Text>
+                                                <Text style={[styles.menuItemSubtitle, { color: colors.textSecondary }]}>
+                                                    {getSkillLevelLabel(profile.skillLevel)} · {profile.playstyle}
+                                                </Text>
+                                            </View>
+                                        </View>
+                                        <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
+                                    </TouchableOpacity>
+                                    {index < sportsProfiles.length - 1 && (
+                                        <View style={[styles.divider, { backgroundColor: colors.border }]} />
+                                    )}
+                                </View>
+                            ))
+                        ) : (
+                            <View style={styles.menuItem}>
+                                <Text style={[styles.menuItemTitle, { color: colors.textSecondary }]}>
+                                    No sports profiles yet
+                                </Text>
+                            </View>
+                        )}
+                    </View>
+
+                    {/* Add New Profile Button */}
+                    <TouchableOpacity
+                        style={[styles.addProfileButton, { backgroundColor: colors.accent }]}
+                        onPress={() => navigation.navigate('CreateSportsProfile')}
+                        activeOpacity={0.8}
+                    >
+                        <Ionicons name="add-circle" size={20} color="#FFF" />
+                        <Text style={styles.addProfileButtonText}>Add New Sport Profile</Text>
+                    </TouchableOpacity>
                 </MenuSection>
 
                 {/* Settings Section */}
                 <MenuSection title="Settings">
-                    <MenuItem
-                        icon="notifications"
-                        title="Notifications"
-                        subtitle="Push notifications, email alerts"
-                        onPress={() => {/* TODO: Navigate to notifications settings */ }}
-                        color="#FF9500"
-                    />
-                    <MenuItem
-                        icon="lock-closed"
-                        title="Privacy & Security"
-                        subtitle="Password, two-factor authentication"
-                        onPress={() => {/* TODO: Navigate to privacy settings */ }}
-                        color={colors.accent}
-                    />
-                    <MenuItem
-                        icon="help-circle"
-                        title="Help & Support"
-                        subtitle="FAQ, contact support"
-                        onPress={() => {/* TODO: Navigate to help */ }}
-                        color={colors.accentGreen}
-                    />
+                    <View style={[styles.listCard, { backgroundColor: colors.surface }]}>
+                        <MenuItem
+                            icon="notifications-outline"
+                            title="Notifications"
+                            subtitle="Push notifications, email alerts"
+                            onPress={() => {/* TODO: Navigate to notifications settings */ }}
+                            color={colors.accent}
+                        />
+                        <View style={[styles.divider, { backgroundColor: colors.border }]} />
+                        <MenuItem
+                            icon="lock-closed-outline"
+                            title="Privacy & Security"
+                            subtitle="Password, two-factor authentication"
+                            onPress={() => {/* TODO: Navigate to privacy settings */ }}
+                            color={colors.accent}
+                        />
+                        <View style={[styles.divider, { backgroundColor: colors.border }]} />
+                        <MenuItem
+                            icon="help-circle-outline"
+                            title="Help & Support"
+                            subtitle="FAQ, contact support"
+                            onPress={() => {/* TODO: Navigate to help */ }}
+                            color={colors.accentGreen}
+                        />
+                    </View>
                 </MenuSection>
 
                 {/* Account Section */}
                 <MenuSection title="Account">
-                    <MenuItem
-                        icon="log-out"
-                        title="Sign Out"
-                        onPress={logout}
-                        color={colors.accentRed}
-                        rightElement={null}
-                    />
+                    <View style={[styles.listCard, { backgroundColor: colors.surface }]}>
+                        <MenuItem
+                            icon="log-out-outline"
+                            title="Sign Out"
+                            onPress={logout}
+                            color={colors.accentRed}
+                            rightElement={null}
+                        />
+                    </View>
                 </MenuSection>
 
                 <View style={styles.bottomPadding} />
@@ -358,30 +340,24 @@ const makeStyles = (colors) => StyleSheet.create({
     scrollView: {
         flex: 1,
     },
-    statsSection: {
-        marginTop: 24,
-        marginBottom: 16,
+    headerSection: {
+        marginTop: 16,
+    },
+    section: {
+        marginTop: SPACING.sectionTop,
     },
     sectionTitle: {
-        fontSize: 20,
-        fontWeight: 'bold',
+        ...TYPOGRAPHY.sectionTitle,
         color: colors.text,
-        paddingHorizontal: 20,
-        marginBottom: 16,
-    },
-    menuSection: {
-        marginBottom: 32,
+        paddingHorizontal: SPACING.screenHorizontal,
+        marginBottom: SPACING.sectionBottom,
     },
     menuItem: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        backgroundColor: colors.surface,
-        paddingVertical: 16,
-        paddingHorizontal: 20,
-        marginHorizontal: 20,
-        marginBottom: 2,
-        borderRadius: 12,
+        paddingVertical: 14,
+        paddingHorizontal: 16,
     },
     menuItemLeft: {
         flexDirection: 'row',
@@ -400,24 +376,13 @@ const makeStyles = (colors) => StyleSheet.create({
         flex: 1,
     },
     menuItemTitle: {
-        fontSize: 16,
-        fontWeight: '600',
+        ...TYPOGRAPHY.cardTitle,
         color: colors.text,
         marginBottom: 2,
     },
     menuItemSubtitle: {
-        fontSize: 14,
+        ...TYPOGRAPHY.body,
         color: colors.textSecondary,
-    },
-    // Appearance section
-    appearanceSection: {
-        marginBottom: 32,
-    },
-    appearanceCard: {
-        backgroundColor: colors.surface,
-        borderRadius: 16,
-        padding: 16,
-        marginHorizontal: 20,
     },
     settingRow: {
         flexDirection: 'row',
@@ -427,113 +392,176 @@ const makeStyles = (colors) => StyleSheet.create({
     },
     settingRowBorder: {
         borderTopWidth: StyleSheet.hairlineWidth,
-        borderTopColor: colors.border,
         marginTop: 8,
         paddingTop: 16,
     },
     settingLabel: {
         fontSize: 16,
         fontWeight: '500',
-        color: colors.text,
     },
     settingSubLabel: {
         fontSize: 13,
         marginTop: 2,
-        color: colors.textSecondary,
     },
-    // Edit mode styles
-    editHeader: {
+    card: {
+        borderRadius: RADII.card,
+        padding: 16,
+        marginHorizontal: SPACING.screenHorizontal,
+        ...CARD_SHADOW,
+    },
+    listCard: {
+        borderRadius: RADII.card,
+        marginHorizontal: SPACING.screenHorizontal,
+        overflow: 'hidden',
+        ...CARD_SHADOW,
+    },
+    divider: {
+        height: StyleSheet.hairlineWidth,
+        marginLeft: 16 + 40 + 16,
+    },
+    // Profile header
+    profileHeaderCard: {
+        borderRadius: RADII.card,
+        padding: 16,
+        marginHorizontal: SPACING.screenHorizontal,
+        ...CARD_SHADOW,
+    },
+    profileTopRow: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
         alignItems: 'center',
-        paddingHorizontal: 20,
-        paddingVertical: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: colors.border,
-        backgroundColor: colors.surface,
     },
-    cancelButton: {
-        fontSize: 16,
-        color: colors.textSecondary,
+    avatarWrap: {
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        overflow: 'hidden',
+        alignItems: 'center',
+        justifyContent: 'center',
     },
-    editTitle: {
-        fontSize: 18,
-        fontWeight: '600',
-        color: colors.text,
+    avatar: {
+        width: 56,
+        height: 56,
+        borderRadius: 28,
     },
-    saveButton: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: colors.accent,
+    avatarPlaceholder: {
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
-    disabledButton: {
-        color: colors.textSecondary,
+    avatarInitial: {
+        fontSize: 22,
+        fontWeight: '700',
     },
-    editForm: {
+    profileMeta: {
         flex: 1,
-        backgroundColor: colors.surface,
+        marginLeft: 12,
     },
-    editAvatarSection: {
+    profileName: {
+        ...TYPOGRAPHY.screenTitle,
+        fontSize: 20,
+    },
+    roleRow: {
+        flexDirection: 'row',
+        marginTop: 6,
+    },
+    roleBadge: {
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        borderRadius: RADII.pill,
+    },
+    roleText: {
+        ...TYPOGRAPHY.small,
+        fontWeight: '700',
+    },
+    editButton: {
+        height: SIZES.inputHeight,
+        paddingHorizontal: 12,
+        borderRadius: RADII.button,
+        borderWidth: 1,
+        flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: 32,
+        gap: 6,
     },
-    editAvatarContainer: {
-        position: 'relative',
+    editButtonText: {
+        ...TYPOGRAPHY.body,
+        fontWeight: '700',
     },
-    editAvatar: {
-        width: 120,
-        height: 120,
-        borderRadius: 60,
-    },
-    editAvatarPlaceholder: {
-        width: 120,
-        height: 120,
-        borderRadius: 60,
-        backgroundColor: colors.surface2,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    editAvatarOverlay: {
-        position: 'absolute',
-        bottom: 8,
-        right: 8,
-        width: 36,
-        height: 36,
-        borderRadius: 18,
-        backgroundColor: colors.accent,
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderWidth: 3,
-        borderColor: colors.surface,
-    },
-    editAvatarText: {
+    profileSub: {
+        ...TYPOGRAPHY.body,
         marginTop: 12,
-        fontSize: 14,
-        color: colors.textSecondary,
+        paddingHorizontal: 2,
     },
-    editInputSection: {
-        paddingHorizontal: 20,
-    },
-    editInputGroup: {
-        marginBottom: 24,
-    },
-    editInputLabel: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: colors.text,
-        marginBottom: 8,
-    },
-    editInput: {
-        backgroundColor: colors.surface2,
-        borderRadius: 12,
+    // Stats
+    statsContainer: {
         paddingHorizontal: 16,
+    },
+    statsRow: {
+        flexDirection: 'row',
+        gap: 8,
+    },
+    statCard: {
+        flex: 1,
+        borderRadius: RADII.card,
         paddingVertical: 16,
-        fontSize: 16,
-        color: colors.text,
+        alignItems: 'center',
+        justifyContent: 'center',
+        ...CARD_SHADOW,
+    },
+    centeredStatCard: {
+        alignItems: 'center',
+    },
+    statLabel: {
+        ...TYPOGRAPHY.small,
+        marginTop: 8,
+        fontWeight: '600',
+        textAlign: 'center',
+    },
+    statValue: {
+        ...TYPOGRAPHY.sectionTitle,
+        marginTop: 6,
+        textAlign: 'center',
+    },
+    statSub: {
+        ...TYPOGRAPHY.small,
+        marginTop: 4,
+        textAlign: 'center',
+    },
+    skillBadge: {
+        marginTop: 6,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: RADII.pill,
+        alignSelf: 'flex-start',
+    },
+    skillBadgeText: {
+        ...TYPOGRAPHY.small,
+        fontWeight: '700',
+        letterSpacing: 0.5,
     },
     bottomPadding: {
         height: 40,
     },
+    sportEmoji: {
+        fontSize: 20,
+    },
+    addProfileButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        marginHorizontal: SPACING.screenHorizontal,
+        marginTop: SPACING.sectionBottom,
+        paddingVertical: 12,
+        borderRadius: RADII.button,
+    },
+    addProfileButtonText: {
+        color: '#FFF',
+        fontSize: 15,
+        fontWeight: '600',
+    },
 });
 
 export default ProfileScreen;
+

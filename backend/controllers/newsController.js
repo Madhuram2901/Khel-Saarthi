@@ -1,33 +1,47 @@
-const axios = require('axios');
+const Parser = require('rss-parser');
+
+const parser = new Parser();
+
+const feeds = [
+    'https://www.espn.com/espn/rss/news',
+    'https://www.thehansindia.com/sports/feed',
+    'https://feeds.feedburner.com/ndtvsports-latest',
+    'https://economictimes.indiatimes.com/rssfeeds/26407562.cms',
+    'https://timesofindia.indiatimes.com/rssfeeds/4719148.cms',
+];
+
+const fetchFeedArticles = async (feedUrl) => {
+    try {
+        const feed = await parser.parseURL(feedUrl);
+        const feedTitle = feed.title || 'Sports News';
+
+        return feed.items.slice(0, 4).map((item) => ({
+            title: item.title || '',
+            description: item.contentSnippet || item.content || '',
+            url: item.link || '',
+            urlToImage: item.enclosure?.url || null,
+            publishedAt: item.isoDate || item.pubDate || null,
+            source: { name: feedTitle },
+        }));
+    } catch (error) {
+        console.error(`Failed to fetch feed ${feedUrl}:`, error.message);
+        return [];
+    }
+};
 
 const getSportsNews = async (req, res) => {
     try {
-        // You can get an API key from https://newsapi.org/
-        const apiKey = process.env.NEWS_API_KEY;
+        const allFeeds = await Promise.all(feeds.map(fetchFeedArticles));
 
-        if (!apiKey) {
-            return res.status(500).json({ message: 'News API key is missing in backend .env' });
-        }
+        let articles = allFeeds.flat();
 
-        // Switch to 'everything' endpoint to search for specific Indian sports
-        // This avoids the empty results from the 'in' category and gives more relevant content
-        const response = await axios.get(`https://newsapi.org/v2/everything`, {
-            params: {
-                q: 'cricket OR badminton OR "indian football" OR "team india" OR kabaddi',
-                language: 'en',
-                sortBy: 'publishedAt',
-                pageSize: 20, // Limit to 20 relevant articles
-                apiKey: apiKey
-            }
-        });
+        articles.sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
 
-        res.json(response.data);
+        articles = articles.slice(0, 20);
+
+        res.json({ articles });
     } catch (error) {
         console.error('Error fetching news:', error.message);
-        if (error.response) {
-            console.error('News API Error Response:', error.response.data);
-            console.error('News API Status:', error.response.status);
-        }
         res.status(500).json({ message: 'Failed to fetch news', error: error.message });
     }
 };

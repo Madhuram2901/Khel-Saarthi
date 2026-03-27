@@ -22,7 +22,11 @@ import EventDetailsScreen from '../screens/EventDetailsScreen';
 import ParticipantsScreen from '../screens/ParticipantsScreen';
 import ChatScreen from '../screens/ChatScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import EditProfileScreen from '../screens/EditProfileScreen';
 import BadmintonProfileScreen from '../screens/BadmintonProfileScreen';
+import CreateSportsProfileScreen from '../screens/CreateSportsProfileScreen';
+import SportsProfileDetailsScreen from '../screens/SportsProfileDetailsScreen';
+import EditSportsProfileScreen from '../screens/EditSportsProfileScreen';
 import AiChatScreen from '../screens/AiChatScreen';
 import NewsScreen from '../screens/NewsScreen';
 import VenueListScreen from '../screens/VenueListScreen';
@@ -30,6 +34,7 @@ import VenueDetailsScreen from '../screens/VenueDetailsScreen';
 import MyBookingsScreen from '../screens/MyBookingsScreen';
 import AddVenueScreen from '../screens/AddVenueScreen';
 import EditVenueScreen from '../screens/EditVenueScreen';
+import EventsScreen from '../screens/EventsScreen';
 // Tournament Screens
 import TournamentListScreen from '../screens/TournamentListScreen';
 import CreateTournamentScreen from '../screens/CreateTournamentScreen';
@@ -44,6 +49,7 @@ const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 const VenueStack = createStackNavigator();
 const TournamentStack = createStackNavigator();
+const EventStack = createStackNavigator();
 
 function HomeStack() {
     const { colors } = useTheme();
@@ -60,12 +66,13 @@ function HomeStack() {
             <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
             <Stack.Screen name="CreateEvent" component={CreateEventScreen} options={{ title: 'Create Event', headerBackTitle: 'Back' }} />
             <Stack.Screen name="EditEvent" component={EditEventScreen} options={{ title: 'Edit Event', headerBackTitle: 'Back' }} />
-            <Stack.Screen name="EventDetails" component={EventDetailsScreen} options={{ title: 'Event Details' }} />
+            <Stack.Screen name="EventDetails" component={EventDetailsScreen} options={{ title: 'Event Details',headerTransparent: true, headerTitle: '', headerTintColor: '#fff' }} />
             <Stack.Screen name="Participants" component={ParticipantsScreen} options={{ title: 'Participants', headerBackTitle: 'Back' }} />
             <Stack.Screen name="Chat" component={ChatScreen} options={({ route }) => ({ title: route.params?.eventTitle || 'Chat', headerBackTitle: 'Back' })} />
             <Stack.Screen name="BadmintonProfile" component={BadmintonProfileScreen} options={{ title: 'Badminton Profile' }} />
             <Stack.Screen name="AiChat" component={AiChatScreen} options={{ headerShown: false }} />
             <Stack.Screen name="AiGymTrainer" component={AiGymTrainerScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="News" component={NewsScreen} options={{ headerShown: false }} />
         </Stack.Navigator>
     );
 }
@@ -83,15 +90,16 @@ function ProfileStack() {
             }}
         >
             <Stack.Screen name="Profile" component={ProfileScreen} options={{ title: 'Profile' }} />
+            <Stack.Screen name="EditProfile" component={EditProfileScreen} />
             <Stack.Screen name="BadmintonProfile" component={BadmintonProfileScreen} options={{ title: 'Badminton Profile', headerBackTitle: 'Profile' }} />
         </Stack.Navigator>
     );
 }
 
-function NewsStack() {
+function EventsStackScreen() {
     const { colors } = useTheme();
     return (
-        <Stack.Navigator
+        <EventStack.Navigator
             screenOptions={{
                 headerStyle: { backgroundColor: colors.surface, elevation: 0, shadowOpacity: 0, borderBottomWidth: 1, borderBottomColor: colors.border },
                 headerTitleStyle: { fontSize: 18, fontWeight: '600', color: colors.text },
@@ -100,8 +108,13 @@ function NewsStack() {
                 cardStyle: { backgroundColor: colors.background },
             }}
         >
-            <Stack.Screen name="News" component={NewsScreen} options={{ title: 'Sports News' }} />
-        </Stack.Navigator>
+            <EventStack.Screen name="Events" component={EventsScreen} options={{ headerShown: false }} />
+            <EventStack.Screen name="CreateEvent" component={CreateEventScreen} options={{ title: 'Create Event' }} />
+            <EventStack.Screen name="EditEvent" component={EditEventScreen} options={{ title: 'Edit Event' }} />
+            <EventStack.Screen name="EventDetails" component={EventDetailsScreen} options={{ title: 'Event Details' }} />
+            <EventStack.Screen name="Participants" component={ParticipantsScreen} options={{ title: 'Participants' }} />
+            <EventStack.Screen name="Chat" component={ChatScreen} options={({ route }) => ({ title: route.params?.eventTitle || 'Chat' })} />
+        </EventStack.Navigator>
     );
 }
 
@@ -140,7 +153,10 @@ function TournamentStackScreen() {
         >
             <TournamentStack.Screen name="TournamentList" component={TournamentListScreen} options={{ headerShown: false }} />
             <TournamentStack.Screen name="CreateTournament" component={CreateTournamentScreen} options={{ title: 'Create Tournament' }} />
-            <TournamentStack.Screen name="TournamentDashboard" component={TournamentDashboardScreen} options={{ title: 'Tournament' }} />
+            <TournamentStack.Screen name="TournamentDashboard" component={TournamentDashboardScreen} options={{
+                title: 'Tournament',
+                headerBackTitle: ' ',
+            }} />
             <TournamentStack.Screen name="ManageTeams" component={ManageTeamsScreen} options={{ title: 'Manage Teams' }} />
             <TournamentStack.Screen name="GenerateFixtures" component={GenerateFixturesScreen} options={{ title: 'Generate Fixtures' }} />
             <TournamentStack.Screen name="MatchDetails" component={MatchDetailsScreen} options={{ title: 'Match Details' }} />
@@ -217,68 +233,85 @@ const AppNavigator = () => {
         return hiddenScreens.includes(routeName) ? 'none' : 'flex';
     };
 
+    const MainTabNavigator = () => (
+        <Tab.Navigator
+            tabBar={(props) => <FloatingTabBar {...props} />}
+            screenOptions={({ route }) => ({
+                headerShown: false,
+                tabBarIcon: ({ focused, color, size }) => {
+                    let iconName;
+
+                    if (route.name === 'HomeStack') iconName = focused ? 'home' : 'home-outline';
+                    else if (route.name === 'TournamentStack') iconName = focused ? 'trophy' : 'trophy-outline';
+                    else if (route.name === 'EventsStack') iconName = focused ? 'calendar' : 'calendar-outline';
+                    else if (route.name === 'VenueStack') iconName = focused ? 'location' : 'location-outline';
+                    else if (route.name === 'ProfileStack') iconName = focused ? 'person' : 'person-outline';
+
+                    return <Ionicons name={iconName} size={size} color={color} />;
+                },
+            })}
+        >
+            <Tab.Screen
+                name="HomeStack"
+                component={HomeStack}
+                options={({ route }) => ({
+                    title: 'Home',
+                    tabBarStyle: { display: getTabBarVisibility(route) },
+                })}
+            />
+
+            <Tab.Screen
+                name="TournamentStack"
+                component={TournamentStackScreen}
+                options={({ route }) => ({
+                    title: 'Tourneys',
+                    tabBarStyle: { display: getTabBarVisibility(route) },
+                })}
+            />
+
+            <Tab.Screen
+                name="EventsStack"
+                component={EventsStackScreen}
+                options={({ route }) => ({
+                    title: 'Events',
+                    tabBarStyle: { display: getTabBarVisibility(route) },
+                    tabBarIcon: ({ color, size }) => (
+                        <Ionicons name="calendar-outline" size={size} color={color} />
+                    ),
+                })}
+            />
+
+            <Tab.Screen
+                name="VenueStack"
+                component={VenueStackScreen}
+                options={({ route }) => ({
+                    title: 'Venues',
+                    tabBarStyle: { display: getTabBarVisibility(route) },
+                })}
+            />
+
+            <Tab.Screen
+                name="ProfileStack"
+                component={ProfileStack}
+                options={({ route }) => ({
+                    title: 'Profile',
+                    tabBarStyle: { display: getTabBarVisibility(route) },
+                })}
+            />
+        </Tab.Navigator>
+    );
+
 
 
     return (
         <NavigationContainer>
             {user ? (
-                <Tab.Navigator
-                    tabBar={(props) => <FloatingTabBar {...props} />}
-                    screenOptions={({ route }) => ({
-                        headerShown: false,
-                        tabBarIcon: ({ focused, color, size }) => {
-                            let iconName;
-
-                            if (route.name === 'HomeStack') iconName = focused ? 'home' : 'home-outline';
-                            else if (route.name === 'TournamentStack') iconName = focused ? 'trophy' : 'trophy-outline';
-                            else if (route.name === 'VenueStack') iconName = focused ? 'calendar' : 'calendar-outline';
-                            else if (route.name === 'NewsStack') iconName = focused ? 'newspaper' : 'newspaper-outline';
-                            else if (route.name === 'ProfileStack') iconName = focused ? 'person' : 'person-outline';
-
-                            return <Ionicons name={iconName} size={size} color={color} />;
-                        },
-                    })}
-                >
-                    <Tab.Screen
-                        name="HomeStack"
-                        component={HomeStack}
-                        options={({ route }) => ({
-                            title: 'Home',
-                            tabBarStyle: { display: getTabBarVisibility(route) },
-                        })}
-                    />
-
-                    <Tab.Screen
-                        name="TournamentStack"
-                        component={TournamentStackScreen}
-                        options={{ title: 'Tournaments' }}
-                    />
-
-                    <Tab.Screen
-                        name="VenueStack"
-                        component={VenueStackScreen}
-                        options={({ route }) => ({
-                            title: 'Venues',
-                            tabBarStyle: { display: getTabBarVisibility(route) },
-                        })}
-                    />
-
-                    <Tab.Screen
-                        name="NewsStack"
-                        component={NewsStack}
-                        options={{ title: 'News' }}
-                    />
-
-                    <Tab.Screen
-                        name="ProfileStack"
-                        component={ProfileStack}
-                        options={({ route }) => ({
-                            title: 'Profile',
-                            tabBarStyle: { display: getTabBarVisibility(route) },
-                        })}
-                    />
-                </Tab.Navigator>
-
+                <Stack.Navigator screenOptions={{ headerShown: false, cardStyle: { backgroundColor: colors.background } }}>
+                    <Stack.Screen name="MainTabs" component={MainTabNavigator} />
+                    <Stack.Screen name="CreateSportsProfile" component={CreateSportsProfileScreen} />
+                    <Stack.Screen name="SportsProfileDetails" component={SportsProfileDetailsScreen} />
+                    <Stack.Screen name="EditSportsProfile" component={EditSportsProfileScreen} />
+                </Stack.Navigator>
             ) : (
                 <Stack.Navigator screenOptions={{ headerShown: false, cardStyle: { backgroundColor: colors.background } }}>
                     <Stack.Screen name="Login" component={LoginScreen} />

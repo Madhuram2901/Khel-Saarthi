@@ -7,8 +7,7 @@ import {
   ScrollView,
   FlatList,
   TouchableOpacity,
-  StatusBar,
-  Image
+  StatusBar
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,13 +17,16 @@ import AuthContext from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import StyledButton from '../components/StyledButton';
 import EventCard from '../components/EventCard';
-import HeroCard from '../components/HeroCard';
 import CategoryFilter from '../components/CategoryFilter';
+import AppCard from '../components/AppCard';
+import SectionHeader from '../components/SectionHeader';
+import NewsCard from '../components/NewsCard';
 
 const HomeScreen = ({ navigation }) => {
   const [events, setEvents] = useState([]);
+  const [newsArticles, setNewsArticles] = useState([]);
   const [filters, setFilters] = useState({ category: 'All' });
-  const { user, logout } = useContext(AuthContext);
+  const { user } = useContext(AuthContext);
   const { colors, isDark } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
@@ -49,6 +51,18 @@ const HomeScreen = ({ navigation }) => {
     fetchEvents();
   }, [filters]);
 
+  useEffect(() => {
+    const fetchNews = async () => {
+      try {
+        const response = await api.get('/news');
+        setNewsArticles(response.data.articles);
+      } catch (error) {
+        console.error('Error fetching news:', error);
+      }
+    };
+    fetchNews();
+  }, []);
+
   const getCurrentDate = () => {
     const date = new Date();
     const day = date.getDate();
@@ -60,65 +74,8 @@ const HomeScreen = ({ navigation }) => {
     <EventCard
       event={item}
       onPress={() => navigation.navigate('EventDetails', { eventId: item._id })}
+      style={styles.eventCard}
     />
-  );
-
-  const HeaderSection = () => (
-    <View style={styles.headerSection}>
-      <View style={styles.headerTop}>
-        <View style={styles.userInfo}>
-          <TouchableOpacity
-            style={styles.avatar}
-            onPress={() => navigation.navigate('ProfileStack')}
-          >
-            {user?.profilePicture ? (
-              <Image source={{ uri: user.profilePicture }} style={styles.avatarImage} />
-            ) : (
-              <Text style={styles.avatarText}>
-                {user?.name?.charAt(0)?.toUpperCase() || 'U'}
-              </Text>
-            )}
-          </TouchableOpacity>
-          <View>
-            <Text style={styles.greeting}>Hello {user?.name || 'User'}</Text>
-            <Text style={styles.date}>{getCurrentDate()}</Text>
-          </View>
-        </View>
-        <View style={styles.headerRight}>
-          <TouchableOpacity
-            style={styles.aiButton}
-            onPress={() => navigation.navigate('AiChat')}
-          >
-            <Ionicons name="sparkles" size={20} color="#fff" />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.searchButton}
-            onPress={() => {/* TODO: Add search functionality */ }}
-          >
-            <Ionicons name="search" size={24} color={colors.accent} />
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      <HeroCard
-        title="Discover Sports Events Near You"
-        subtitle="Join local sports communities"
-        onPress={() => {/* TODO: Navigate to search/discover */ }}
-        icon="trophy"
-      />
-    </View>
-  );
-
-  const AIRecommendationSection = () => (
-    <View style={styles.sectionContainer}>
-      <TouchableOpacity style={styles.aiRecommendation}>
-        <View style={styles.aiRecommendationContent}>
-          <Ionicons name="sparkles" size={20} color="#FF6B35" />
-          <Text style={styles.aiRecommendationText}>AI Recommendation</Text>
-          <Text style={styles.aiRecommendationSubtext}>View All {'>'}</Text>
-        </View>
-      </TouchableOpacity>
-    </View>
   );
 
   return (
@@ -127,39 +84,41 @@ const HomeScreen = ({ navigation }) => {
 
       {/* Header */}
       <View style={styles.header}>
-        <View>
-          <Text style={styles.greeting}>Hello, {user?.name || 'Athlete'}! 👋</Text>
-          <Text style={styles.subGreeting}>Ready to play today?</Text>
-        </View>
-        <TouchableOpacity onPress={() => navigation.navigate('ProfileStack')}>
-          <Image
-            source={{ uri: user?.profilePicture || 'https://via.placeholder.com/100' }}
-            style={styles.profilePic}
-          />
-        </TouchableOpacity>
+        <Text style={styles.greeting}>Hello, {user?.name || 'Athlete'}! 👋</Text>
+        <Text style={styles.subGreeting}>Ready to play today?</Text>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scrollContent, { paddingBottom: 120 }]}>
-        {/* Hero Section */}
-        <HeroCard
-          title="Discover Sports Events Near You"
-          subtitle="Join local sports communities"
-          onPress={() => {/* TODO: Navigate to search/discover */ }}
-          icon="trophy"
-        />
-
-        <View style={{ marginTop: 16 }}>
-          <HeroCard
-            title="AI Gym Trainer"
-            subtitle="Real-time form analysis & rep counting"
-            onPress={() => navigation.navigate('AiGymTrainer')}
-            icon="body"
-            image="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600&h=300&fit=crop"
-          />
+        {/* Quick Actions */}
+        <View style={[styles.sectionContainer, styles.quickActionsSection]}>
+          <Text style={styles.sectionTitle}>Quick Actions</Text>
+          <View style={styles.quickActionsRow}>
+            <TouchableOpacity style={styles.quickActionItem} onPress={() => navigation.navigate('CreateEvent')}>
+              <View style={styles.quickActionCircle}>
+                <Ionicons name="add" size={26} color={colors.accent} />
+              </View>
+              <Text style={styles.quickActionLabel}>Create Event</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.quickActionItem} onPress={() => navigation.navigate('TournamentStack', { screen: 'CreateTournament' })}>
+              <View style={styles.quickActionCircle}>
+                <Ionicons name="trophy" size={26} color={colors.accent} />
+              </View>
+              <Text style={styles.quickActionLabel}>Tournament</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.quickActionItem} onPress={() => navigation.navigate('VenueStack', { screen: 'VenueList' })}>
+              <View style={styles.quickActionCircle}>
+                <Ionicons name="business" size={26} color={colors.accent} />
+              </View>
+              <Text style={styles.quickActionLabel}>Book Venue</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.quickActionItem} onPress={() => navigation.navigate('AiGymTrainer')}>
+              <View style={styles.quickActionCircle}>
+                <Ionicons name="fitness" size={26} color={colors.accent} />
+              </View>
+              <Text style={styles.quickActionLabel}>AI Coach</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-
-        {/* AI Recommendation Section */}
-        <AIRecommendationSection />
 
         {/* Category Filter Section */}
         <View style={styles.sectionContainer}>
@@ -173,7 +132,7 @@ const HomeScreen = ({ navigation }) => {
           </ScrollView>
         </View>
 
-        {/* Events Near You Section */}
+        {/* Events Near You Map */}
         <View style={styles.sectionContainer}>
           <Text style={styles.sectionTitle}>Events Near You</Text>
           <MapView
@@ -211,13 +170,11 @@ const HomeScreen = ({ navigation }) => {
         </View>
 
         {/* Upcoming Events Section */}
-        <View style={styles.sectionContainer}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Upcoming Events</Text>
-            <TouchableOpacity onPress={() => {/* TODO: Navigate to all events */ }}>
-              <Text style={styles.viewAllText}>View All</Text>
-            </TouchableOpacity>
-          </View>
+        <View style={[styles.sectionContainer, styles.upcomingEventsSection]}>
+          <SectionHeader
+            title="Upcoming Events"
+            onPressViewAll={() => navigation.navigate('EventsStack')}
+          />
 
           {events.length > 0 ? (
             <FlatList
@@ -226,8 +183,10 @@ const HomeScreen = ({ navigation }) => {
               keyExtractor={(item) => item._id}
               horizontal={true}
               showsHorizontalScrollIndicator={false}
-              style={styles.eventsList}
-              contentContainerStyle={styles.eventsListContent}
+              contentContainerStyle={{
+                paddingLeft: 16,
+                paddingRight: 8,
+              }}
             />
           ) : (
             <View style={styles.noEventsContainer}>
@@ -238,9 +197,23 @@ const HomeScreen = ({ navigation }) => {
           )}
         </View>
 
+        {/* Sports News Section */}
+        {newsArticles.length > 0 && (
+          <View style={[styles.sectionContainer, styles.newsSection]}>
+            <Text style={styles.sectionTitle}>Sports News</Text>
+            <FlatList
+              data={newsArticles}
+              keyExtractor={(item, index) => index.toString()}
+              renderItem={({ item }) => <NewsCard item={item} />}
+              scrollEnabled={false}
+              contentContainerStyle={{ paddingBottom: 20 }}
+            />
+          </View>
+        )}
+
         {/* Action Buttons Section */}
-        <View style={styles.actionSection}>
-          {user?.role === 'host' && (
+        {user?.role === 'host' && (
+          <View style={styles.actionSection}>
             <StyledButton
               title="Create New Event"
               onPress={() => navigation.navigate('CreateEvent')}
@@ -248,17 +221,8 @@ const HomeScreen = ({ navigation }) => {
               icon="add-circle"
               size="large"
             />
-          )}
-          <StyledButton
-            title="Sign Out"
-            onPress={logout}
-            variant="outline"
-            icon="log-out"
-            size="medium"
-          />
-        </View>
-
-        <View style={{ height: 80 }} />
+          </View>
+        )}
       </ScrollView>
 
       {/* Floating AI Button */}
@@ -299,15 +263,14 @@ const makeStyles = (colors) => StyleSheet.create({
     zIndex: 1000,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
+    justifyContent: 'flex-start',
+    paddingHorizontal: 16,
     paddingVertical: 15,
+    marginBottom: 4,
   },
   greeting: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: '700',
     color: colors.text,
   },
   subGreeting: {
@@ -315,26 +278,22 @@ const makeStyles = (colors) => StyleSheet.create({
     color: colors.textSecondary,
     marginTop: 4,
   },
-  profilePic: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-  },
   sectionContainer: {
-    marginVertical: 12,
+    marginTop: 24,
+    marginBottom: 8,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    marginBottom: 16,
+    paddingHorizontal: 16,
+    marginBottom: 12,
   },
   sectionTitle: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: 'bold',
     color: colors.text,
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     marginBottom: 12,
   },
   viewAllText: {
@@ -342,36 +301,9 @@ const makeStyles = (colors) => StyleSheet.create({
     color: colors.accent,
     fontWeight: '600',
   },
-  aiRecommendation: {
-    marginHorizontal: 20,
-    backgroundColor: colors.surface,
-    borderRadius: 16,
-    padding: 16,
-    shadowColor: colors.cardShadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  aiRecommendationContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  aiRecommendationText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.text,
-    marginLeft: 8,
-    flex: 1,
-  },
-  aiRecommendationSubtext: {
-    fontSize: 14,
-    color: colors.accent,
-    fontWeight: '600',
-  },
   map: {
     height: 200,
-    marginHorizontal: 20,
+    marginHorizontal: 16,
     borderRadius: 16,
     overflow: 'hidden',
   },
@@ -402,7 +334,7 @@ const makeStyles = (colors) => StyleSheet.create({
   noEventsContainer: {
     alignItems: 'center',
     paddingVertical: 40,
-    marginHorizontal: 20,
+    marginHorizontal: 16,
   },
   noEventsText: {
     fontSize: 18,
@@ -416,8 +348,47 @@ const makeStyles = (colors) => StyleSheet.create({
     marginTop: 4,
   },
   actionSection: {
-    padding: 20,
-    paddingBottom: 40,
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    marginBottom: 24,
+  },
+  newsSection: {
+    marginBottom: 32,
+  },
+  quickActionsSection: {
+    marginBottom: 24,
+  },
+  quickActionsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+  },
+  upcomingEventsSection: {
+    marginBottom: 8,
+  },
+  eventCard: {
+    marginRight: 12,
+    width: 270,
+    borderRadius: 16,
+  },
+  quickActionItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  quickActionCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.surface2,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  quickActionLabel: {
+    fontSize: 12,
+    textAlign: 'center',
+    marginTop: 6,
+    color: colors.text,
   },
 });
 

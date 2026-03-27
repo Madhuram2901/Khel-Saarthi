@@ -1,10 +1,18 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ImageBackground } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { getSportImage, formatEventDate } from '../utils/constants';
+import { useTheme } from '../context/ThemeContext';
 
 const EventCard = ({ event, onPress, style = {} }) => {
+  const { colors, isDark } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, isDark), [colors, isDark]);
   const { day, month } = formatEventDate(event.date);
+
+  const priceText =
+    event.price === 0 || event.price === '0' || !event.price
+      ? 'Free'
+      : `₹${event.price}`;
 
   return (
     <TouchableOpacity onPress={onPress} style={[styles.container, style]}>
@@ -14,22 +22,28 @@ const EventCard = ({ event, onPress, style = {} }) => {
         imageStyle={styles.backgroundImage}
       >
         <View style={styles.overlay}>
+
+          {/* Top badges */}
           <View style={styles.header}>
             <View style={styles.dateContainer}>
               <Text style={styles.day}>{day}</Text>
               <Text style={styles.month}>{month.toUpperCase()}</Text>
             </View>
+
             <View style={styles.categoryBadge}>
               <Text style={styles.categoryText}>{event.category}</Text>
             </View>
           </View>
 
+          {/* Bottom content */}
           <View style={styles.content}>
-            <Text style={styles.title} numberOfLines={2}>{event.title}</Text>
+            <Text style={styles.title} numberOfLines={2}>
+              {event.title}
+            </Text>
 
             <View style={styles.locationContainer}>
               <Ionicons name="location-outline" size={14} color="#FFFFFF" />
-              <Text style={styles.location}>
+              <Text style={styles.location} numberOfLines={1}>
                 {event.location?.address || 'Location TBD'}
               </Text>
             </View>
@@ -42,41 +56,54 @@ const EventCard = ({ event, onPress, style = {} }) => {
                 </Text>
               </View>
 
-              <View style={styles.hostContainer}>
-                <Text style={styles.hostLabel}>By</Text>
-                <Text style={styles.hostName}>{event.host?.name}</Text>
+              <View style={styles.priceContainer}>
+                <Ionicons name="cash-outline" size={14} color="#FFFFFF" />
+                <Text style={styles.priceText}>{priceText}</Text>
               </View>
             </View>
           </View>
+
         </View>
       </ImageBackground>
     </TouchableOpacity>
   );
 };
 
-const styles = StyleSheet.create({
+const withAlpha = (hex, alpha) => {
+  if (!hex || typeof hex !== 'string') return `rgba(0,0,0,${alpha})`;
+  const normalized = hex.replace('#', '');
+  const full = normalized.length === 3
+    ? normalized.split('').map((c) => c + c).join('')
+    : normalized;
+  const r = parseInt(full.slice(0, 2), 16);
+  const g = parseInt(full.slice(2, 4), 16);
+  const b = parseInt(full.slice(4, 6), 16);
+  if ([r, g, b].some((v) => Number.isNaN(v))) return `rgba(0,0,0,${alpha})`;
+  return `rgba(${r},${g},${b},${alpha})`;
+};
+
+const makeStyles = (colors, isDark) => StyleSheet.create({
   container: {
     borderRadius: 16,
     overflow: 'hidden',
-    marginHorizontal: 8,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: isDark ? 0.4 : 0.2,
     shadowRadius: 8,
-    elevation: 8,
+    elevation: 4,
   },
   imageBackground: {
-    width: 280,
-    height: 200,
+    width: '100%',
+    height: 190,
   },
   backgroundImage: {
     borderRadius: 16,
   },
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
-    padding: 16,
+    padding: 14,
     justifyContent: 'space-between',
+    backgroundColor: 'rgba(0,0,0,0.45)',
   },
   header: {
     flexDirection: 'row',
@@ -84,53 +111,52 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   dateContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    backgroundColor: withAlpha(colors.surface, 0.92),
     borderRadius: 8,
-    padding: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
     alignItems: 'center',
-    minWidth: 50,
+    minWidth: 48,
   },
   day: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    lineHeight: 20,
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.text,
+    lineHeight: 18,
   },
   month: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
-    color: '#666',
-    lineHeight: 14,
+    color: colors.textSecondary,
+    lineHeight: 12,
   },
   categoryBadge: {
-    backgroundColor: '#FF6B35',
+    backgroundColor: colors.accent,
     borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
   },
   categoryText: {
-    color: '#FFFFFF',
-    fontSize: 12,
+    color: '#FFF',
+    fontSize: 11,
     fontWeight: '600',
   },
   content: {
-    flex: 1,
     justifyContent: 'flex-end',
   },
   title: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 16,
+    fontWeight: '700',
     color: '#FFFFFF',
-    marginBottom: 8,
-    lineHeight: 22,
+    marginBottom: 6,
   },
   locationContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   location: {
-    fontSize: 13,
+    fontSize: 12,
     color: '#FFFFFF',
     marginLeft: 4,
     opacity: 0.9,
@@ -145,24 +171,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   participants: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#FFFFFF',
     marginLeft: 4,
     opacity: 0.9,
   },
-  hostContainer: {
+  priceContainer: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  hostLabel: {
+  priceText: {
     fontSize: 12,
     color: '#FFFFFF',
-    opacity: 0.7,
-    marginRight: 4,
-  },
-  hostName: {
-    fontSize: 12,
-    color: '#FFFFFF',
+    marginLeft: 4,
     fontWeight: '600',
   },
 });

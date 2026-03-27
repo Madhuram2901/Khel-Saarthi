@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { getCategoryIcon, getCategoryColor } from '../utils/constants';
+import { getCategoryIcon } from '../utils/constants';
 import { useTheme } from '../context/ThemeContext';
 
 const CategoryFilter = ({ categories, selectedCategory, onSelectCategory }) => {
@@ -12,14 +12,13 @@ const CategoryFilter = ({ categories, selectedCategory, onSelectCategory }) => {
     <View style={styles.container}>
       {categories.map((category) => {
         const isSelected = selectedCategory === category;
-        const categoryColor = getCategoryColor(category);
 
         return (
           <TouchableOpacity
             key={category}
             style={[
               styles.filterButton,
-              isSelected && { backgroundColor: categoryColor }
+              isSelected && { backgroundColor: colors.accent }
             ]}
             onPress={() => onSelectCategory(category)}
           >
@@ -27,12 +26,11 @@ const CategoryFilter = ({ categories, selectedCategory, onSelectCategory }) => {
               <Ionicons
                 name={getCategoryIcon(category)}
                 size={20}
-                color={isSelected ? '#FFFFFF' : categoryColor}
+                color={isSelected ? '#FFFFFF' : colors.text}
               />
               <Text style={[
                 styles.filterText,
-                isSelected && { color: '#FFFFFF' },
-                !isSelected && { color: categoryColor }
+                { color: isSelected ? '#FFFFFF' : colors.text }
               ]}>
                 {category}
               </Text>
@@ -51,7 +49,7 @@ const makeStyles = (colors) => StyleSheet.create({
     paddingVertical: 12,
   },
   filterButton: {
-    backgroundColor: colors.surface2,
+    backgroundColor: colors.card,
     borderRadius: 20,
     paddingVertical: 10,
     paddingHorizontal: 16,

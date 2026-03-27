@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext, useMemo } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, Image, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../api/api';
 import { useNavigation } from '@react-navigation/native';
@@ -8,6 +8,9 @@ import { useTheme } from '../context/ThemeContext';
 import MyBookingsScreen from './MyBookingsScreen';
 import VenueHostDashboard from './VenueHostDashboard';
 import Constants from 'expo-constants';
+import AppCard from '../components/AppCard';
+import VenueCard from '../components/VenueCard';
+import { SPACING } from '../theme/designSystem';
 
 const VenueListScreen = () => {
     const navigation = useNavigation();
@@ -40,33 +43,11 @@ const VenueListScreen = () => {
     }, [city, viewMode]);
 
     const renderVenue = ({ item }) => (
-        <TouchableOpacity
-            style={styles.card}
+        <VenueCard
+            venue={item}
             onPress={() => navigation.navigate('VenueDetails', { venueId: item._id })}
-        >
-            <Image
-                source={{ uri: item.images[0] || 'https://images.unsplash.com/photo-1522778119026-d647f0565c6a' }}
-                style={styles.image}
-            />
-            <View style={styles.info}>
-                <Text style={styles.name}>{item.name}</Text>
-                <Text style={styles.address}>{item.city}, {item.state}</Text>
-                <View style={styles.row}>
-                    <Text style={styles.price}>₹{item.pricePerHour}/hr</Text>
-                    <View style={styles.rating}>
-                        <Ionicons name="star" size={14} color="#FFD700" />
-                        <Text style={styles.ratingText}>{item.rating} ({item.numReviews})</Text>
-                    </View>
-                </View>
-                <View style={styles.tags}>
-                    {item.sportTypes.map((sport, index) => (
-                        <View key={index} style={styles.tag}>
-                            <Text style={styles.tagText}>{sport}</Text>
-                        </View>
-                    ))}
-                </View>
-            </View>
-        </TouchableOpacity>
+            style={styles.venueCard}
+        />
     );
 
     const renderContent = () => {
@@ -178,7 +159,7 @@ const makeStyles = (colors) => StyleSheet.create({
         color: colors.accent,
         fontWeight: 'bold',
     },
-    list: { padding: 15, paddingBottom: 140 },
+    list: { paddingHorizontal: SPACING.screenHorizontal, paddingBottom: 140 },
     searchContainer: { padding: 15, backgroundColor: colors.surface },
     searchBar: {
         flexDirection: 'row',
@@ -188,35 +169,10 @@ const makeStyles = (colors) => StyleSheet.create({
         padding: 10
     },
     input: { marginLeft: 10, flex: 1, color: colors.text },
-    card: {
-        backgroundColor: colors.surface,
-        borderRadius: 12,
-        marginBottom: 15,
-        overflow: 'hidden',
-        elevation: 3,
-        shadowColor: colors.cardShadow,
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
+    venueCard: {
+        width: '100%',
+        marginBottom: 16,
     },
-    image: { width: '100%', height: 150 },
-    info: { padding: 12 },
-    name: { fontSize: 18, fontWeight: 'bold', marginBottom: 4, color: colors.text },
-    address: { color: colors.textSecondary, marginBottom: 8 },
-    row: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
-    price: { fontSize: 16, fontWeight: '600', color: colors.accent },
-    rating: { flexDirection: 'row', alignItems: 'center' },
-    ratingText: { marginLeft: 4, color: colors.textSecondary },
-    tags: { flexDirection: 'row', flexWrap: 'wrap' },
-    tag: {
-        backgroundColor: colors.surface2,
-        paddingHorizontal: 8,
-        paddingVertical: 4,
-        borderRadius: 4,
-        marginRight: 6,
-        marginBottom: 4
-    },
-    tagText: { color: colors.accent, fontSize: 12 },
     loader: { marginTop: 50 },
     empty: { textAlign: 'center', marginTop: 50, color: colors.textSecondary },
     fab: {

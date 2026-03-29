@@ -11,7 +11,11 @@ const createVenue = asyncHandler(async (req, res) => {
     let { name, description, address, city, state, location, sportTypes, pricePerHour, amenities, availability } = req.body;
 
     // Check permissions
-    if (req.user.role !== 'venue_manager' && req.user.role !== 'admin') {
+    if (
+        req.user.role !== 'venue_manager' &&
+        req.user.role !== 'admin' &&
+        req.user.role !== 'host'
+    ) {
         res.status(403);
         throw new Error('Not authorized to create venues');
     }
@@ -189,7 +193,11 @@ const updateVenue = asyncHandler(async (req, res) => {
     }
 
     // Check ownership
-    if (venue.manager.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+    if (
+        venue.manager.toString() !== req.user._id.toString() &&
+        req.user.role !== 'admin' &&
+        req.user.role !== 'host'
+    ) {
         res.status(403);
         throw new Error('Not authorized to update this venue');
     }
@@ -254,6 +262,15 @@ const getHostBookings = asyncHandler(async (req, res) => {
     res.json(bookings);
 });
 
+// @desc    Get venues managed by current user
+// @route   GET /api/venues/my-venues
+// @access  Private
+const getMyVenues = asyncHandler(async (req, res) => {
+    const venues = await Venue.find({ manager: req.user._id })
+        .populate('manager', 'name email');
+    res.json(venues);
+});
+
 module.exports = {
     createVenue,
     getVenues,
@@ -261,5 +278,6 @@ module.exports = {
     updateVenue,
     createBooking,
     getMyBookings,
-    getHostBookings
+    getHostBookings,
+    getMyVenues
 };

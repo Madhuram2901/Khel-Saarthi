@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useContext } from 'react';
 import {
   View,
   Text,
@@ -9,27 +9,35 @@ import {
   TouchableOpacity
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import EventCard from '../components/EventCard';
 import api from '../api/api';
+import AuthContext from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 
 const sports = ['All', 'Cricket', 'Football', 'Badminton', 'Tennis', 'Basketball'];
 
 const EventsScreen = ({ navigation }) => {
+  const { user } = useContext(AuthContext);
   const [events, setEvents] = useState([]);
   const [filteredEvents, setFilteredEvents] = useState([]);
+  const [myEvents, setMyEvents] = useState([]);
   const [selectedSport, setSelectedSport] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState('all');
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
-  useEffect(() => {
-    fetchEvents();
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchEvents();
+      fetchMyEvents();
+    }, [user?._id, user?.role])
+  );
 
   useEffect(() => {
     filterEvents();
-  }, [selectedSport, searchQuery, events]);
+  }, [selectedSport, searchQuery, events, myEvents, viewMode, user?.role]);
 
   const fetchEvents = async () => {
     try {
@@ -44,8 +52,42 @@ const EventsScreen = ({ navigation }) => {
     }
   };
 
+  const fetchMyEvents = async () => {
+    try {
+      if (user?.role === 'host') {
+        const res = await api.get('/events');
+        const mine = res.data.filter(
+          e => e.createdBy?._id === user._id ||
+               e.createdBy === user._id ||
+               e.host?._id === user._id ||
+               e.host === user._id
+        );
+        setMyEvents(mine.sort((a, b) =>
+          new Date(a.date) - new Date(b.date)
+        ));
+      } else {
+        const res = await api.get('/users/profile');
+        const joinedIds = res.data.joinedEvents ?? [];
+        const eventsRes = await api.get('/events');
+        const mine = eventsRes.data.filter(
+          e => joinedIds.includes(e._id)
+        );
+        setMyEvents(mine.sort((a, b) =>
+          new Date(a.date) - new Date(b.date)
+        ));
+      }
+    } catch (error) {
+      console.log('Error fetching my events', error);
+    }
+  };
+
   const filterEvents = () => {
-    let filtered = [...events];
+    const sourceEvents =
+      user?.role === 'host' && viewMode === 'my'
+        ? myEvents
+        : events;
+
+    let filtered = [...sourceEvents];
 
     if (selectedSport !== 'All') {
       filtered = filtered.filter(e => e.category === selectedSport);
@@ -90,6 +132,38 @@ const EventsScreen = ({ navigation }) => {
           </TouchableOpacity>
         </View>
 
+        <View style={styles.tabRow}>
+          <TouchableOpacity
+            style={[
+              styles.tabItem,
+              viewMode === 'all' && styles.tabItemActive,
+            ]}
+            onPress={() => setViewMode('all')}
+          >
+            <Text style={[
+              styles.tabText,
+              viewMode === 'all' && styles.tabTextActive,
+            ]}>
+              All Events
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.tabItem,
+              viewMode === 'my' && styles.tabItemActive,
+            ]}
+            onPress={() => setViewMode('my')}
+          >
+            <Text style={[
+              styles.tabText,
+              viewMode === 'my' && styles.tabTextActive,
+            ]}>
+              {user?.role === 'host' ? 'My Events' : 'Joined'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
         {/* Search */}
         <View style={styles.searchContainer}>
           <Ionicons name="search-outline" size={18} color="#888" />
@@ -131,12 +205,39 @@ const EventsScreen = ({ navigation }) => {
       </View>
 
       <FlatList
-        data={filteredEvents}
+        data={user?.role === 'host'
+          ? filteredEvents
+          : viewMode === 'all'
+            ? filteredEvents
+            : myEvents}
         keyExtractor={(item) => item._id}
         renderItem={renderEvent}
         numColumns={2}
         showsVerticalScrollIndicator={false}
         columnWrapperStyle={{ justifyContent: 'space-between' }}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Ionicons
+              name={user?.role === 'host'
+                ? 'calendar-outline'
+                : 'footsteps-outline'}
+              size={48}
+              color={colors.textSecondary}
+            />
+            <Text style={styles.emptyTitle}>
+              {viewMode === 'my'
+                ? user?.role === 'host'
+                  ? 'No events created yet'
+                  : 'No events joined yet'
+                : 'No events found'}
+            </Text>
+            <Text style={styles.emptySubtitle}>
+              {viewMode === 'my' && user?.role === 'host'
+                ? 'Tap + to create your first event'
+                : ''}
+            </Text>
+          </View>
+        }
         contentContainerStyle={{
           paddingHorizontal: 16,
           paddingBottom: 120
@@ -183,6 +284,30 @@ const makeStyles = (colors) => StyleSheet.create({
     alignItems: 'center'
   },
 
+  tabRow: {
+    flexDirection: 'row',
+    marginBottom: 12,
+    gap: 8,
+  },
+  tabItem: {
+    paddingHorizontal: 16,
+    paddingVertical: 7,
+    borderRadius: 20,
+    backgroundColor: colors.surface2,
+  },
+  tabItemActive: {
+    backgroundColor: colors.accent,
+  },
+  tabText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: colors.textSecondary,
+  },
+  tabTextActive: {
+    color: '#FFF',
+    fontWeight: '600',
+  },
+
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -221,5 +346,24 @@ const makeStyles = (colors) => StyleSheet.create({
   filterTextActive: {
     color: '#FFF',
     fontWeight: '600',
+  },
+
+  emptyContainer: {
+    alignItems: 'center',
+    paddingVertical: 60,
+    paddingHorizontal: 32,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.textSecondary,
+    marginTop: 12,
+    textAlign: 'center',
+  },
+  emptySubtitle: {
+    fontSize: 14,
+    color: colors.textMuted,
+    marginTop: 4,
+    textAlign: 'center',
   },
 });

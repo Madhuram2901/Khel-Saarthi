@@ -45,6 +45,7 @@ import MatchDetailsScreen from '../screens/MatchDetailsScreen';
 import CreateTeamScreen from '../screens/CreateTeamScreen';
 import MyTeamScreen from '../screens/MyTeamScreen';
 import EditTeamScreen from '../screens/EditTeamScreen';
+import ViewTeamsScreen from '../screens/ViewTeamsScreen';
 
 import AiGymTrainerScreen from '../screens/AiGymTrainerScreen';
 
@@ -185,6 +186,7 @@ function TournamentStackScreen() {
                 headerBackTitle: ' ',
             }} />
             <TournamentStack.Screen name="ManageTeams" component={ManageTeamsScreen} options={{ title: 'Manage Teams' }} />
+            <TournamentStack.Screen name="ViewTeams" component={ViewTeamsScreen} options={{ title: 'Teams' }} />
             <TournamentStack.Screen name="GenerateFixtures" component={GenerateFixturesScreen} options={{ title: 'Generate Fixtures' }} />
             <TournamentStack.Screen name="MatchDetails" component={MatchDetailsScreen} options={{ title: 'Match Details' }} />
             <TournamentStack.Screen name="CreateTeam" component={CreateTeamScreen} options={{ title: 'Register Team' }} />
@@ -256,6 +258,7 @@ const AppNavigator = () => {
             'CreateTournament',
             'TournamentDashboard',
             'ManageTeams',
+            'ViewTeams',
             'GenerateFixtures',
             'MatchDetails',
             'CreateTeam',

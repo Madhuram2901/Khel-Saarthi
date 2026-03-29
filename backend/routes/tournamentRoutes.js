@@ -5,6 +5,7 @@ const path = require('path');
 const {
     createTournament,
     getTournaments,
+    getMyTournaments,
     getTournamentById,
     updateTournament,
     publishTournament,
@@ -47,6 +48,8 @@ router.get('/public/:slug', getTournamentBySlug);
 router.route('/')
     .get(protect, getTournaments)
     .post(protect, createTournament);
+
+router.get('/my', protect, getMyTournaments);
 
 router.route('/:id')
     .get(getTournamentById)

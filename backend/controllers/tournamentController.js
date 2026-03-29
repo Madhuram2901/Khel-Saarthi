@@ -53,6 +53,17 @@ const getTournaments = asyncHandler(async (req, res) => {
     res.json(tournaments);
 });
 
+// @desc    Get user's tournaments (where user is host)
+// @route   GET /api/tournaments/my
+// @access  Private
+const getMyTournaments = asyncHandler(async (req, res) => {
+    const tournaments = await Tournament.find({
+        host: req.user._id
+    }).populate('host', 'name email').sort({ createdAt: -1 });
+
+    res.json(tournaments);
+});
+
 // @desc    Get tournament by ID
 // @route   GET /api/tournaments/:id
 // @access  Public
@@ -340,7 +351,7 @@ const getTeams = asyncHandler(async (req, res) => {
 
 // @desc    Delete team
 // @route   DELETE /api/tournaments/:tournamentId/teams/:teamId
-// @access  Private
+// @access  Private (Host only)
 const deleteTeam = asyncHandler(async (req, res) => {
     const tournament = await Tournament.findById(req.params.tournamentId);
 
@@ -356,13 +367,10 @@ const deleteTeam = asyncHandler(async (req, res) => {
         throw new Error('Team not found');
     }
 
-    // Check authorization: host or team owner
-    if (
-        tournament.host.toString() !== req.user._id.toString() &&
-        team.owner.toString() !== req.user._id.toString()
-    ) {
+    // Check authorization: only host can delete
+    if (tournament.host.toString() !== req.user._id.toString()) {
         res.status(403);
-        throw new Error('Not authorized to delete this team');
+        throw new Error('Only tournament host can delete teams');
     }
 
     // Remove team from tournament.teams array
@@ -385,9 +393,9 @@ const deleteTeam = asyncHandler(async (req, res) => {
     res.json({ message: 'Team removed' });
 });
 
-// @desc    Update team
+// @desc    Update team name (host only)
 // @route   PUT /api/tournaments/:tournamentId/teams/:teamId
-// @access  Private
+// @access  Private (Host only)
 const updateTeam = asyncHandler(async (req, res) => {
     const tournament = await Tournament.findById(req.params.tournamentId);
 
@@ -403,31 +411,17 @@ const updateTeam = asyncHandler(async (req, res) => {
         throw new Error('Team not found');
     }
 
-    // Check authorization: host or team owner
-    if (
-        tournament.host.toString() !== req.user._id.toString() &&
-        team.owner.toString() !== req.user._id.toString()
-    ) {
+    // Check authorization: only host can update teams
+    if (tournament.host.toString() !== req.user._id.toString()) {
         res.status(403);
-        throw new Error('Not authorized to update this team');
+        throw new Error('Only tournament host can update teams');
     }
 
+    // Only allow updating team name
     const { name } = req.body;
-    const logoUrl = req.file ? `/uploads/teams/${req.file.filename}` : undefined;
-
-    // Parse players from FormData (sent as JSON string)
-    let players = undefined;
-    if (req.body.players) {
-        if (typeof req.body.players === 'string') {
-            players = JSON.parse(req.body.players);
-        } else {
-            players = req.body.players;
-        }
+    if (name) {
+        team.name = name;
     }
-
-    if (name) team.name = name;
-    if (logoUrl) team.logoUrl = logoUrl;
-    if (players) team.players = players;
 
     const updatedTeam = await team.save();
     const populatedTeam = await Team.findById(updatedTeam._id).populate('owner', 'name email');
@@ -745,6 +739,7 @@ const generateShareLink = asyncHandler(async (req, res) => {
 module.exports = {
     createTournament,
     getTournaments,
+    getMyTournaments,
     getTournamentById,
     updateTournament,
     publishTournament,

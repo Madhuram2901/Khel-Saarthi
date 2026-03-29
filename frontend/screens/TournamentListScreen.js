@@ -27,46 +27,40 @@ const TournamentListScreen = ({ navigation }) => {
 
     const [viewMode, setViewMode] = useState('all');
     const [tournaments, setTournaments] = useState([]);
-    const [myTournaments, setMyTournaments] = useState([]);
     const [loading, setLoading] = useState(false);
 
+    const isParticipantView = !canCreateTournament;
+    const secondaryTabKey = isParticipantView ? 'joined' : 'mine';
+    const secondaryTabLabel = isParticipantView
+        ? 'Joined'
+        : 'Your Tournaments';
+
     const displayedTournaments = useMemo(() => {
-        const source = viewMode === 'registered' ? myTournaments : tournaments;
-        return [...source].sort(
+        return [...tournaments].sort(
             (a, b) => new Date(a.startDate || 0) - new Date(b.startDate || 0)
         );
-    }, [myTournaments, tournaments, viewMode]);
+    }, [tournaments]);
 
     useFocusEffect(
         React.useCallback(() => {
-            fetchTournamentLists();
-        }, [user?._id, user?.role])
+            fetchTournaments();
+        }, [user?._id, user?.role, viewMode])
     );
 
-    const fetchTournamentLists = async () => {
+    const fetchTournaments = async () => {
         try {
             setLoading(true);
-            const [allRes, myRes] = await Promise.allSettled([
-                api.get('/tournaments'),
-                api.get('/users/mytournaments'),
-            ]);
-
-            if (allRes.status === 'fulfilled') {
-                setTournaments(allRes.value.data || []);
-            } else {
-                console.error('Error fetching tournaments:', allRes.reason);
-                Alert.alert('Error', 'Failed to load tournaments');
-            }
-
-            if (myRes.status === 'fulfilled') {
-                setMyTournaments(myRes.value.data || []);
-            } else {
-                console.warn(
-                    'Error fetching registered tournaments:',
-                    myRes.reason
-                );
-                setMyTournaments([]);
-            }
+            const endpoint =
+                viewMode === 'all'
+                    ? '/tournaments'
+                    : isParticipantView
+                      ? '/users/mytournaments'
+                      : '/tournaments/my';
+            const response = await api.get(endpoint);
+            setTournaments(response.data || []);
+        } catch (error) {
+            console.error('Error fetching tournaments:', error);
+            Alert.alert('Error', 'Failed to load tournaments');
         } finally {
             setLoading(false);
         }
@@ -120,18 +114,19 @@ const TournamentListScreen = ({ navigation }) => {
                     <TouchableOpacity
                         style={[
                             styles.tabItem,
-                            viewMode === 'registered' && styles.tabItemActive,
+                            viewMode === secondaryTabKey &&
+                                styles.tabItemActive,
                         ]}
-                        onPress={() => setViewMode('registered')}
+                        onPress={() => setViewMode(secondaryTabKey)}
                     >
                         <Text
                             style={[
                                 styles.tabText,
-                                viewMode === 'registered' &&
+                                viewMode === secondaryTabKey &&
                                     styles.tabTextActive,
                             ]}
                         >
-                            Registered
+                            {secondaryTabLabel}
                         </Text>
                     </TouchableOpacity>
                 </View>
@@ -145,7 +140,7 @@ const TournamentListScreen = ({ navigation }) => {
                 refreshControl={
                     <RefreshControl
                         refreshing={loading}
-                        onRefresh={fetchTournamentLists}
+                        onRefresh={fetchTournaments}
                     />
                 }
                 ListEmptyComponent={
@@ -156,8 +151,10 @@ const TournamentListScreen = ({ navigation }) => {
                             color={colors.textMuted}
                         />
                         <Text style={styles.emptyText}>
-                            {viewMode === 'registered'
-                                ? 'No registered tournaments yet'
+                            {viewMode === secondaryTabKey
+                                ? isParticipantView
+                                    ? 'No joined tournaments yet'
+                                    : 'No tournaments yet'
                                 : 'No tournaments yet'}
                         </Text>
 

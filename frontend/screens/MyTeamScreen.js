@@ -13,6 +13,7 @@ const getFullImageUrl = (relativePath) => {
 
 const MyTeamScreen = ({ route, navigation }) => {
     const { team, tournamentName } = route.params;
+    const readOnly = route.params?.readOnly === true;
     const { colors, isDark } = useTheme();
     const styles = useMemo(() => makeStyles(colors, isDark), [colors, isDark]);
 
@@ -20,12 +21,14 @@ const MyTeamScreen = ({ route, navigation }) => {
         <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
             <View style={styles.headerRow}>
                 <Text style={styles.title}>My Team</Text>
-                <TouchableOpacity
-                    style={styles.editButton}
-                    onPress={() => navigation.navigate('EditTeam', { team, tournamentId: route.params?.tournamentId })}
-                >
-                    <Ionicons name="pencil" size={18} color="#FFF" />
-                </TouchableOpacity>
+                {!readOnly && (
+                    <TouchableOpacity
+                        style={styles.editButton}
+                        onPress={() => navigation.navigate('EditTeam', { team, tournamentId: route.params?.tournamentId })}
+                    >
+                        <Ionicons name="pencil" size={18} color="#FFF" />
+                    </TouchableOpacity>
+                )}
             </View>
 
             <View style={styles.heroCard}>

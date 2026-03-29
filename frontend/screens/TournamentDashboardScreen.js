@@ -59,6 +59,7 @@ const TournamentDashboardScreen = ({ route, navigation }) => {
     const [isRegistered, setIsRegistered] = useState(false);
     const [loading, setLoading] = useState(false);
     const [activeTab, setActiveTab] = useState('overview');
+    const [expandedTeamId, setExpandedTeamId] = useState(null);
 
     useFocusEffect(
         React.useCallback(() => {
@@ -115,6 +116,27 @@ const TournamentDashboardScreen = ({ route, navigation }) => {
         }
     };
 
+    const handleRegisterTeam = () => {
+        navigation.navigate('CreateTeam', {
+            tournamentId,
+            tournamentName: tournament?.name,
+        });
+    };
+
+    const handleViewMyTeam = () => {
+        if (!myTeam) {
+            Alert.alert('Team not found', 'Your registered team could not be loaded yet.');
+            return;
+        }
+
+        navigation.navigate('MyTeam', {
+            team: myTeam,
+            tournamentId,
+            tournamentName: tournament?.name,
+            readOnly: true,
+        });
+    };
+
     const handleShare = async () => {
         try {
             const { data } = await api.post(`/tournaments/${tournamentId}/share-link`);
@@ -161,28 +183,43 @@ const TournamentDashboardScreen = ({ route, navigation }) => {
         ]);
     };
 
+    const handleDeleteTeam = (teamId, teamName) => {
+        Alert.alert('Delete Team', `Are you sure you want to delete "${teamName}"?`, [
+            { text: 'Cancel', style: 'cancel' },
+            {
+                text: 'Delete',
+                style: 'destructive',
+                onPress: async () => {
+                    try {
+                        await api.delete(`/tournaments/${tournamentId}/teams/${teamId}`);
+                        fetchTournamentData();
+                        Alert.alert('Success', 'Team deleted');
+                    } catch (error) {
+                        Alert.alert('Error', error.response?.data?.message || 'Failed to delete team');
+                    }
+                },
+            },
+        ]);
+    };
+
+    const toggleTeamExpanded = (teamId) => {
+        setExpandedTeamId(expandedTeamId === teamId ? null : teamId);
+    };
+
     const fmtDate = (dateValue) => new Date(dateValue).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
     if (!tournament) return <View style={styles.loadingContainer}><Text style={{ color: colors.text }}>Loading...</Text></View>;
 
-    // Use backend isHost value (checks if user IS the host of THIS tournament)
-    const isHost = tournament.isHost === true;
-    const isUserRole = user?.role === 'user';
+    // Fix: Proper host check handling both object and string IDs
+    const isHost =
+        tournament?.isHost === true ||
+        String(tournament?.host?._id || tournament?.host) === String(user?._id);
     const tabs = [
         { key: 'overview', label: 'Overview', icon: 'information-circle-outline' },
         { key: 'teams', label: 'Teams', icon: 'people-outline' },
         { key: 'fixtures', label: 'Fixtures', icon: 'list-outline' },
         { key: 'standings', label: 'Standings', icon: 'trophy-outline' },
     ];
-    const primaryButtonLabel = isHost ? 'Manage Teams' : isRegistered ? 'View My Team' : 'Register Team';
-
-    const handlePrimaryAction = () => {
-        if (isHost) return navigation.navigate('ManageTeams', { tournamentId });
-        if (isRegistered && myTeam) {
-            return navigation.navigate('MyTeam', { tournamentId, tournamentName: tournament.name, team: myTeam });
-        }
-        return navigation.navigate('CreateTeam', { tournamentId, tournamentName: tournament.name });
-    };
 
     return (
         <View style={styles.container}>
@@ -224,10 +261,25 @@ const TournamentDashboardScreen = ({ route, navigation }) => {
                             <View style={styles.statCard}><Ionicons name="calendar" size={32} color="#FF6B6B" /><Text style={styles.statValue}>{matches.length}</Text><Text style={styles.statLabel}>Matches</Text></View>
                             <View style={styles.statCard}><Ionicons name="trophy" size={32} color="#FFD93D" /><Text style={styles.statValue} adjustsFontSizeToFit={true} numberOfLines={2} minimumFontScale={0.6}>{tournament.format.replace(/_/g, ' ')}</Text><Text style={styles.statLabel}>Format</Text></View>
                         </View>
-                        {isHost && teams.length > 0 && matches.length === 0 && (
-                            <TouchableOpacity style={styles.actionButton} onPress={() => navigation.navigate('GenerateFixtures', { tournamentId })}>
-                                <Ionicons name="git-network" size={24} color="#FFF" /><Text style={styles.actionButtonText}>Generate Fixtures</Text>
+                        {!isHost && !isRegistered && (
+                            <TouchableOpacity style={styles.primaryCta} onPress={handleRegisterTeam}>
+                                <Ionicons name="add-circle-outline" size={20} color="#FFF" />
+                                <Text style={styles.primaryCtaText}>Register Team</Text>
                             </TouchableOpacity>
+                        )}
+                        {!isHost && isRegistered && (
+                            <TouchableOpacity style={styles.primaryCta} onPress={handleViewMyTeam}>
+                                <Ionicons name="eye-outline" size={20} color="#FFF" />
+                                <Text style={styles.primaryCtaText}>View My Team</Text>
+                            </TouchableOpacity>
+                        )}
+                        {!isHost && isRegistered && myTeam && (
+                            <View style={styles.registrationSummary}>
+                                <Text style={styles.registrationSummaryTitle}>Registered Team</Text>
+                                <Text style={styles.registrationSummaryText}>
+                                    {myTeam.name}
+                                </Text>
+                            </View>
                         )}
                         {tournament.venues?.length > 0 && (
                             <View style={styles.infoSection}>
@@ -240,73 +292,87 @@ const TournamentDashboardScreen = ({ route, navigation }) => {
                                 ))}
                             </View>
                         )}
-                        <TouchableOpacity style={styles.primaryCta} onPress={handlePrimaryAction}>
-                            <Ionicons name={isHost ? 'settings-outline' : isRegistered ? 'shield-checkmark-outline' : 'person-add-outline'} size={22} color="#FFF" />
-                            <Text style={styles.primaryCtaText}>{primaryButtonLabel}</Text>
-                        </TouchableOpacity>
-                        {isUserRole && isRegistered && myTeam && (
-                            <View style={styles.registrationSummary}>
-                                <Text style={styles.registrationSummaryTitle}>Your team is registered</Text>
-                                <Text style={styles.registrationSummaryText}>{myTeam.name}</Text>
-                            </View>
+                        {isHost && (
+                            <TouchableOpacity style={styles.deleteButton} onPress={handleDeleteTournament}>
+                                <Ionicons name="trash-outline" size={20} color="#FFF" />
+                                <Text style={styles.deleteButtonText}>Delete Tournament</Text>
+                            </TouchableOpacity>
                         )}
                     </View>
                 )}
 
                 {activeTab === 'teams' && (
                     <View style={styles.teamsContainer}>
-                        {isHost ? (
-                            <View style={styles.hostActionsRow}>
-                                <TouchableOpacity style={styles.hostPrimaryButton} onPress={() => navigation.navigate('ManageTeams', { tournamentId })}>
-                                    <Ionicons name="add-circle-outline" size={20} color="#FFF" /><Text style={styles.hostPrimaryButtonText}>Add Team</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity style={styles.hostSecondaryButton} onPress={() => navigation.navigate('ManageTeams', { tournamentId })}>
-                                    <Ionicons name="settings-outline" size={20} color={colors.accent} /><Text style={styles.hostSecondaryButtonText}>Manage Teams</Text>
-                                </TouchableOpacity>
+                        {teams.length === 0 ? (
+                            <View style={styles.emptyState}>
+                                <Ionicons name="people-outline" size={64} color={colors.textMuted} />
+                                <Text style={styles.emptyText}>No teams added yet</Text>
                             </View>
                         ) : (
-                            <View style={styles.userTeamSection}>
-                                <TouchableOpacity style={[styles.userActionButton, isRegistered && styles.userActionButtonMuted]} onPress={handlePrimaryAction}>
-                                    <Ionicons name={isRegistered ? 'eye-outline' : 'person-add-outline'} size={20} color="#FFF" /><Text style={styles.userActionButtonText}>{primaryButtonLabel}</Text>
-                                </TouchableOpacity>
-                                {isRegistered && myTeam && (
-                                    <View style={styles.myTeamCard}>
-                                        <View style={styles.myTeamHeader}>
-                                            <Text style={styles.myTeamTitle}>Your Team</Text>
-                                            <TouchableOpacity onPress={() => navigation.navigate('MyTeam', { tournamentId, tournamentName: tournament.name, team: myTeam })}>
-                                                <Text style={styles.myTeamLinkText}>Open</Text>
+                            teams.map((team) => (
+                                <View key={team._id || normalizeId(team) || team.name} style={styles.teamCardExpanded}>
+                                    <View style={styles.teamCardHeader}>
+                                        <View style={styles.teamCardLeft}>
+                                            {team.logoUrl && getFullImageUrl(team.logoUrl) ? (
+                                                <Image source={{ uri: getFullImageUrl(team.logoUrl) }} style={styles.teamLogoSmall} />
+                                            ) : (
+                                                <View style={styles.teamIconSmall}>
+                                                    <Ionicons name="shield" size={20} color={colors.accent} />
+                                                </View>
+                                            )}
+                                            <View style={styles.teamHeaderInfo}>
+                                                <Text style={styles.teamNameExpanded}>{team.name}</Text>
+                                                <Text style={styles.teamMemberCount}>{team.players?.length || 0} members</Text>
+                                            </View>
+                                        </View>
+                                        <View style={styles.teamCardActions}>
+                                            {isHost && (
+                                                <TouchableOpacity
+                                                    style={styles.deleteIconButton}
+                                                    onPress={() => handleDeleteTeam(team._id, team.name)}
+                                                >
+                                                    <Ionicons name="trash-outline" size={20} color="#FF3B30" />
+                                                </TouchableOpacity>
+                                            )}
+                                            <TouchableOpacity
+                                                style={styles.expandButton}
+                                                onPress={() => toggleTeamExpanded(team._id)}
+                                            >
+                                                <Ionicons
+                                                    name={expandedTeamId === team._id ? 'chevron-up' : 'chevron-down'}
+                                                    size={24}
+                                                    color={colors.accent}
+                                                />
                                             </TouchableOpacity>
                                         </View>
-                                        <Text style={styles.myTeamName}>{myTeam.name}</Text>
-                                        <Text style={styles.myTeamMeta}>{myTeam.players?.length || 0} members</Text>
-                                        {(myTeam.players || []).map((player, index) => (
-                                            <View key={normalizeId(player) || `${player.name}-${index}`} style={styles.myTeamMember}>
-                                                <Ionicons name="person-outline" size={16} color={colors.textSecondary} />
-                                                <Text style={styles.myTeamMemberText}>{player.name || `Member ${index + 1}`}{player.role ? ` - ${player.role}` : ''}</Text>
-                                            </View>
-                                        ))}
                                     </View>
-                                )}
-                            </View>
-                        )}
-                        <Text style={styles.sectionHeading}>{isHost ? 'All Teams' : 'Team List'}</Text>
-                        {teams.map((team) => (
-                            <View key={team._id || normalizeId(team) || team.name} style={styles.teamCard}>
-                                {team.logoUrl && getFullImageUrl(team.logoUrl) ? (
-                                    <Image source={{ uri: getFullImageUrl(team.logoUrl) }} style={styles.teamLogo} />
-                                ) : (
-                                    <View style={styles.teamIcon}>
-                                        <Ionicons name="shield" size={24} color={colors.accent} />
-                                    </View>
-                                )}
-                                <View style={styles.teamDetails}>
-                                    <Text style={styles.teamName}>{team.name}</Text>
-                                    <Text style={styles.teamMeta}>{team.players?.length || 0} members</Text>
+
+                                    {expandedTeamId === team._id && (
+                                        <View style={styles.teamPlayersSection}>
+                                            {team.players && team.players.length > 0 ? (
+                                                team.players.map((player, index) => (
+                                                    <View key={index} style={styles.playerRow}>
+                                                        <View style={styles.playerInfo}>
+                                                            <Ionicons name="person-outline" size={16} color={colors.textSecondary} />
+                                                            <Text style={styles.playerName}>
+                                                                {player.name || `Player ${index + 1}`}
+                                                            </Text>
+                                                        </View>
+                                                        {player.role && (
+                                                            <View style={styles.playerRoleBadge}>
+                                                                <Text style={styles.playerRoleText}>{player.role}</Text>
+                                                            </View>
+                                                        )}
+                                                    </View>
+                                                ))
+                                            ) : (
+                                                <Text style={styles.noPlayersText}>No players added</Text>
+                                            )}
+                                        </View>
+                                    )}
                                 </View>
-                                {myTeam && normalizeId(team) === normalizeId(myTeam) && <View style={styles.registeredBadge}><Text style={styles.registeredBadgeText}>Yours</Text></View>}
-                            </View>
-                        ))}
-                        {teams.length === 0 && <View style={styles.emptyState}><Ionicons name="people-outline" size={64} color={colors.textMuted} /><Text style={styles.emptyText}>No teams added yet</Text></View>}
+                            ))
+                        )}
                     </View>
                 )}
 
@@ -373,7 +439,7 @@ const makeStyles = (colors, isDark) => StyleSheet.create({
     infoTitle: { fontSize: 16, fontWeight: '600', color: colors.text, marginBottom: 12 },
     venueItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8 },
     venueText: { fontSize: 14, color: colors.textSecondary, marginLeft: 8 },
-    primaryCta: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: colors.accent, borderRadius: 14, paddingVertical: 16, paddingHorizontal: 18 },
+    primaryCta: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: colors.accent, borderRadius: 14, paddingVertical: 16, paddingHorizontal: 18, marginBottom: 16 },
     primaryCtaText: { color: '#FFF', fontSize: 16, fontWeight: '700', marginLeft: 8 },
     registrationSummary: { marginTop: 14, padding: 16, borderRadius: 12, backgroundColor: colors.surface },
     registrationSummaryTitle: { fontSize: 13, fontWeight: '600', color: colors.textSecondary, marginBottom: 6 },
@@ -405,6 +471,28 @@ const makeStyles = (colors, isDark) => StyleSheet.create({
     teamMeta: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
     registeredBadge: { backgroundColor: isDark ? 'rgba(52,199,89,0.18)' : '#E8F5E9', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5 },
     registeredBadgeText: { color: colors.accentGreen || '#34C759', fontSize: 12, fontWeight: '700' },
+    addTeamButton: { flexDirection: 'row', backgroundColor: colors.accent, borderRadius: 12, paddingVertical: 14, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center', marginBottom: 18 },
+    addTeamButtonText: { color: '#FFF', fontSize: 15, fontWeight: '700', marginLeft: 8 },
+    teamCardExpanded: { backgroundColor: colors.surface, borderRadius: 12, marginBottom: 12, overflow: 'hidden' },
+    teamCardHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14 },
+    teamCardLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
+    teamLogoSmall: { width: 48, height: 48, borderRadius: 24, marginRight: 12 },
+    teamIconSmall: { width: 48, height: 48, borderRadius: 24, backgroundColor: isDark ? 'rgba(0,122,255,0.15)' : '#F0F8FF', justifyContent: 'center', alignItems: 'center', marginRight: 12 },
+    teamHeaderInfo: { flex: 1 },
+    teamNameExpanded: { fontSize: 16, fontWeight: '700', color: colors.text },
+    teamMemberCount: { fontSize: 12, color: colors.textSecondary, marginTop: 4 },
+    teamCardActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    deleteIconButton: { padding: 8 },
+    expandButton: { padding: 8 },
+    teamPlayersSection: { backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : '#F9F9FB', paddingHorizontal: 16, paddingVertical: 12, borderTopWidth: 1, borderTopColor: colors.border },
+    playerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10 },
+    playerInfo: { flexDirection: 'row', alignItems: 'center', flex: 1 },
+    playerName: { fontSize: 14, color: colors.text, marginLeft: 8 },
+    playerRoleBadge: { backgroundColor: colors.accent, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
+    playerRoleText: { fontSize: 11, color: '#FFF', fontWeight: '600' },
+    noPlayersText: { fontSize: 14, color: colors.textSecondary, fontStyle: 'italic', paddingVertical: 8 },
+    deleteButton: { flexDirection: 'row', backgroundColor: '#FF3B30', borderRadius: 12, paddingVertical: 14, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
+    deleteButtonText: { color: '#FFF', fontSize: 15, fontWeight: '700', marginLeft: 8 },
     fixturesContainer: { padding: 16 },
     matchCard: { backgroundColor: colors.surface, borderRadius: 12, padding: 16, marginBottom: 12 },
     matchRound: { fontSize: 12, fontWeight: '600', color: colors.accent, marginBottom: 8 },

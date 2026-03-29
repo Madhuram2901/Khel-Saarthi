@@ -19,16 +19,18 @@ const sports = ['All', 'Cricket', 'Football', 'Badminton', 'Tennis', 'Basketball
 
 const EventsScreen = ({ navigation }) => {
   const { user } = useContext(AuthContext);
+
   const [events, setEvents] = useState([]);
   const [filteredEvents, setFilteredEvents] = useState([]);
   const [myEvents, setMyEvents] = useState([]);
+
   const [selectedSport, setSelectedSport] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState('all');
+
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
-  // Only host/admin can create events
   const canCreateEvent =
     user?.role === 'host' || user?.role === 'admin';
 
@@ -41,7 +43,7 @@ const EventsScreen = ({ navigation }) => {
 
   useEffect(() => {
     filterEvents();
-  }, [selectedSport, searchQuery, events, myEvents, viewMode, user?.role]);
+  }, [selectedSport, searchQuery, events, myEvents, viewMode]);
 
   const fetchEvents = async () => {
     try {
@@ -50,46 +52,45 @@ const EventsScreen = ({ navigation }) => {
         (a, b) => new Date(a.date) - new Date(b.date)
       );
       setEvents(sortedEvents);
-      setFilteredEvents(sortedEvents);
     } catch (error) {
       console.log('Error fetching events', error);
     }
   };
 
   const fetchMyEvents = async () => {
-    try {
-      if (user?.role === 'host') {
-        const res = await api.get('/events');
-        const mine = res.data.filter(
-          e => e.createdBy?._id === user._id ||
-               e.createdBy === user._id ||
-               e.host?._id === user._id ||
-               e.host === user._id
-        );
-        setMyEvents(mine.sort((a, b) =>
-          new Date(a.date) - new Date(b.date)
-        ));
-      } else {
-        const res = await api.get('/users/profile');
-        const joinedIds = res.data.joinedEvents ?? [];
-        const eventsRes = await api.get('/events');
-        const mine = eventsRes.data.filter(
-          e => joinedIds.includes(e._id)
-        );
-        setMyEvents(mine.sort((a, b) =>
-          new Date(a.date) - new Date(b.date)
-        ));
-      }
-    } catch (error) {
-      console.log('Error fetching my events', error);
+  try {
+    if (user?.role === 'host') {
+      const res = await api.get('/events');
+      const mine = res.data.filter(
+        e =>
+          e.host?._id === user._id ||
+          e.host === user._id
+      );
+
+      setMyEvents(
+        mine.sort((a, b) => new Date(a.date) - new Date(b.date))
+      );
+    } else {
+      // For participants → get registered events from backend
+      const res = await api.get('/users/myevents');
+
+      setMyEvents(
+        res.data.sort((a, b) => new Date(a.date) - new Date(b.date))
+      );
     }
-  };
+  } catch (error) {
+    console.log('Error fetching my events', error);
+  }
+};
 
   const filterEvents = () => {
-    const sourceEvents =
-      user?.role === 'host' && viewMode === 'my'
-        ? myEvents
-        : events;
+    let sourceEvents;
+
+    if (viewMode === 'my') {
+      sourceEvents = myEvents;
+    } else {
+      sourceEvents = events;
+    }
 
     let filtered = [...sourceEvents];
 
@@ -126,7 +127,6 @@ const EventsScreen = ({ navigation }) => {
         <View style={styles.headerRow}>
           <Text style={styles.headerTitle}>Events</Text>
 
-          {/* PLUS BUTTON ONLY FOR HOST/ADMIN */}
           {canCreateEvent && (
             <TouchableOpacity
               style={styles.addButton}
@@ -164,7 +164,7 @@ const EventsScreen = ({ navigation }) => {
               styles.tabText,
               viewMode === 'my' && styles.tabTextActive,
             ]}>
-              {user?.role === 'host' ? 'My Events' : 'Joined'}
+              {user?.role === 'host' ? 'My Events' : 'Registered'}
             </Text>
           </TouchableOpacity>
         </View>
@@ -218,6 +218,18 @@ const EventsScreen = ({ navigation }) => {
           paddingHorizontal: 16,
           paddingBottom: 120
         }}
+        ListEmptyComponent={
+          <View style={{ alignItems: 'center', marginTop: 40 }}>
+            <Ionicons name="calendar-outline" size={48} color={colors.textSecondary} />
+            <Text style={{ color: colors.textSecondary, marginTop: 10 }}>
+              {viewMode === 'my'
+                ? user?.role === 'host'
+                  ? 'No events created yet'
+                  : 'No events registered yet'
+                : 'No events found'}
+            </Text>
+          </View>
+        }
       />
     </SafeAreaView>
   );

@@ -58,12 +58,19 @@ const ProfileScreen = ({ navigation }) => {
         fetchSportsProfiles();
     }, []);
 
-    const calculateBMI = () => {
-        const numericHeight = Number(user.height);
-        const numericWeight = Number(user.weight);
+    if (!user) {
+        return null;
+    }
+
+    const height = user?.profile?.height ?? user?.physicalStats?.height ?? user?.height ?? null;
+    const weight = user?.profile?.weight ?? user?.physicalStats?.weight ?? user?.weight ?? null;
+
+    const calculateBMI = (heightValue, weightValue) => {
+        const numericHeight = Number(heightValue);
+        const numericWeight = Number(weightValue);
         if (!numericHeight || !numericWeight) return null;
-        const h = numericHeight / 100;
-        const bmi = numericWeight / (h * h);
+        const heightInMeters = numericHeight / 100;
+        const bmi = numericWeight / (heightInMeters * heightInMeters);
         return bmi.toFixed(1);
     };
     const getBMIColor = (bmi) => {
@@ -74,7 +81,7 @@ const ProfileScreen = ({ navigation }) => {
         return colors.accentRed;
     };
 
-    const bmiValue = calculateBMI();
+    const bmiValue = calculateBMI(height, weight);
     const bmiNumber = bmiValue ? parseFloat(bmiValue) : null;
     const statsCardWidth = Math.max((width - 40) / 4, 88);
 
@@ -174,18 +181,24 @@ const ProfileScreen = ({ navigation }) => {
                             <View style={[styles.statCard, { backgroundColor: colors.surface, minWidth: statsCardWidth }]}>
                                 <Ionicons name="resize-outline" size={24} color={colors.accent} />
                                 <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Height (cm)</Text>
-                                <Text style={[styles.statValue, { color: colors.text }]}>{user.height != null ? user.height : '--'}</Text>
+                                <Text style={[styles.statValue, { color: colors.text }]}>
+                                    {height != null ? height : '--'}
+                                </Text>
                             </View>
                             <View style={[styles.statCard, { backgroundColor: colors.surface, minWidth: statsCardWidth }]}>
                                 <Ionicons name="barbell-outline" size={24} color={colors.accent} />
                                 <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Weight (kg)</Text>
-                                <Text style={[styles.statValue, { color: colors.text }]}>{user.weight != null ? user.weight : '--'}</Text>
+                                <Text style={[styles.statValue, { color: colors.text }]}>
+                                    {weight != null ? weight : '--'}
+                                </Text>
                             </View>
-                            <View style={[styles.statCard, { backgroundColor: colors.surface, minWidth: statsCardWidth }]}>
-                                <Ionicons name="fitness-outline" size={24} color={colors.accent} />
-                                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>BMI</Text>
-                                <Text style={[styles.statValue, { color: bmiNumber !== null ? getBMIColor(bmiNumber) : colors.textSecondary }]}>{bmiValue || '--'}</Text>
-                            </View>
+                            {bmiValue && (
+                                <View style={[styles.statCard, { backgroundColor: colors.surface, minWidth: statsCardWidth }]}>
+                                    <Ionicons name="fitness-outline" size={24} color={colors.accent} />
+                                    <Text style={[styles.statLabel, { color: colors.textSecondary }]}>BMI</Text>
+                                    <Text style={[styles.statValue, { color: getBMIColor(bmiNumber) }]}>{bmiValue}</Text>
+                                </View>
+                            )}
                         </View>
                     </ScrollView>
                 </View>

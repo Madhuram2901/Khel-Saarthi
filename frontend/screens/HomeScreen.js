@@ -99,7 +99,7 @@ const HomeScreen = ({ navigation }) => {
               </View>
               <Text style={styles.quickActionLabel}>Create Event</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.quickActionItem} onPress={() => navigation.navigate('TournamentStack', { screen: 'CreateTournament' })}>
+            <TouchableOpacity style={styles.quickActionItem} onPress={() => navigation.navigate('TournamentStack', { screen: 'CreateTournament', initial: false })}>
               <View style={styles.quickActionCircle}>
                 <Ionicons name="trophy" size={26} color={colors.accent} />
               </View>

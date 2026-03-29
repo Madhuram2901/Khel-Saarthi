@@ -66,12 +66,29 @@ function HomeStack() {
             <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
             <Stack.Screen name="CreateEvent" component={CreateEventScreen} options={{ title: 'Create Event', headerBackTitle: 'Back' }} />
             <Stack.Screen name="EditEvent" component={EditEventScreen} options={{ title: 'Edit Event', headerBackTitle: 'Back' }} />
+            <Stack.Screen
+                name="CreateTournament"
+                component={CreateTournamentScreen}
+                options={{
+                    title: 'Create Tournament',
+                    headerShown: true,
+                    headerBackTitleVisible: false,
+                }}
+            />
             <Stack.Screen name="EventDetails" component={EventDetailsScreen} options={{ title: 'Event Details',headerTransparent: true, headerTitle: '', headerTintColor: '#fff' }} />
             <Stack.Screen name="Participants" component={ParticipantsScreen} options={{ title: 'Participants', headerBackTitle: 'Back' }} />
             <Stack.Screen name="Chat" component={ChatScreen} options={({ route }) => ({ title: route.params?.eventTitle || 'Chat', headerBackTitle: 'Back' })} />
             <Stack.Screen name="BadmintonProfile" component={BadmintonProfileScreen} options={{ title: 'Badminton Profile' }} />
             <Stack.Screen name="AiChat" component={AiChatScreen} options={{ headerShown: false }} />
-            <Stack.Screen name="AiGymTrainer" component={AiGymTrainerScreen} options={{ headerShown: false }} />
+            <Stack.Screen
+                name="AiGymTrainer"
+                component={AiGymTrainerScreen}
+                options={{
+                    headerShown: false,
+                    gestureEnabled: true,
+                    gestureDirection: 'horizontal',
+                }}
+            />
             <Stack.Screen name="News" component={NewsScreen} options={{ headerShown: false }} />
         </Stack.Navigator>
     );
@@ -152,7 +169,14 @@ function TournamentStackScreen() {
             }}
         >
             <TournamentStack.Screen name="TournamentList" component={TournamentListScreen} options={{ headerShown: false }} />
-            <TournamentStack.Screen name="CreateTournament" component={CreateTournamentScreen} options={{ title: 'Create Tournament' }} />
+            <TournamentStack.Screen
+                name="CreateTournament"
+                component={CreateTournamentScreen}
+                options={{
+                    title: 'Create Tournament',
+                    headerShown: true,
+                }}
+            />
             <TournamentStack.Screen name="TournamentDashboard" component={TournamentDashboardScreen} options={{
                 title: 'Tournament',
                 headerBackTitle: ' ',

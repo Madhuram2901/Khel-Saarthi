@@ -32,24 +32,38 @@ function FloatingTabBar({ state, descriptors, navigation }) {
     state.routes.map((_, i) => new Animated.Value(i === state.index ? 1 : 0))
   ).current;
 
+  // Sync pills on every render to catch any drift
+  state.routes.forEach((_, i) => {
+    if (i !== state.index) {
+      pillOpacities[i].setValue(0);
+    }
+  });
+
   // FAB press scale
   const fabScale = useRef(new Animated.Value(1)).current;
 
   // Animate pill opacities whenever active index changes
   useEffect(() => {
     state.routes.forEach((_, i) => {
-      Animated.spring(pillOpacities[i], {
-        toValue: i === state.index ? 1 : 0,
-        useNativeDriver: true,
-        damping: 14,
-        mass: 0.6,
-        stiffness: 160,
-      }).start();
+      // Immediately set incorrect pills to 0 without animation
+      if (i !== state.index) {
+        pillOpacities[i].setValue(0);
+      }
     });
+    // Then animate only the active pill in
+    Animated.spring(pillOpacities[state.index], {
+      toValue: 1,
+      useNativeDriver: true,
+      damping: 14,
+      mass: 0.6,
+      stiffness: 160,
+    }).start();
   }, [state.index]);
 
   // Hide the bar on deep screens
-  const { tabBarStyle } = descriptors[state.routes[state.index].key].options;
+  const activeDescriptor = descriptors[state.routes[state.index]?.key];
+  if (!activeDescriptor) return null;
+  const { tabBarStyle } = activeDescriptor.options;
   if (tabBarStyle?.display === 'none') return null;
 
   // FAB press handlers

@@ -135,17 +135,17 @@ const HomeScreen = ({ navigation }) => {
             </View>
           ) : (
             <View style={styles.quickActionsRow}>
-              <TouchableOpacity style={styles.quickActionItem} onPress={() => navigation.navigate('CreateEvent')}>
+              <TouchableOpacity style={styles.quickActionItem} onPress={() => navigation.navigate('EventsStack')}>
                 <View style={styles.quickActionCircle}>
-                  <Ionicons name="add" size={26} color={colors.accent} />
+                  <Ionicons name="calendar" size={26} color={colors.accent} />
                 </View>
-                <Text style={styles.quickActionLabel}>Create Event</Text>
+                <Text style={styles.quickActionLabel}>Join Event</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.quickActionItem} onPress={() => navigation.navigate('TournamentStack', { screen: 'CreateTournament', initial: false })}>
+              <TouchableOpacity style={styles.quickActionItem} onPress={() => navigation.navigate('TournamentStack')}>
                 <View style={styles.quickActionCircle}>
                   <Ionicons name="trophy" size={26} color={colors.accent} />
                 </View>
-                <Text style={styles.quickActionLabel}>Tournament</Text>
+                <Text style={styles.quickActionLabel}>Tournaments</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.quickActionItem} onPress={() => navigation.navigate('VenueStack', { screen: 'VenueList' })}>
                 <View style={styles.quickActionCircle}>

@@ -28,6 +28,10 @@ const EventsScreen = ({ navigation }) => {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
+  // Only host/admin can create events
+  const canCreateEvent =
+    user?.role === 'host' || user?.role === 'admin';
+
   useFocusEffect(
     React.useCallback(() => {
       fetchEvents();
@@ -118,18 +122,19 @@ const EventsScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Header Container */}
       <View style={styles.headerContainer}>
-        {/* Header Row */}
         <View style={styles.headerRow}>
           <Text style={styles.headerTitle}>Events</Text>
 
-          <TouchableOpacity
-            style={styles.addButton}
-            onPress={() => navigation.navigate('CreateEvent')}
-          >
-            <Ionicons name="add" size={26} color="#FFF" />
-          </TouchableOpacity>
+          {/* PLUS BUTTON ONLY FOR HOST/ADMIN */}
+          {canCreateEvent && (
+            <TouchableOpacity
+              style={styles.addButton}
+              onPress={() => navigation.navigate('CreateEvent')}
+            >
+              <Ionicons name="add" size={26} color="#FFF" />
+            </TouchableOpacity>
+          )}
         </View>
 
         <View style={styles.tabRow}>
@@ -164,7 +169,6 @@ const EventsScreen = ({ navigation }) => {
           </TouchableOpacity>
         </View>
 
-        {/* Search */}
         <View style={styles.searchContainer}>
           <Ionicons name="search-outline" size={18} color="#888" />
           <TextInput
@@ -176,7 +180,6 @@ const EventsScreen = ({ navigation }) => {
           />
         </View>
 
-        {/* Filters */}
         <FlatList
           data={sports}
           horizontal
@@ -205,39 +208,12 @@ const EventsScreen = ({ navigation }) => {
       </View>
 
       <FlatList
-        data={user?.role === 'host'
-          ? filteredEvents
-          : viewMode === 'all'
-            ? filteredEvents
-            : myEvents}
+        data={filteredEvents}
         keyExtractor={(item) => item._id}
         renderItem={renderEvent}
         numColumns={2}
         showsVerticalScrollIndicator={false}
         columnWrapperStyle={{ justifyContent: 'space-between' }}
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Ionicons
-              name={user?.role === 'host'
-                ? 'calendar-outline'
-                : 'footsteps-outline'}
-              size={48}
-              color={colors.textSecondary}
-            />
-            <Text style={styles.emptyTitle}>
-              {viewMode === 'my'
-                ? user?.role === 'host'
-                  ? 'No events created yet'
-                  : 'No events joined yet'
-                : 'No events found'}
-            </Text>
-            <Text style={styles.emptySubtitle}>
-              {viewMode === 'my' && user?.role === 'host'
-                ? 'Tap + to create your first event'
-                : ''}
-            </Text>
-          </View>
-        }
         contentContainerStyle={{
           paddingHorizontal: 16,
           paddingBottom: 120
@@ -250,9 +226,7 @@ const EventsScreen = ({ navigation }) => {
 export default EventsScreen;
 
 const makeStyles = (colors) => StyleSheet.create({
-  container: {
-    flex: 1,
-  },
+  container: { flex: 1 },
 
   headerContainer: {
     paddingHorizontal: 16,
@@ -289,20 +263,24 @@ const makeStyles = (colors) => StyleSheet.create({
     marginBottom: 12,
     gap: 8,
   },
+
   tabItem: {
     paddingHorizontal: 16,
     paddingVertical: 7,
     borderRadius: 20,
     backgroundColor: colors.surface2,
   },
+
   tabItemActive: {
     backgroundColor: colors.accent,
   },
+
   tabText: {
     fontSize: 13,
     fontWeight: '500',
     color: colors.textSecondary,
   },
+
   tabTextActive: {
     color: '#FFF',
     fontWeight: '600',
@@ -346,24 +324,5 @@ const makeStyles = (colors) => StyleSheet.create({
   filterTextActive: {
     color: '#FFF',
     fontWeight: '600',
-  },
-
-  emptyContainer: {
-    alignItems: 'center',
-    paddingVertical: 60,
-    paddingHorizontal: 32,
-  },
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.textSecondary,
-    marginTop: 12,
-    textAlign: 'center',
-  },
-  emptySubtitle: {
-    fontSize: 14,
-    color: colors.textMuted,
-    marginTop: 4,
-    textAlign: 'center',
   },
 });

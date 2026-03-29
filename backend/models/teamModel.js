@@ -10,6 +10,20 @@ const teamSchema = mongoose.Schema(
             type: String,
             default: '',
         },
+        owner: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+        },
+        players: [
+            {
+                name: String,
+                role: String,
+                user: {
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref: 'User',
+                },
+            },
+        ],
         tournament: {
             type: mongoose.Schema.Types.ObjectId,
             required: true,

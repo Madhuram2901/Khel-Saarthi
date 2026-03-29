@@ -2,6 +2,8 @@ const asyncHandler = require('express-async-handler');
 const User = require('../models/userModel');
 const generateToken = require('../utils/generateToken');
 const Event = require('../models/eventModel');
+const Team = require('../models/teamModel');
+const Tournament = require('../models/tournamentModel');
 const { uploadToCloudinary, deleteFromCloudinary } = require('../utils/cloudinaryUpload');
 const fs = require('fs');
 
@@ -213,6 +215,25 @@ const getMyProfile = asyncHandler(async (req, res) => {
     });
 });
 
+// @desc    Get tournaments user is registered in
+// @route   GET /api/users/mytournaments
+// @access  Private
+const getMyTournaments = asyncHandler(async (req, res) => {
+    // Find all teams owned by user
+    const userTeams = await Team.find({ owner: req.user._id }).populate('tournament');
+
+    // Extract unique tournament IDs
+    const tournamentIds = [...new Set(userTeams.map(team => team.tournament._id.toString()))];
+
+    // Fetch full tournament details with teams and matches
+    const tournaments = await Tournament.find({ _id: { $in: tournamentIds } })
+        .populate('host', 'name email')
+        .populate('teams')
+        .sort({ createdAt: -1 });
+
+    res.json(tournaments || []);
+});
+
 // @desc    Remove user's profile picture
 // @route   DELETE /api/users/profile-picture
 // @access  Private
@@ -231,4 +252,4 @@ const removeProfilePicture = asyncHandler(async (req, res) => {
     res.json({ message: 'Profile picture removed', profilePicture: '' });
 });
 
-module.exports = { registerUser, loginUser, getMyEvents, updateUserProfile, getMyProfile, updateUserInfo, removeProfilePicture };
+module.exports = { registerUser, loginUser, getMyEvents, getMyTournaments, updateUserProfile, getMyProfile, updateUserInfo, removeProfilePicture };

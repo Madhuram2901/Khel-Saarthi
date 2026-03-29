@@ -42,6 +42,9 @@ import TournamentDashboardScreen from '../screens/TournamentDashboardScreen';
 import ManageTeamsScreen from '../screens/ManageTeamsScreen';
 import GenerateFixturesScreen from '../screens/GenerateFixturesScreen';
 import MatchDetailsScreen from '../screens/MatchDetailsScreen';
+import CreateTeamScreen from '../screens/CreateTeamScreen';
+import MyTeamScreen from '../screens/MyTeamScreen';
+import EditTeamScreen from '../screens/EditTeamScreen';
 
 import AiGymTrainerScreen from '../screens/AiGymTrainerScreen';
 
@@ -184,6 +187,9 @@ function TournamentStackScreen() {
             <TournamentStack.Screen name="ManageTeams" component={ManageTeamsScreen} options={{ title: 'Manage Teams' }} />
             <TournamentStack.Screen name="GenerateFixtures" component={GenerateFixturesScreen} options={{ title: 'Generate Fixtures' }} />
             <TournamentStack.Screen name="MatchDetails" component={MatchDetailsScreen} options={{ title: 'Match Details' }} />
+            <TournamentStack.Screen name="CreateTeam" component={CreateTeamScreen} options={{ title: 'Register Team' }} />
+            <TournamentStack.Screen name="MyTeam" component={MyTeamScreen} options={{ title: 'My Team' }} />
+            <TournamentStack.Screen name="EditTeam" component={EditTeamScreen} options={{ title: 'Edit Team' }} />
         </TournamentStack.Navigator>
     );
 }
@@ -252,6 +258,9 @@ const AppNavigator = () => {
             'ManageTeams',
             'GenerateFixtures',
             'MatchDetails',
+            'CreateTeam',
+            'MyTeam',
+            'EditTeam',
         ];
 
         return hiddenScreens.includes(routeName) ? 'none' : 'flex';

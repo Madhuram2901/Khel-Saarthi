@@ -40,6 +40,10 @@ const tournamentSchema = mongoose.Schema(
             required: true,
             ref: 'User',
         },
+        teams: [{
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Team',
+        }],
         groups: {
             type: Map,
             of: [mongoose.Schema.Types.ObjectId],

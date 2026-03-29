@@ -7,6 +7,7 @@ import {
     TouchableOpacity,
     RefreshControl,
     Alert,
+    SafeAreaView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
@@ -21,27 +22,51 @@ const TournamentListScreen = ({ navigation }) => {
     const { colors } = useTheme();
     const styles = useMemo(() => makeStyles(colors), [colors]);
 
-    // Only host/admin can create tournaments
     const canCreateTournament =
         user?.role === 'host' || user?.role === 'admin';
 
+    const [viewMode, setViewMode] = useState('all');
     const [tournaments, setTournaments] = useState([]);
+    const [myTournaments, setMyTournaments] = useState([]);
     const [loading, setLoading] = useState(false);
+
+    const displayedTournaments = useMemo(() => {
+        const source = viewMode === 'registered' ? myTournaments : tournaments;
+        return [...source].sort(
+            (a, b) => new Date(a.startDate || 0) - new Date(b.startDate || 0)
+        );
+    }, [myTournaments, tournaments, viewMode]);
 
     useFocusEffect(
         React.useCallback(() => {
-            fetchTournaments();
-        }, [])
+            fetchTournamentLists();
+        }, [user?._id, user?.role])
     );
 
-    const fetchTournaments = async () => {
+    const fetchTournamentLists = async () => {
         try {
             setLoading(true);
-            const { data } = await api.get('/tournaments');
-            setTournaments(data);
-        } catch (error) {
-            console.error('Error fetching tournaments:', error);
-            Alert.alert('Error', 'Failed to load tournaments');
+            const [allRes, myRes] = await Promise.allSettled([
+                api.get('/tournaments'),
+                api.get('/users/mytournaments'),
+            ]);
+
+            if (allRes.status === 'fulfilled') {
+                setTournaments(allRes.value.data || []);
+            } else {
+                console.error('Error fetching tournaments:', allRes.reason);
+                Alert.alert('Error', 'Failed to load tournaments');
+            }
+
+            if (myRes.status === 'fulfilled') {
+                setMyTournaments(myRes.value.data || []);
+            } else {
+                console.warn(
+                    'Error fetching registered tournaments:',
+                    myRes.reason
+                );
+                setMyTournaments([]);
+            }
         } finally {
             setLoading(false);
         }
@@ -59,32 +84,68 @@ const TournamentListScreen = ({ navigation }) => {
     );
 
     return (
-        <View style={styles.container}>
-            {/* Header */}
+        <SafeAreaView style={styles.container}>
             <View style={styles.header}>
-                <Text style={styles.title}>Tournaments</Text>
+                <View style={styles.headerRow}>
+                    <Text style={styles.title}>Tournaments</Text>
 
-                {/* PLUS BUTTON ONLY FOR HOST/ADMIN */}
-                {canCreateTournament && (
+                    {canCreateTournament && (
+                        <TouchableOpacity
+                            style={styles.createButton}
+                            onPress={() => navigation.navigate('CreateTournament')}
+                        >
+                            <Ionicons name="add" size={24} color="#FFF" />
+                        </TouchableOpacity>
+                    )}
+                </View>
+
+                <View style={styles.tabRow}>
                     <TouchableOpacity
-                        style={styles.createButton}
-                        onPress={() => navigation.navigate('CreateTournament')}
+                        style={[
+                            styles.tabItem,
+                            viewMode === 'all' && styles.tabItemActive,
+                        ]}
+                        onPress={() => setViewMode('all')}
                     >
-                        <Ionicons name="add" size={24} color="#FFF" />
+                        <Text
+                            style={[
+                                styles.tabText,
+                                viewMode === 'all' && styles.tabTextActive,
+                            ]}
+                        >
+                            All Tournaments
+                        </Text>
                     </TouchableOpacity>
-                )}
+
+                    <TouchableOpacity
+                        style={[
+                            styles.tabItem,
+                            viewMode === 'registered' && styles.tabItemActive,
+                        ]}
+                        onPress={() => setViewMode('registered')}
+                    >
+                        <Text
+                            style={[
+                                styles.tabText,
+                                viewMode === 'registered' &&
+                                    styles.tabTextActive,
+                            ]}
+                        >
+                            Registered
+                        </Text>
+                    </TouchableOpacity>
+                </View>
             </View>
 
-            {/* Tournament List */}
             <FlatList
-                data={tournaments}
+                data={displayedTournaments}
                 renderItem={renderTournamentCard}
                 keyExtractor={(item) => item._id}
                 contentContainerStyle={styles.listContainer}
                 refreshControl={
                     <RefreshControl
                         refreshing={loading}
-                        onRefresh={fetchTournaments}
+                        onRefresh={fetchTournamentLists}
                     />
                 }
                 ListEmptyComponent={
@@ -95,11 +156,12 @@ const TournamentListScreen = ({ navigation }) => {
                             color={colors.textMuted}
                         />
                         <Text style={styles.emptyText}>
-                            No tournaments yet
+                            {viewMode === 'registered'
+                                ? 'No registered tournaments yet'
+                                : 'No tournaments yet'}
                         </Text>
 
-                        {/* Empty state create button only for host/admin */}
-                        {canCreateTournament && (
+                        {viewMode === 'all' && canCreateTournament && (
                             <TouchableOpacity
                                 style={styles.emptyButton}
                                 onPress={() =>
@@ -114,7 +176,7 @@ const TournamentListScreen = ({ navigation }) => {
                     </View>
                 }
             />
-        </View>
+        </SafeAreaView>
     );
 };
 
@@ -125,15 +187,18 @@ const makeStyles = (colors) =>
             backgroundColor: colors.background,
         },
         header: {
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
             paddingHorizontal: SPACING.screenHorizontal,
-            paddingTop: 50,
+            paddingTop: 16,
             paddingBottom: 16,
             backgroundColor: colors.surface,
             borderBottomWidth: 1,
             borderBottomColor: colors.border,
+        },
+        headerRow: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 14,
         },
         title: {
             ...TYPOGRAPHY.screenTitle,
@@ -152,10 +217,32 @@ const makeStyles = (colors) =>
             shadowRadius: 8,
             elevation: 4,
         },
+        tabRow: {
+            flexDirection: 'row',
+            gap: 8,
+        },
+        tabItem: {
+            paddingHorizontal: 16,
+            paddingVertical: 8,
+            borderRadius: 20,
+            backgroundColor: colors.surface2,
+        },
+        tabItemActive: {
+            backgroundColor: colors.accent,
+        },
+        tabText: {
+            fontSize: 13,
+            fontWeight: '500',
+            color: colors.textSecondary,
+        },
+        tabTextActive: {
+            color: '#FFF',
+            fontWeight: '600',
+        },
         listContainer: {
             paddingHorizontal: SPACING.screenHorizontal,
             paddingTop: 16,
-            paddingBottom: 16,
+            paddingBottom: 24,
             flexGrow: 1,
         },
         emptyContainer: {
@@ -168,6 +255,7 @@ const makeStyles = (colors) =>
             color: colors.textSecondary,
             marginTop: 16,
             marginBottom: 24,
+            textAlign: 'center',
         },
         emptyButton: {
             backgroundColor: colors.accent,

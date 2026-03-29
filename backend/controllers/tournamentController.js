@@ -65,7 +65,7 @@ const getTournamentById = asyncHandler(async (req, res) => {
     }
 
     // Get teams
-    const teams = await Team.find({ tournament: tournament._id });
+    const teams = await Team.find({ tournament: tournament._id }).populate('owner', 'name email');
 
     // Get matches
     const matches = await Match.find({ tournament: tournament._id })
@@ -78,11 +78,30 @@ const getTournamentById = asyncHandler(async (req, res) => {
         .populate('team', 'name logoUrl')
         .sort({ points: -1, goalDifference: -1 });
 
+    // Get user's team if logged in
+    let myTeam = null;
+    let isRegistered = false;
+    let isHost = false;
+
+    if (req.user) {
+        myTeam = await Team.findOne({
+            tournament: tournament._id,
+            owner: req.user._id,
+        }).populate('owner', 'name email');
+        isRegistered = !!myTeam;
+        isHost = tournament.host._id.toString() === req.user._id.toString();
+    }
+
     res.json({
         tournament,
         teams,
         matches,
         standings,
+        myTeam,
+        isRegistered,
+        isHost,
+        teamsCount: teams.length,
+        matchesCount: matches.length,
     });
 });
 
@@ -146,7 +165,91 @@ const publishTournament = asyncHandler(async (req, res) => {
     res.json(updatedTournament);
 });
 
-// @desc    Add team to tournament
+// @desc    Register team for tournament (user)
+// @route   POST /api/tournaments/:id/register-team
+// @access  Private
+const registerTeamForTournament = asyncHandler(async (req, res) => {
+    console.log('REGISTER TEAM - User:', { id: req.user._id, role: req.user.role });
+    console.log('REGISTER TEAM - Tournament ID:', req.params.id);
+    console.log('REGISTER TEAM - Body:', req.body);
+    console.log('REGISTER TEAM - File:', req.file);
+
+    const tournament = await Tournament.findById(req.params.id);
+
+    if (!tournament) {
+        console.log('REGISTER TEAM - Tournament not found');
+        res.status(404);
+        throw new Error('Tournament not found');
+    }
+
+    const { name } = req.body;
+    const logoUrl = req.file ? `/uploads/teams/${req.file.filename}` : '';
+
+    if (!name) {
+        console.log('REGISTER TEAM - Team name missing');
+        res.status(400);
+        throw new Error('Team name is required');
+    }
+
+    // Parse players from FormData (sent as JSON string)
+    let players = [];
+    if (req.body.players) {
+        if (typeof req.body.players === 'string') {
+            players = JSON.parse(req.body.players);
+        } else {
+            players = req.body.players;
+        }
+    }
+
+    // Check if user already has a team in this tournament
+    const existingTeam = await Team.findOne({
+        tournament: tournament._id,
+        owner: req.user._id,
+    });
+
+    if (existingTeam) {
+        console.log('REGISTER TEAM - User already has team:', existingTeam._id);
+        res.status(400);
+        throw new Error('You already have a team registered for this tournament');
+    }
+
+    // Create team with owner and players
+    const team = await Team.create({
+        name,
+        logoUrl,
+        players,
+        owner: req.user._id,
+        tournament: tournament._id,
+    });
+
+    console.log('REGISTER TEAM - Team created:', team._id);
+
+    // Add team to tournament
+    if (!tournament.teams) {
+        tournament.teams = [];
+    }
+    tournament.teams.push(team._id);
+    await tournament.save();
+
+    console.log('REGISTER TEAM - Tournament updated with team');
+
+    const populatedTeam = await Team.findById(team._id).populate('owner', 'name email');
+    res.status(201).json(populatedTeam);
+});
+
+// @desc    Get user's team in tournament
+// @route   GET /api/tournaments/:id/my-team
+// @access  Private
+const getMyTeamInTournament = asyncHandler(async (req, res) => {
+    const team = await Team.findOne({
+        tournament: req.params.id,
+        owner: req.user._id,
+    }).populate('owner', 'name email');
+
+    res.json(team || null);
+});
+
+// @desc    Add team to tournament (host)
 // @route   POST /api/tournaments/:id/teams
 // @access  Private
 const addTeam = asyncHandler(async (req, res) => {
@@ -175,6 +278,13 @@ const addTeam = asyncHandler(async (req, res) => {
         logoUrl: logoUrl || '',
         tournament: tournament._id,
     });
+
+    // Add team to tournament
+    if (!tournament.teams) {
+        tournament.teams = [];
+    }
+    tournament.teams.push(team._id);
+    await tournament.save();
 
     res.status(201).json(team);
 });
@@ -209,6 +319,14 @@ const bulkAddTeams = asyncHandler(async (req, res) => {
     }));
 
     const createdTeams = await Team.insertMany(teamDocs);
+
+    // Add teams to tournament
+    if (!tournament.teams) {
+        tournament.teams = [];
+    }
+    tournament.teams.push(...createdTeams.map(t => t._id));
+    await tournament.save();
+
     res.status(201).json(createdTeams);
 });
 
@@ -231,18 +349,27 @@ const deleteTeam = asyncHandler(async (req, res) => {
         throw new Error('Tournament not found');
     }
 
-    // Check ownership
-    if (tournament.host.toString() !== req.user._id.toString()) {
-        res.status(403);
-        throw new Error('Not authorized');
-    }
-
     const team = await Team.findById(req.params.teamId);
 
     if (!team) {
         res.status(404);
         throw new Error('Team not found');
     }
+
+    // Check authorization: host or team owner
+    if (
+        tournament.host.toString() !== req.user._id.toString() &&
+        team.owner.toString() !== req.user._id.toString()
+    ) {
+        res.status(403);
+        throw new Error('Not authorized to delete this team');
+    }
+
+    // Remove team from tournament.teams array
+    tournament.teams = tournament.teams.filter(
+        (teamId) => teamId.toString() !== team._id.toString()
+    );
+    await tournament.save();
 
     // Remove team from future matches
     await Match.updateMany(
@@ -269,12 +396,6 @@ const updateTeam = asyncHandler(async (req, res) => {
         throw new Error('Tournament not found');
     }
 
-    // Check ownership
-    if (tournament.host.toString() !== req.user._id.toString()) {
-        res.status(403);
-        throw new Error('Not authorized');
-    }
-
     const team = await Team.findById(req.params.teamId);
 
     if (!team) {
@@ -282,13 +403,36 @@ const updateTeam = asyncHandler(async (req, res) => {
         throw new Error('Team not found');
     }
 
-    const { name, logoUrl } = req.body;
+    // Check authorization: host or team owner
+    if (
+        tournament.host.toString() !== req.user._id.toString() &&
+        team.owner.toString() !== req.user._id.toString()
+    ) {
+        res.status(403);
+        throw new Error('Not authorized to update this team');
+    }
+
+    const { name } = req.body;
+    const logoUrl = req.file ? `/uploads/teams/${req.file.filename}` : undefined;
+
+    // Parse players from FormData (sent as JSON string)
+    let players = undefined;
+    if (req.body.players) {
+        if (typeof req.body.players === 'string') {
+            players = JSON.parse(req.body.players);
+        } else {
+            players = req.body.players;
+        }
+    }
 
     if (name) team.name = name;
-    if (logoUrl !== undefined) team.logoUrl = logoUrl;
+    if (logoUrl) team.logoUrl = logoUrl;
+    if (players) team.players = players;
 
     const updatedTeam = await team.save();
-    res.json(updatedTeam);
+    const populatedTeam = await Team.findById(updatedTeam._id).populate('owner', 'name email');
+
+    res.json(populatedTeam);
 });
 
 // @desc    Generate fixtures
@@ -542,7 +686,7 @@ const getTournamentBySlug = asyncHandler(async (req, res) => {
     }
 
     // Fetch related data
-    const teams = await Team.find({ tournament: tournament._id });
+    const teams = await Team.find({ tournament: tournament._id }).populate('owner', 'name email');
     const matches = await Match.find({ tournament: tournament._id })
         .populate('teamA')
         .populate('teamB');
@@ -550,11 +694,24 @@ const getTournamentBySlug = asyncHandler(async (req, res) => {
         .populate('team')
         .sort({ points: -1, goalDifference: -1, goalsFor: -1 });
 
+    // Get user's team if logged in
+    let myTeam = null;
+    let isRegistered = false;
+    if (req.user) {
+        myTeam = await Team.findOne({
+            tournament: tournament._id,
+            owner: req.user._id,
+        }).populate('owner', 'name email');
+        isRegistered = !!myTeam;
+    }
+
     res.json({
         tournament,
         teams,
         matches,
         standings,
+        myTeam,
+        isRegistered,
     });
 });
 
@@ -591,9 +748,11 @@ module.exports = {
     getTournamentById,
     updateTournament,
     publishTournament,
+    registerTeamForTournament,
     addTeam,
     bulkAddTeams,
     getTeams,
+    getMyTeamInTournament,
     deleteTeam,
     updateTeam,
     generateFixtures,

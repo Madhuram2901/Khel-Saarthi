@@ -1,14 +1,18 @@
 const express = require('express');
 const router = express.Router();
+const multer = require('multer');
+const path = require('path');
 const {
     createTournament,
     getTournaments,
     getTournamentById,
     updateTournament,
     publishTournament,
+    registerTeamForTournament,
     addTeam,
     bulkAddTeams,
     getTeams,
+    getMyTeamInTournament,
     deleteTeam,
     updateTeam,
     generateFixtures,
@@ -23,6 +27,18 @@ const {
     generateShareLink,
 } = require('../controllers/tournamentController');
 const { protect } = require('../middleware/authMiddleware');
+
+// Multer for file uploads
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, 'uploads/teams/');
+    },
+    filename: (req, file, cb) => {
+        cb(null, `team-${Date.now()}${path.extname(file.originalname)}`);
+    },
+});
+
+const upload = multer({ storage });
 
 // Public route for viewing by slug
 router.get('/public/:slug', getTournamentBySlug);
@@ -40,6 +56,10 @@ router.route('/:id')
 router.post('/:id/publish', protect, publishTournament);
 router.post('/:id/share-link', protect, generateShareLink);
 
+// User team registration
+router.post('/:id/register-team', protect, upload.single('logo'), registerTeamForTournament);
+router.get('/:id/my-team', protect, getMyTeamInTournament);
+
 // Team routes
 router.route('/:id/teams')
     .get(getTeams)
@@ -47,7 +67,7 @@ router.route('/:id/teams')
 
 router.post('/:id/teams/bulk', protect, bulkAddTeams);
 router.route('/:tournamentId/teams/:teamId')
-    .put(protect, updateTeam)
+    .put(protect, upload.single('logo'), updateTeam)
     .delete(protect, deleteTeam);
 
 // Fixture generation

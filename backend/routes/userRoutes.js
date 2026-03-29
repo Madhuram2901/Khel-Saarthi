@@ -4,6 +4,7 @@ const {
     registerUser,
     loginUser,
     getMyEvents,
+    getMyTournaments,
     updateUserProfile,
     getMyProfile,
     updateUserInfo,
@@ -21,6 +22,7 @@ router.delete('/profile-picture', protect, removeProfilePicture);
 router.post('/register', registerUser);
 router.post('/login', loginUser);
 router.get('/myevents', protect, getMyEvents);
+router.get('/mytournaments', protect, getMyTournaments);
 router.get('/profile', protect, getMyProfile);
 
 // This line will now work correctly

@@ -107,6 +107,24 @@ const ProfileScreen = ({ navigation }) => {
         </TouchableOpacity>
     );
 
+    const StatCard = ({ icon, label, value, valueColor = colors.text, centered = false }) => (
+        <View
+            style={[
+                styles.statCard,
+                centered && styles.centeredStatCard,
+                { backgroundColor: colors.surface, minWidth: statsCardWidth },
+            ]}
+        >
+            <Ionicons name={icon} size={24} color={colors.accent} />
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{label}</Text>
+            <Text style={[styles.statValue, { color: valueColor }]}>{value}</Text>
+        </View>
+    );
+
+    const eventsCreated = user.eventsCreated ?? '--';
+    const venuesOwned = user.venuesOwned ?? '--';
+    const tournamentsCreated = user.tournamentsCreated ?? '--';
+
     return (
         <SafeAreaView style={styles.container} edges={['left', 'right']}>
             <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={colors.background} />
@@ -173,31 +191,52 @@ const ProfileScreen = ({ navigation }) => {
                         contentContainerStyle={styles.statsContainer}
                     >
                         <View style={[styles.statsRow, { minWidth: width - 32 }]}>
-                            <View style={[styles.statCard, styles.centeredStatCard, { backgroundColor: colors.surface, minWidth: statsCardWidth }]}>
-                                <Ionicons name="trophy-outline" size={24} color={colors.accent} />
-                                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Events Joined</Text>
-                                <Text style={[styles.statValue, { color: colors.text }]}>{eventsJoined}</Text>
-                            </View>
-                            <View style={[styles.statCard, { backgroundColor: colors.surface, minWidth: statsCardWidth }]}>
-                                <Ionicons name="resize-outline" size={24} color={colors.accent} />
-                                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Height (cm)</Text>
-                                <Text style={[styles.statValue, { color: colors.text }]}>
-                                    {height != null ? height : '--'}
-                                </Text>
-                            </View>
-                            <View style={[styles.statCard, { backgroundColor: colors.surface, minWidth: statsCardWidth }]}>
-                                <Ionicons name="barbell-outline" size={24} color={colors.accent} />
-                                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Weight (kg)</Text>
-                                <Text style={[styles.statValue, { color: colors.text }]}>
-                                    {weight != null ? weight : '--'}
-                                </Text>
-                            </View>
-                            {bmiValue && (
-                                <View style={[styles.statCard, { backgroundColor: colors.surface, minWidth: statsCardWidth }]}>
-                                    <Ionicons name="fitness-outline" size={24} color={colors.accent} />
-                                    <Text style={[styles.statLabel, { color: colors.textSecondary }]}>BMI</Text>
-                                    <Text style={[styles.statValue, { color: getBMIColor(bmiNumber) }]}>{bmiValue}</Text>
-                                </View>
+                            {user.role === 'host' ? (
+                                <>
+                                    <StatCard
+                                        icon="calendar-outline"
+                                        label="Events Created"
+                                        value={eventsCreated}
+                                        centered
+                                    />
+                                    <StatCard
+                                        icon="location-outline"
+                                        label="Venues Owned"
+                                        value={venuesOwned}
+                                    />
+                                    <StatCard
+                                        icon="trophy-outline"
+                                        label="Tournaments"
+                                        value={tournamentsCreated}
+                                    />
+                                </>
+                            ) : (
+                                <>
+                                    <StatCard
+                                        icon="trophy-outline"
+                                        label="Events Joined"
+                                        value={eventsJoined}
+                                        centered
+                                    />
+                                    <StatCard
+                                        icon="resize-outline"
+                                        label="Height (cm)"
+                                        value={height != null ? height : '--'}
+                                    />
+                                    <StatCard
+                                        icon="barbell-outline"
+                                        label="Weight (kg)"
+                                        value={weight != null ? weight : '--'}
+                                    />
+                                    {bmiValue && (
+                                        <StatCard
+                                            icon="fitness-outline"
+                                            label="BMI"
+                                            value={bmiValue}
+                                            valueColor={getBMIColor(bmiNumber)}
+                                        />
+                                    )}
+                                </>
                             )}
                         </View>
                     </ScrollView>
@@ -241,7 +280,8 @@ const ProfileScreen = ({ navigation }) => {
                 </View>
 
                 {/* Sports Profiles Section */}
-                <MenuSection title="Sports Profiles">
+                {user.role !== 'host' && (
+                    <MenuSection title="Sports Profiles">
                     <View style={[styles.listCard, { backgroundColor: colors.surface }]}>
                         {loadingProfiles ? (
                             <View style={styles.menuItem}>
@@ -295,7 +335,8 @@ const ProfileScreen = ({ navigation }) => {
                         <Ionicons name="add-circle" size={20} color="#FFF" />
                         <Text style={styles.addProfileButtonText}>Add New Sport Profile</Text>
                     </TouchableOpacity>
-                </MenuSection>
+                    </MenuSection>
+                )}
 
                 {/* Settings Section */}
                 <MenuSection title="Settings">

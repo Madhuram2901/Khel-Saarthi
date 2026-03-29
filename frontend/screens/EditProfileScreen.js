@@ -33,6 +33,7 @@ const EditProfileScreen = ({ navigation }) => {
     const [weight, setWeight] = useState(user.weight?.toString() ?? '');
     const [image, setImage] = useState(null);
     const [loading, setLoading] = useState(false);
+    const isHost = user.role === 'host';
 
     const requestMediaLibraryPermission = async () => {
         try {
@@ -86,8 +87,10 @@ const EditProfileScreen = ({ navigation }) => {
             const formData = new FormData();
             formData.append('name', name);
             formData.append('email', email);
-            formData.append('height', parseFloat(height) || null);
-            formData.append('weight', parseFloat(weight) || null);
+            if (!isHost) {
+                formData.append('height', parseFloat(height) || null);
+                formData.append('weight', parseFloat(weight) || null);
+            }
 
             if (image) {
                 formData.append('profilePicture', {
@@ -115,7 +118,7 @@ const EditProfileScreen = ({ navigation }) => {
         } finally {
             setLoading(false);
         }
-    }, [email, height, image, name, navigation, setUser, weight]);
+    }, [email, height, image, isHost, name, navigation, setUser, weight]);
 
     useLayoutEffect(() => {
         navigation.setOptions({
@@ -191,29 +194,33 @@ const EditProfileScreen = ({ navigation }) => {
                             />
                         </View>
 
-                        <View style={styles.inputGroup}>
-                            <Text style={styles.inputLabel}>Height (cm)</Text>
-                            <TextInput
-                                style={styles.input}
-                                placeholder="e.g. 175"
-                                placeholderTextColor={colors.textSecondary}
-                                keyboardType="numeric"
-                                value={height}
-                                onChangeText={setHeight}
-                            />
-                        </View>
+                        {user.role !== 'host' && (
+                            <>
+                                <View style={styles.inputGroup}>
+                                    <Text style={styles.inputLabel}>Height (cm)</Text>
+                                    <TextInput
+                                        style={styles.input}
+                                        placeholder="e.g. 175"
+                                        placeholderTextColor={colors.textSecondary}
+                                        keyboardType="numeric"
+                                        value={height}
+                                        onChangeText={setHeight}
+                                    />
+                                </View>
 
-                        <View style={styles.inputGroup}>
-                            <Text style={styles.inputLabel}>Weight (kg)</Text>
-                            <TextInput
-                                style={styles.input}
-                                placeholder="e.g. 70"
-                                placeholderTextColor={colors.textSecondary}
-                                keyboardType="numeric"
-                                value={weight}
-                                onChangeText={setWeight}
-                            />
-                        </View>
+                                <View style={styles.inputGroup}>
+                                    <Text style={styles.inputLabel}>Weight (kg)</Text>
+                                    <TextInput
+                                        style={styles.input}
+                                        placeholder="e.g. 70"
+                                        placeholderTextColor={colors.textSecondary}
+                                        keyboardType="numeric"
+                                        value={weight}
+                                        onChangeText={setWeight}
+                                    />
+                                </View>
+                            </>
+                        )}
                     </View>
                 </ScrollView>
             </KeyboardAvoidingView>

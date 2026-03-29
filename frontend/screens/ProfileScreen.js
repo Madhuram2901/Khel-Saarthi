@@ -28,6 +28,10 @@ const ProfileScreen = ({ navigation }) => {
     const [eventsJoined, setEventsJoined] = useState(0);
     const [sportsProfiles, setSportsProfiles] = useState([]);
     const [loadingProfiles, setLoadingProfiles] = useState(false);
+    const [eventsCreated, setEventsCreated] = useState(0);
+    const [venuesOwned, setVenuesOwned] = useState(0);
+    const [tournamentsCreated, setTournamentsCreated] = useState(0);
+    const [loadingStats, setLoadingStats] = useState(false);
 
     useEffect(() => {
         const fetchEventsJoined = async () => {
@@ -57,6 +61,59 @@ const ProfileScreen = ({ navigation }) => {
     useEffect(() => {
         fetchSportsProfiles();
     }, []);
+
+    const fetchHostStats = async () => {
+        try {
+            setLoadingStats(true);
+
+            const eventsRes = await api.get('/events');
+            const myEvents = eventsRes.data.filter(
+                e =>
+                    e.createdBy?._id === user._id ||
+                    e.createdBy === user._id ||
+                    e.host?._id === user._id ||
+                    e.host === user._id
+            );
+            setEventsCreated(myEvents.length);
+
+            try {
+                const myVenuesRes = await api.get('/venues/my-venues');
+                setVenuesOwned(myVenuesRes.data.length);
+            } catch {
+                const allVenuesRes = await api.get('/venues');
+                const mine = allVenuesRes.data.filter(
+                    v =>
+                        v.manager?._id === user._id ||
+                        v.manager === user._id
+                );
+                setVenuesOwned(mine.length);
+            }
+
+            try {
+                const tournamentsRes = await api.get('/tournaments');
+                const myTournaments = tournamentsRes.data.filter(
+                    t =>
+                        t.createdBy?._id === user._id ||
+                        t.createdBy === user._id ||
+                        t.host?._id === user._id ||
+                        t.host === user._id
+                );
+                setTournamentsCreated(myTournaments.length);
+            } catch {
+                setTournamentsCreated(0);
+            }
+        } catch (error) {
+            console.log('Error fetching host stats', error);
+        } finally {
+            setLoadingStats(false);
+        }
+    };
+
+    useEffect(() => {
+        if (user?.role === 'host') {
+            fetchHostStats();
+        }
+    }, [user]);
 
     if (!user) {
         return null;
@@ -120,10 +177,6 @@ const ProfileScreen = ({ navigation }) => {
             <Text style={[styles.statValue, { color: valueColor }]}>{value}</Text>
         </View>
     );
-
-    const eventsCreated = user.eventsCreated ?? '--';
-    const venuesOwned = user.venuesOwned ?? '--';
-    const tournamentsCreated = user.tournamentsCreated ?? '--';
 
     return (
         <SafeAreaView style={styles.container} edges={['left', 'right']}>
@@ -196,18 +249,18 @@ const ProfileScreen = ({ navigation }) => {
                                     <StatCard
                                         icon="calendar-outline"
                                         label="Events Created"
-                                        value={eventsCreated}
+                                        value={loadingStats ? '--' : eventsCreated}
                                         centered
                                     />
                                     <StatCard
                                         icon="location-outline"
                                         label="Venues Owned"
-                                        value={venuesOwned}
+                                        value={loadingStats ? '--' : venuesOwned}
                                     />
                                     <StatCard
                                         icon="trophy-outline"
                                         label="Tournaments"
-                                        value={tournamentsCreated}
+                                        value={loadingStats ? '--' : tournamentsCreated}
                                     />
                                 </>
                             ) : (

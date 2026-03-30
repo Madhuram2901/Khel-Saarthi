@@ -1,5 +1,6 @@
 
-import React, { useContext, useState, useEffect, useMemo } from 'react';
+import React, { useContext, useState, useEffect, useMemo, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
     View,
     Text,
@@ -58,9 +59,11 @@ const ProfileScreen = ({ navigation }) => {
         }
     };
 
-    useEffect(() => {
-        fetchSportsProfiles();
-    }, []);
+    useFocusEffect(
+        useCallback(() => {
+            fetchSportsProfiles();
+        }, [])
+    );
 
     const fetchHostStats = async () => {
         try {

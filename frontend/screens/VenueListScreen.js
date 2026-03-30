@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useContext, useMemo } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect, useContext, useMemo, useCallback } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, ActivityIndicator, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../api/api';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import AuthContext from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import MyBookingsScreen from './MyBookingsScreen';
@@ -24,6 +24,7 @@ const VenueListScreen = () => {
     const [myVenues, setMyVenues] = useState([]);
     const [loading, setLoading] = useState(true);
     const [myVenuesLoading, setMyVenuesLoading] = useState(false);
+    const [refreshing, setRefreshing] = useState(false);
     const [city, setCity] = useState('');
 
     const fetchVenues = async () => {
@@ -61,6 +62,12 @@ const VenueListScreen = () => {
         }
     };
 
+    const onRefresh = async () => {
+        setRefreshing(true);
+        await fetchMyVenues();
+        setRefreshing(false);
+    };
+
     useEffect(() => {
         if (viewMode === 'explore') {
             fetchVenues();
@@ -70,6 +77,14 @@ const VenueListScreen = () => {
     useEffect(() => {
         if (viewMode === 'myVenues') fetchMyVenues();
     }, [viewMode]);
+
+    useFocusEffect(
+        useCallback(() => {
+            if (viewMode === 'myVenues') {
+                fetchMyVenues();
+            }
+        }, [viewMode])
+    );
 
     const renderVenue = ({ item }) => (
         <VenueCard
@@ -97,6 +112,13 @@ const VenueListScreen = () => {
                             renderItem={renderVenue}
                             keyExtractor={item => item._id}
                             contentContainerStyle={styles.list}
+                            refreshControl={
+                                <RefreshControl
+                                    refreshing={refreshing}
+                                    onRefresh={onRefresh}
+                                    tintColor={colors.accent}
+                                />
+                            }
                             ListEmptyComponent={
                                 <View style={styles.emptyContainer}>
                                     <Ionicons

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useContext } from 'react';
 import {
   View,
   Text,
@@ -9,27 +9,41 @@ import {
   TouchableOpacity
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import EventCard from '../components/EventCard';
 import api from '../api/api';
+import AuthContext from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 
 const sports = ['All', 'Cricket', 'Football', 'Badminton', 'Tennis', 'Basketball'];
 
 const EventsScreen = ({ navigation }) => {
+  const { user } = useContext(AuthContext);
+
   const [events, setEvents] = useState([]);
   const [filteredEvents, setFilteredEvents] = useState([]);
+  const [myEvents, setMyEvents] = useState([]);
+
   const [selectedSport, setSelectedSport] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState('all');
+
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
-  useEffect(() => {
-    fetchEvents();
-  }, []);
+  const canCreateEvent =
+    user?.role === 'host' || user?.role === 'admin';
+
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchEvents();
+      fetchMyEvents();
+    }, [user?._id, user?.role])
+  );
 
   useEffect(() => {
     filterEvents();
-  }, [selectedSport, searchQuery, events]);
+  }, [selectedSport, searchQuery, events, myEvents, viewMode]);
 
   const fetchEvents = async () => {
     try {
@@ -38,14 +52,47 @@ const EventsScreen = ({ navigation }) => {
         (a, b) => new Date(a.date) - new Date(b.date)
       );
       setEvents(sortedEvents);
-      setFilteredEvents(sortedEvents);
     } catch (error) {
       console.log('Error fetching events', error);
     }
   };
 
+  const fetchMyEvents = async () => {
+  try {
+    if (user?.role === 'host') {
+      const res = await api.get('/events');
+      const mine = res.data.filter(
+        e =>
+          e.host?._id === user._id ||
+          e.host === user._id
+      );
+
+      setMyEvents(
+        mine.sort((a, b) => new Date(a.date) - new Date(b.date))
+      );
+    } else {
+      // For participants → get registered events from backend
+      const res = await api.get('/users/myevents');
+
+      setMyEvents(
+        res.data.sort((a, b) => new Date(a.date) - new Date(b.date))
+      );
+    }
+  } catch (error) {
+    console.log('Error fetching my events', error);
+  }
+};
+
   const filterEvents = () => {
-    let filtered = [...events];
+    let sourceEvents;
+
+    if (viewMode === 'my') {
+      sourceEvents = myEvents;
+    } else {
+      sourceEvents = events;
+    }
+
+    let filtered = [...sourceEvents];
 
     if (selectedSport !== 'All') {
       filtered = filtered.filter(e => e.category === selectedSport);
@@ -76,21 +123,52 @@ const EventsScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Header Container */}
       <View style={styles.headerContainer}>
-        {/* Header Row */}
         <View style={styles.headerRow}>
           <Text style={styles.headerTitle}>Events</Text>
 
+          {canCreateEvent && (
+            <TouchableOpacity
+              style={styles.addButton}
+              onPress={() => navigation.navigate('CreateEvent')}
+            >
+              <Ionicons name="add" size={26} color="#FFF" />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        <View style={styles.tabRow}>
           <TouchableOpacity
-            style={styles.addButton}
-            onPress={() => navigation.navigate('CreateEvent')}
+            style={[
+              styles.tabItem,
+              viewMode === 'all' && styles.tabItemActive,
+            ]}
+            onPress={() => setViewMode('all')}
           >
-            <Ionicons name="add" size={26} color="#FFF" />
+            <Text style={[
+              styles.tabText,
+              viewMode === 'all' && styles.tabTextActive,
+            ]}>
+              All Events
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.tabItem,
+              viewMode === 'my' && styles.tabItemActive,
+            ]}
+            onPress={() => setViewMode('my')}
+          >
+            <Text style={[
+              styles.tabText,
+              viewMode === 'my' && styles.tabTextActive,
+            ]}>
+              {user?.role === 'host' ? 'My Events' : 'Registered'}
+            </Text>
           </TouchableOpacity>
         </View>
 
-        {/* Search */}
         <View style={styles.searchContainer}>
           <Ionicons name="search-outline" size={18} color="#888" />
           <TextInput
@@ -102,7 +180,6 @@ const EventsScreen = ({ navigation }) => {
           />
         </View>
 
-        {/* Filters */}
         <FlatList
           data={sports}
           horizontal
@@ -141,6 +218,18 @@ const EventsScreen = ({ navigation }) => {
           paddingHorizontal: 16,
           paddingBottom: 120
         }}
+        ListEmptyComponent={
+          <View style={{ alignItems: 'center', marginTop: 40 }}>
+            <Ionicons name="calendar-outline" size={48} color={colors.textSecondary} />
+            <Text style={{ color: colors.textSecondary, marginTop: 10 }}>
+              {viewMode === 'my'
+                ? user?.role === 'host'
+                  ? 'No events created yet'
+                  : 'No events registered yet'
+                : 'No events found'}
+            </Text>
+          </View>
+        }
       />
     </SafeAreaView>
   );
@@ -149,9 +238,7 @@ const EventsScreen = ({ navigation }) => {
 export default EventsScreen;
 
 const makeStyles = (colors) => StyleSheet.create({
-  container: {
-    flex: 1,
-  },
+  container: { flex: 1 },
 
   headerContainer: {
     paddingHorizontal: 16,
@@ -181,6 +268,34 @@ const makeStyles = (colors) => StyleSheet.create({
     backgroundColor: colors.accent,
     justifyContent: 'center',
     alignItems: 'center'
+  },
+
+  tabRow: {
+    flexDirection: 'row',
+    marginBottom: 12,
+    gap: 8,
+  },
+
+  tabItem: {
+    paddingHorizontal: 16,
+    paddingVertical: 7,
+    borderRadius: 20,
+    backgroundColor: colors.surface2,
+  },
+
+  tabItemActive: {
+    backgroundColor: colors.accent,
+  },
+
+  tabText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: colors.textSecondary,
+  },
+
+  tabTextActive: {
+    color: '#FFF',
+    fontWeight: '600',
   },
 
   searchContainer: {

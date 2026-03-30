@@ -85,39 +85,82 @@ const HomeScreen = ({ navigation }) => {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.greeting}>Hello, {user?.name || 'Athlete'}! 👋</Text>
-        <Text style={styles.subGreeting}>Ready to play today?</Text>
+        <Text style={styles.subGreeting}>
+          {user?.role === 'host'
+            ? 'Manage your events & venues'
+            : 'Ready to play today?'}
+        </Text>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scrollContent, { paddingBottom: 120 }]}>
         {/* Quick Actions */}
         <View style={[styles.sectionContainer, styles.quickActionsSection]}>
           <Text style={styles.sectionTitle}>Quick Actions</Text>
-          <View style={styles.quickActionsRow}>
-            <TouchableOpacity style={styles.quickActionItem} onPress={() => navigation.navigate('CreateEvent')}>
-              <View style={styles.quickActionCircle}>
-                <Ionicons name="add" size={26} color={colors.accent} />
-              </View>
-              <Text style={styles.quickActionLabel}>Create Event</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.quickActionItem} onPress={() => navigation.navigate('TournamentStack', { screen: 'CreateTournament' })}>
-              <View style={styles.quickActionCircle}>
-                <Ionicons name="trophy" size={26} color={colors.accent} />
-              </View>
-              <Text style={styles.quickActionLabel}>Tournament</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.quickActionItem} onPress={() => navigation.navigate('VenueStack', { screen: 'VenueList' })}>
-              <View style={styles.quickActionCircle}>
-                <Ionicons name="business" size={26} color={colors.accent} />
-              </View>
-              <Text style={styles.quickActionLabel}>Book Venue</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.quickActionItem} onPress={() => navigation.navigate('AiGymTrainer')}>
-              <View style={styles.quickActionCircle}>
-                <Ionicons name="fitness" size={26} color={colors.accent} />
-              </View>
-              <Text style={styles.quickActionLabel}>AI Coach</Text>
-            </TouchableOpacity>
-          </View>
+          {user?.role === 'host' ? (
+            <View style={styles.quickActionsRow}>
+              <TouchableOpacity
+                style={styles.quickActionItem}
+                onPress={() => navigation.navigate('CreateEvent')}
+              >
+                <View style={styles.quickActionCircle}>
+                  <Ionicons name="add" size={26} color={colors.accent} />
+                </View>
+                <Text style={styles.quickActionLabel}>Create Event</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.quickActionItem}
+                onPress={() => navigation.navigate('TournamentStack', {
+                  screen: 'CreateTournament',
+                  initial: false,
+                })}
+              >
+                <View style={styles.quickActionCircle}>
+                  <Ionicons name="trophy" size={26} color={colors.accent} />
+                </View>
+                <Text style={styles.quickActionLabel}>Tournament</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.quickActionItem}
+                onPress={() => navigation.navigate('VenueStack', {
+                  screen: 'VenueList',
+                })}
+              >
+                <View style={styles.quickActionCircle}>
+                  <Ionicons name="location" size={26} color={colors.accent} />
+                </View>
+                <Text style={styles.quickActionLabel}>Your Venues</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.quickActionsRow}>
+              <TouchableOpacity style={styles.quickActionItem} onPress={() => navigation.navigate('EventsStack')}>
+                <View style={styles.quickActionCircle}>
+                  <Ionicons name="calendar" size={26} color={colors.accent} />
+                </View>
+                <Text style={styles.quickActionLabel}>Join Event</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.quickActionItem} onPress={() => navigation.navigate('TournamentStack')}>
+                <View style={styles.quickActionCircle}>
+                  <Ionicons name="trophy" size={26} color={colors.accent} />
+                </View>
+                <Text style={styles.quickActionLabel}>Tournaments</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.quickActionItem} onPress={() => navigation.navigate('VenueStack', { screen: 'VenueList' })}>
+                <View style={styles.quickActionCircle}>
+                  <Ionicons name="business" size={26} color={colors.accent} />
+                </View>
+                <Text style={styles.quickActionLabel}>Book Venue</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.quickActionItem} onPress={() => navigation.navigate('AiGymTrainer')}>
+                <View style={styles.quickActionCircle}>
+                  <Ionicons name="fitness" size={26} color={colors.accent} />
+                </View>
+                <Text style={styles.quickActionLabel}>AI Coach</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
 
         {/* Category Filter Section */}

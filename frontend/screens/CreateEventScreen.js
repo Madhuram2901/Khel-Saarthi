@@ -1,14 +1,18 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet, TextInput, Alert, ScrollView, TouchableOpacity, Image } from 'react-native';
+import React, { useState, useEffect, useMemo, useContext } from 'react';
+import { View, Text, StyleSheet, TextInput, Alert, ScrollView, TouchableOpacity, Image, Platform, useColorScheme } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import * as ImagePicker from 'expo-image-picker';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../api/api';
+import AuthContext from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import StyledButton from '../components/StyledButton';
 
 const CreateEventScreen = ({ navigation }) => {
+    const { user } = useContext(AuthContext);
     const { colors } = useTheme();
+    const colorScheme = useColorScheme();
     const styles = useMemo(() => makeStyles(colors), [colors]);
 
     const [title, setTitle] = useState('');
@@ -18,6 +22,8 @@ const CreateEventScreen = ({ navigation }) => {
     const [category, setCategory] = useState('');
     const [skillLevel, setSkillLevel] = useState('');
     const [entryFee, setEntryFee] = useState('0');
+    const [time, setTime] = useState(null);
+    const [showTimePicker, setShowTimePicker] = useState(false);
     const [bannerImage, setBannerImage] = useState(null);
 
     const categories = ['Cricket', 'Football', 'Badminton', 'Running', 'Other'];
@@ -53,17 +59,56 @@ const CreateEventScreen = ({ navigation }) => {
         setLocation(e.nativeEvent.coordinate);
     };
 
+    const formatSelectedTime = (value) => (
+        value
+            ? value.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            : 'Select event time'
+    );
+
+    const combineDateAndTime = (dateValue, timeValue) => {
+        const [year, month, day] = dateValue.split('-').map(Number);
+        const combined = new Date(
+            year,
+            month - 1,
+            day,
+            timeValue.getHours(),
+            timeValue.getMinutes(),
+            0,
+            0
+        );
+        return combined.toISOString();
+    };
+
+    const handleTimeChange = (_event, selectedTime) => {
+        setShowTimePicker(false);
+        if (selectedTime) {
+            setTime(selectedTime);
+        }
+    };
+
     const handleCreateEvent = async () => {
-        if (!title || !description || !date || !location || !category || !skillLevel) {
+        if (
+            !title ||
+            !description ||
+            !date ||
+            !location ||
+            !category ||
+            !skillLevel ||
+            (user?.role === 'host' && !time)
+        ) {
             Alert.alert('Error', 'Please fill in all fields and select a location, category, and skill level.');
             return;
         }
 
         try {
+            const eventDateValue = user?.role === 'host' && time
+                ? combineDateAndTime(date, time)
+                : date;
+
             const formData = new FormData();
             formData.append('title', title);
             formData.append('description', description);
-            formData.append('date', date);
+            formData.append('date', eventDateValue);
             formData.append('location', JSON.stringify({
                 type: 'Point',
                 coordinates: [location.longitude, location.latitude]
@@ -86,8 +131,24 @@ const CreateEventScreen = ({ navigation }) => {
                 },
             });
 
-            Alert.alert('Success', 'Event created successfully!');
-            navigation.goBack();
+            Alert.alert(
+                'Success',
+                'Event created successfully!',
+                [
+                    {
+                        text: 'OK',
+                        onPress: () => {
+                            if (navigation.canGoBack()) {
+                                navigation.goBack();
+                            } else {
+                                navigation.navigate('HomeStack', {
+                                    screen: 'Home',
+                                });
+                            }
+                        },
+                    },
+                ]
+            );
         } catch (error) {
             console.error(error.response?.data);
             Alert.alert('Error', 'Could not create event.');
@@ -156,6 +217,43 @@ const CreateEventScreen = ({ navigation }) => {
                 value={date}
                 onChangeText={setDate}
             />
+            {user?.role === 'host' && (
+                <>
+                    <Text style={styles.label}>Event Time</Text>
+                    <TouchableOpacity
+                        style={styles.input}
+                        onPress={() => setShowTimePicker(true)}
+                        activeOpacity={0.85}
+                    >
+                        <Text
+                            style={[
+                                styles.timeText,
+                                { color: time ? colors.text : colors.textSecondary },
+                            ]}
+                        >
+                            {formatSelectedTime(time)}
+                        </Text>
+                    </TouchableOpacity>
+                    {time && (
+                        <Text style={styles.selectedTimeText}>
+                            Selected time: {formatSelectedTime(time)}
+                        </Text>
+                    )}
+                    {showTimePicker && (
+                      <DateTimePicker
+                        value={time || new Date()}
+                        mode="time"
+                        display="default"
+                        is24Hour={false}
+                        themeVariant={colorScheme === 'dark' ? 'dark' : 'light'}
+                        onChange={(event, selectedTime) => {
+                            setShowTimePicker(false);
+                            if (selectedTime) setTime(selectedTime);
+                        }}
+                      />
+                    )}
+                </>
+            )}
 
             <Text style={styles.label}>Entry Fee (₹)</Text>
             <TextInput
@@ -290,6 +388,15 @@ const makeStyles = (colors) => StyleSheet.create({
         borderRadius: 5,
         color: colors.text,
         backgroundColor: colors.surface,
+    },
+    timeText: {
+        color: colors.text,
+    },
+    selectedTimeText: {
+        fontSize: 13,
+        color: colors.text,
+        marginTop: -4,
+        marginBottom: 12,
     },
     map: {
         width: '100%',

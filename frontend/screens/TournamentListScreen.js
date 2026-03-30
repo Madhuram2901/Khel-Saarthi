@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useMemo } from 'react';
+import React, { useState, useContext, useMemo } from 'react';
 import {
     View,
     Text,
@@ -7,13 +7,13 @@ import {
     TouchableOpacity,
     RefreshControl,
     Alert,
+    SafeAreaView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import api from '../api/api';
 import AuthContext from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import AppCard from '../components/AppCard';
 import TournamentCard from '../components/TournamentCard';
 import { SPACING, TYPOGRAPHY } from '../theme/designSystem';
 
@@ -21,20 +21,43 @@ const TournamentListScreen = ({ navigation }) => {
     const { user } = useContext(AuthContext);
     const { colors } = useTheme();
     const styles = useMemo(() => makeStyles(colors), [colors]);
+
+    const canCreateTournament =
+        user?.role === 'host' || user?.role === 'admin';
+
+    const [viewMode, setViewMode] = useState('all');
     const [tournaments, setTournaments] = useState([]);
     const [loading, setLoading] = useState(false);
+
+    const isParticipantView = !canCreateTournament;
+    const secondaryTabKey = isParticipantView ? 'joined' : 'mine';
+    const secondaryTabLabel = isParticipantView
+        ? 'Joined'
+        : 'Your Tournaments';
+
+    const displayedTournaments = useMemo(() => {
+        return [...tournaments].sort(
+            (a, b) => new Date(a.startDate || 0) - new Date(b.startDate || 0)
+        );
+    }, [tournaments]);
 
     useFocusEffect(
         React.useCallback(() => {
             fetchTournaments();
-        }, [])
+        }, [user?._id, user?.role, viewMode])
     );
 
     const fetchTournaments = async () => {
         try {
             setLoading(true);
-            const { data } = await api.get('/tournaments');
-            setTournaments(data);
+            const endpoint =
+                viewMode === 'all'
+                    ? '/tournaments'
+                    : isParticipantView
+                      ? '/users/mytournaments'
+                      : '/tournaments/my';
+            const response = await api.get(endpoint);
+            setTournaments(response.data || []);
         } catch (error) {
             console.error('Error fetching tournaments:', error);
             Alert.alert('Error', 'Failed to load tournaments');
@@ -46,107 +69,202 @@ const TournamentListScreen = ({ navigation }) => {
     const renderTournamentCard = ({ item }) => (
         <TournamentCard
             tournament={item}
-            onPress={() => navigation.navigate('TournamentDashboard', { tournamentId: item._id })}
+            onPress={() =>
+                navigation.navigate('TournamentDashboard', {
+                    tournamentId: item._id,
+                })
+            }
         />
     );
 
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container}>
             <View style={styles.header}>
-                <Text style={styles.title}>Tournaments</Text>
-                <TouchableOpacity
-                    style={styles.createButton}
-                    onPress={() => navigation.navigate('CreateTournament')}
-                >
-                    <Ionicons name="add" size={24} color="#FFF" />
-                </TouchableOpacity>
+                <View style={styles.headerRow}>
+                    <Text style={styles.title}>Tournaments</Text>
+
+                    {canCreateTournament && (
+                        <TouchableOpacity
+                            style={styles.createButton}
+                            onPress={() => navigation.navigate('CreateTournament')}
+                        >
+                            <Ionicons name="add" size={24} color="#FFF" />
+                        </TouchableOpacity>
+                    )}
+                </View>
+
+                <View style={styles.tabRow}>
+                    <TouchableOpacity
+                        style={[
+                            styles.tabItem,
+                            viewMode === 'all' && styles.tabItemActive,
+                        ]}
+                        onPress={() => setViewMode('all')}
+                    >
+                        <Text
+                            style={[
+                                styles.tabText,
+                                viewMode === 'all' && styles.tabTextActive,
+                            ]}
+                        >
+                            All Tournaments
+                        </Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={[
+                            styles.tabItem,
+                            viewMode === secondaryTabKey &&
+                                styles.tabItemActive,
+                        ]}
+                        onPress={() => setViewMode(secondaryTabKey)}
+                    >
+                        <Text
+                            style={[
+                                styles.tabText,
+                                viewMode === secondaryTabKey &&
+                                    styles.tabTextActive,
+                            ]}
+                        >
+                            {secondaryTabLabel}
+                        </Text>
+                    </TouchableOpacity>
+                </View>
             </View>
 
             <FlatList
-                data={tournaments}
+                data={displayedTournaments}
                 renderItem={renderTournamentCard}
                 keyExtractor={(item) => item._id}
                 contentContainerStyle={styles.listContainer}
                 refreshControl={
-                    <RefreshControl refreshing={loading} onRefresh={fetchTournaments} />
+                    <RefreshControl
+                        refreshing={loading}
+                        onRefresh={fetchTournaments}
+                    />
                 }
                 ListEmptyComponent={
                     <View style={styles.emptyContainer}>
-                        <Ionicons name="trophy-outline" size={64} color={colors.textMuted} />
-                        <Text style={styles.emptyText}>No tournaments yet</Text>
-                        <TouchableOpacity
-                            style={styles.emptyButton}
-                            onPress={() => navigation.navigate('CreateTournament')}
-                        >
-                            <Text style={styles.emptyButtonText}>Create Tournament</Text>
-                        </TouchableOpacity>
+                        <Ionicons
+                            name="trophy-outline"
+                            size={64}
+                            color={colors.textMuted}
+                        />
+                        <Text style={styles.emptyText}>
+                            {viewMode === secondaryTabKey
+                                ? isParticipantView
+                                    ? 'No joined tournaments yet'
+                                    : 'No tournaments yet'
+                                : 'No tournaments yet'}
+                        </Text>
+
+                        {viewMode === 'all' && canCreateTournament && (
+                            <TouchableOpacity
+                                style={styles.emptyButton}
+                                onPress={() =>
+                                    navigation.navigate('CreateTournament')
+                                }
+                            >
+                                <Text style={styles.emptyButtonText}>
+                                    Create Tournament
+                                </Text>
+                            </TouchableOpacity>
+                        )}
                     </View>
                 }
             />
-        </View>
+        </SafeAreaView>
     );
 };
 
-const makeStyles = (colors) => StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: colors.background,
-    },
-    header: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingHorizontal: SPACING.screenHorizontal,
-        paddingTop: 50,
-        paddingBottom: 16,
-        backgroundColor: colors.surface,
-        borderBottomWidth: 1,
-        borderBottomColor: colors.border,
-    },
-    title: {
-        ...TYPOGRAPHY.screenTitle,
-        color: colors.text,
-    },
-    createButton: {
-        backgroundColor: colors.accent,
-        width: 44,
-        height: 44,
-        borderRadius: 22,
-        justifyContent: 'center',
-        alignItems: 'center',
-        shadowColor: colors.accent,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 4,
-    },
-    listContainer: {
-        paddingHorizontal: SPACING.screenHorizontal,
-        paddingTop: 16,
-        paddingBottom: 16,
-    },
-    emptyContainer: {
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingVertical: 60,
-    },
-    emptyText: {
-        fontSize: 18,
-        color: colors.textSecondary,
-        marginTop: 16,
-        marginBottom: 24,
-    },
-    emptyButton: {
-        backgroundColor: colors.accent,
-        paddingHorizontal: 24,
-        paddingVertical: 12,
-        borderRadius: 12,
-    },
-    emptyButtonText: {
-        color: '#FFF',
-        fontSize: 16,
-        fontWeight: '600',
-    },
-});
+const makeStyles = (colors) =>
+    StyleSheet.create({
+        container: {
+            flex: 1,
+            backgroundColor: colors.background,
+        },
+        header: {
+            paddingHorizontal: SPACING.screenHorizontal,
+            paddingTop: 16,
+            paddingBottom: 16,
+            backgroundColor: colors.surface,
+            borderBottomWidth: 1,
+            borderBottomColor: colors.border,
+        },
+        headerRow: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 14,
+        },
+        title: {
+            ...TYPOGRAPHY.screenTitle,
+            color: colors.text,
+        },
+        createButton: {
+            backgroundColor: colors.accent,
+            width: 44,
+            height: 44,
+            borderRadius: 22,
+            justifyContent: 'center',
+            alignItems: 'center',
+            shadowColor: colors.accent,
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.3,
+            shadowRadius: 8,
+            elevation: 4,
+        },
+        tabRow: {
+            flexDirection: 'row',
+            gap: 8,
+        },
+        tabItem: {
+            paddingHorizontal: 16,
+            paddingVertical: 8,
+            borderRadius: 20,
+            backgroundColor: colors.surface2,
+        },
+        tabItemActive: {
+            backgroundColor: colors.accent,
+        },
+        tabText: {
+            fontSize: 13,
+            fontWeight: '500',
+            color: colors.textSecondary,
+        },
+        tabTextActive: {
+            color: '#FFF',
+            fontWeight: '600',
+        },
+        listContainer: {
+            paddingHorizontal: SPACING.screenHorizontal,
+            paddingTop: 16,
+            paddingBottom: 24,
+            flexGrow: 1,
+        },
+        emptyContainer: {
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingVertical: 60,
+        },
+        emptyText: {
+            fontSize: 18,
+            color: colors.textSecondary,
+            marginTop: 16,
+            marginBottom: 24,
+            textAlign: 'center',
+        },
+        emptyButton: {
+            backgroundColor: colors.accent,
+            paddingHorizontal: 24,
+            paddingVertical: 12,
+            borderRadius: 12,
+        },
+        emptyButtonText: {
+            color: '#FFF',
+            fontSize: 16,
+            fontWeight: '600',
+        },
+    });
 
 export default TournamentListScreen;

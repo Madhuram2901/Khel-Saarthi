@@ -5,6 +5,13 @@ import * as ImagePicker from 'expo-image-picker';
 import api from '../api/api';
 import { useTheme } from '../context/ThemeContext';
 
+const getFullImageUrl = (relativePath) => {
+    if (!relativePath) return null;
+    if (relativePath.startsWith('http')) return relativePath;
+    const baseUrl = api.defaults.baseURL.replace('/api', '');
+    return `${baseUrl}${relativePath}`;
+};
+
 const ManageTeamsScreen = ({ route, navigation }) => {
     const { tournamentId } = route.params;
     const { colors, isDark } = useTheme();
@@ -89,7 +96,13 @@ const ManageTeamsScreen = ({ route, navigation }) => {
             {teams.map((team) => (
                 <View key={team._id} style={styles.teamCard}>
                     <View style={styles.teamHeader}>
-                        {team.logoUrl ? <Image source={{ uri: team.logoUrl }} style={styles.teamLogo} /> : <View style={styles.teamIcon}><Ionicons name="shield" size={24} color={colors.accent} /></View>}
+                        {team.logoUrl && getFullImageUrl(team.logoUrl) ? (
+                            <Image source={{ uri: getFullImageUrl(team.logoUrl) }} style={styles.teamLogo} />
+                        ) : (
+                            <View style={styles.teamIcon}>
+                                <Ionicons name="shield" size={24} color={colors.accent} />
+                            </View>
+                        )}
                         {editingTeam === team._id ? (
                             <View style={styles.editRow}>
                                 <TextInput style={styles.editInput} value={editName} onChangeText={setEditName} autoFocus placeholderTextColor={colors.textSecondary} />

@@ -2,20 +2,27 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 const {
     createVenue,
     getVenues,
     getVenueById,
     updateVenue,
     createBooking,
-    getHostBookings
+    getHostBookings,
+    getMyVenues
 } = require('../controllers/venueController');
 const { protect } = require('../middleware/authMiddleware');
+
+const uploadDir = 'uploads/';
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+}
 
 // Configure multer for venue images
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, 'uploads/');
+        cb(null, uploadDir);
     },
     filename: (req, file, cb) => {
         cb(null, `venue-${Date.now()}-${Math.round(Math.random() * 1E9)}${path.extname(file.originalname)}`);
@@ -43,6 +50,8 @@ router.route('/')
 
 router.route('/bookings/host')
     .get(protect, getHostBookings);
+
+router.get('/my-venues', protect, getMyVenues);
 
 router.route('/:id')
     .get(getVenueById)

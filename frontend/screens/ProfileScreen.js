@@ -1,5 +1,6 @@
 
-import React, { useContext, useState, useEffect, useMemo } from 'react';
+import React, { useContext, useState, useEffect, useMemo, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
     View,
     Text,
@@ -28,6 +29,10 @@ const ProfileScreen = ({ navigation }) => {
     const [eventsJoined, setEventsJoined] = useState(0);
     const [sportsProfiles, setSportsProfiles] = useState([]);
     const [loadingProfiles, setLoadingProfiles] = useState(false);
+    const [eventsCreated, setEventsCreated] = useState(0);
+    const [venuesOwned, setVenuesOwned] = useState(0);
+    const [tournamentsCreated, setTournamentsCreated] = useState(0);
+    const [loadingStats, setLoadingStats] = useState(false);
 
     useEffect(() => {
         const fetchEventsJoined = async () => {
@@ -54,16 +59,78 @@ const ProfileScreen = ({ navigation }) => {
         }
     };
 
-    useEffect(() => {
-        fetchSportsProfiles();
-    }, []);
+    useFocusEffect(
+        useCallback(() => {
+            fetchSportsProfiles();
+        }, [])
+    );
 
-    const calculateBMI = () => {
-        const numericHeight = Number(user.height);
-        const numericWeight = Number(user.weight);
+    const fetchHostStats = async () => {
+        try {
+            setLoadingStats(true);
+
+            const eventsRes = await api.get('/events');
+            const myEvents = eventsRes.data.filter(
+                e =>
+                    e.createdBy?._id === user._id ||
+                    e.createdBy === user._id ||
+                    e.host?._id === user._id ||
+                    e.host === user._id
+            );
+            setEventsCreated(myEvents.length);
+
+            try {
+                const myVenuesRes = await api.get('/venues/my-venues');
+                setVenuesOwned(myVenuesRes.data.length);
+            } catch {
+                const allVenuesRes = await api.get('/venues');
+                const mine = allVenuesRes.data.filter(
+                    v =>
+                        v.manager?._id === user._id ||
+                        v.manager === user._id
+                );
+                setVenuesOwned(mine.length);
+            }
+
+            try {
+                const tournamentsRes = await api.get('/tournaments');
+                const myTournaments = tournamentsRes.data.filter(
+                    t =>
+                        t.createdBy?._id === user._id ||
+                        t.createdBy === user._id ||
+                        t.host?._id === user._id ||
+                        t.host === user._id
+                );
+                setTournamentsCreated(myTournaments.length);
+            } catch {
+                setTournamentsCreated(0);
+            }
+        } catch (error) {
+            console.log('Error fetching host stats', error);
+        } finally {
+            setLoadingStats(false);
+        }
+    };
+
+    useEffect(() => {
+        if (user?.role === 'host') {
+            fetchHostStats();
+        }
+    }, [user]);
+
+    if (!user) {
+        return null;
+    }
+
+    const height = user?.profile?.height ?? user?.physicalStats?.height ?? user?.height ?? null;
+    const weight = user?.profile?.weight ?? user?.physicalStats?.weight ?? user?.weight ?? null;
+
+    const calculateBMI = (heightValue, weightValue) => {
+        const numericHeight = Number(heightValue);
+        const numericWeight = Number(weightValue);
         if (!numericHeight || !numericWeight) return null;
-        const h = numericHeight / 100;
-        const bmi = numericWeight / (h * h);
+        const heightInMeters = numericHeight / 100;
+        const bmi = numericWeight / (heightInMeters * heightInMeters);
         return bmi.toFixed(1);
     };
     const getBMIColor = (bmi) => {
@@ -74,7 +141,7 @@ const ProfileScreen = ({ navigation }) => {
         return colors.accentRed;
     };
 
-    const bmiValue = calculateBMI();
+    const bmiValue = calculateBMI(height, weight);
     const bmiNumber = bmiValue ? parseFloat(bmiValue) : null;
     const statsCardWidth = Math.max((width - 40) / 4, 88);
 
@@ -98,6 +165,20 @@ const ProfileScreen = ({ navigation }) => {
             </View>
             {rightElement || <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />}
         </TouchableOpacity>
+    );
+
+    const StatCard = ({ icon, label, value, valueColor = colors.text, centered = false }) => (
+        <View
+            style={[
+                styles.statCard,
+                centered && styles.centeredStatCard,
+                { backgroundColor: colors.surface, minWidth: statsCardWidth },
+            ]}
+        >
+            <Ionicons name={icon} size={24} color={colors.accent} />
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{label}</Text>
+            <Text style={[styles.statValue, { color: valueColor }]}>{value}</Text>
+        </View>
     );
 
     return (
@@ -166,26 +247,53 @@ const ProfileScreen = ({ navigation }) => {
                         contentContainerStyle={styles.statsContainer}
                     >
                         <View style={[styles.statsRow, { minWidth: width - 32 }]}>
-                            <View style={[styles.statCard, styles.centeredStatCard, { backgroundColor: colors.surface, minWidth: statsCardWidth }]}>
-                                <Ionicons name="trophy-outline" size={24} color={colors.accent} />
-                                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Events Joined</Text>
-                                <Text style={[styles.statValue, { color: colors.text }]}>{eventsJoined}</Text>
-                            </View>
-                            <View style={[styles.statCard, { backgroundColor: colors.surface, minWidth: statsCardWidth }]}>
-                                <Ionicons name="resize-outline" size={24} color={colors.accent} />
-                                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Height (cm)</Text>
-                                <Text style={[styles.statValue, { color: colors.text }]}>{user.height != null ? user.height : '--'}</Text>
-                            </View>
-                            <View style={[styles.statCard, { backgroundColor: colors.surface, minWidth: statsCardWidth }]}>
-                                <Ionicons name="barbell-outline" size={24} color={colors.accent} />
-                                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Weight (kg)</Text>
-                                <Text style={[styles.statValue, { color: colors.text }]}>{user.weight != null ? user.weight : '--'}</Text>
-                            </View>
-                            <View style={[styles.statCard, { backgroundColor: colors.surface, minWidth: statsCardWidth }]}>
-                                <Ionicons name="fitness-outline" size={24} color={colors.accent} />
-                                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>BMI</Text>
-                                <Text style={[styles.statValue, { color: bmiNumber !== null ? getBMIColor(bmiNumber) : colors.textSecondary }]}>{bmiValue || '--'}</Text>
-                            </View>
+                            {user.role === 'host' ? (
+                                <>
+                                    <StatCard
+                                        icon="calendar-outline"
+                                        label="Events Created"
+                                        value={loadingStats ? '--' : eventsCreated}
+                                        centered
+                                    />
+                                    <StatCard
+                                        icon="location-outline"
+                                        label="Venues Owned"
+                                        value={loadingStats ? '--' : venuesOwned}
+                                    />
+                                    <StatCard
+                                        icon="trophy-outline"
+                                        label="Tournaments"
+                                        value={loadingStats ? '--' : tournamentsCreated}
+                                    />
+                                </>
+                            ) : (
+                                <>
+                                    <StatCard
+                                        icon="trophy-outline"
+                                        label="Events Joined"
+                                        value={eventsJoined}
+                                        centered
+                                    />
+                                    <StatCard
+                                        icon="resize-outline"
+                                        label="Height (cm)"
+                                        value={height != null ? height : '--'}
+                                    />
+                                    <StatCard
+                                        icon="barbell-outline"
+                                        label="Weight (kg)"
+                                        value={weight != null ? weight : '--'}
+                                    />
+                                    {bmiValue && (
+                                        <StatCard
+                                            icon="fitness-outline"
+                                            label="BMI"
+                                            value={bmiValue}
+                                            valueColor={getBMIColor(bmiNumber)}
+                                        />
+                                    )}
+                                </>
+                            )}
                         </View>
                     </ScrollView>
                 </View>
@@ -228,7 +336,8 @@ const ProfileScreen = ({ navigation }) => {
                 </View>
 
                 {/* Sports Profiles Section */}
-                <MenuSection title="Sports Profiles">
+                {user.role !== 'host' && (
+                    <MenuSection title="Sports Profiles">
                     <View style={[styles.listCard, { backgroundColor: colors.surface }]}>
                         {loadingProfiles ? (
                             <View style={styles.menuItem}>
@@ -282,7 +391,8 @@ const ProfileScreen = ({ navigation }) => {
                         <Ionicons name="add-circle" size={20} color="#FFF" />
                         <Text style={styles.addProfileButtonText}>Add New Sport Profile</Text>
                     </TouchableOpacity>
-                </MenuSection>
+                    </MenuSection>
+                )}
 
                 {/* Settings Section */}
                 <MenuSection title="Settings">

@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useCameraPermissions } from 'expo-camera';
 import * as Speech from 'expo-speech';
 import * as Haptics from 'expo-haptics';
+import { useTheme } from '../context/ThemeContext';
 
 const HTML_CONTENT = `
 <!DOCTYPE html>
@@ -161,6 +162,7 @@ const EXERCISES = [
 ];
 
 const AiGymTrainerScreen = ({ navigation }) => {
+    const { colors, isDark } = useTheme();
     const [currentExercise, setCurrentExercise] = useState(null);
     const [reps, setReps] = useState(0);
     const [feedback, setFeedback] = useState('Ready?');
@@ -313,51 +315,101 @@ const AiGymTrainerScreen = ({ navigation }) => {
             {/* ── EXERCISE SELECTION SHEET ──
                 Visible when: no active session yet, OR user tapped the pill mid-session */}
             {(!isSessionActive || showSheet) && (
-                <View style={styles.sheetOverlay}>
-                    <View style={styles.sheet}>
-                        <View style={styles.sheetHandle} />
+                <TouchableOpacity
+                    style={[
+                        styles.sheetOverlay,
+                        {
+                            backgroundColor: isDark
+                                ? 'rgba(0,0,0,0.75)'
+                                : 'rgba(0,0,0,0.55)',
+                        },
+                    ]}
+                    activeOpacity={1}
+                    onPress={() => isSessionActive ? setShowSheet(false) : navigation.goBack()}
+                >
+                    <TouchableOpacity activeOpacity={1} onPress={() => {}}>
+                        <View
+                            style={[
+                                styles.sheet,
+                                { backgroundColor: isDark ? '#1C1C1E' : '#F2F2F7' },
+                            ]}
+                        >
+                            <View
+                                style={[
+                                    styles.sheetHandle,
+                                    { backgroundColor: isDark ? '#48484A' : '#C7C7CC' },
+                                ]}
+                            />
 
-                        <View style={styles.sheetHeader}>
-                            <View>
-                                <Text style={styles.sheetTitle}>Choose Exercise</Text>
-                                <Text style={styles.sheetSubtitle}>AI Trainer will analyze your form</Text>
+                            <View style={styles.sheetHeader}>
+                                {!isSessionActive ? (
+                                    <TouchableOpacity
+                                        onPress={() => navigation.goBack()}
+                                        style={styles.sheetBackButton}
+                                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                                    >
+                                        <Ionicons
+                                            name="chevron-back"
+                                            size={22}
+                                            color={colors.accent}
+                                        />
+                                    </TouchableOpacity>
+                                ) : (
+                                    <View style={styles.sheetBackButton} />
+                                )}
+
+                                <View style={styles.sheetTitleBlock}>
+                                    <Text style={[styles.sheetTitle, styles.sheetTitleCentered, { color: colors.text }]}>Choose Exercise</Text>
+                                    <Text style={[styles.sheetSubtitle, styles.sheetSubtitleCentered, { color: colors.textSecondary }]}>
+                                        AI Trainer will analyze your form
+                                    </Text>
+                                </View>
+
+                                {!isSessionActive && <View style={styles.sheetBackButton} />}
                             </View>
-                            <TouchableOpacity
-                                onPress={() => isSessionActive ? setShowSheet(false) : navigation.goBack()}
-                                style={styles.closeButton}
-                            >
-                                <Ionicons name="close" size={18} color="#8E8E93" />
-                            </TouchableOpacity>
-                        </View>
 
-                        <View style={styles.exerciseList}>
-                            {EXERCISES.map((ex, index) => (
-                                <TouchableOpacity
-                                    key={ex.key}
-                                    style={[
-                                        styles.exerciseRow,
-                                        index < EXERCISES.length - 1 && styles.exerciseRowBorder,
-                                        currentExercise === ex.key && styles.exerciseRowActive,
-                                    ]}
-                                    onPress={() => selectExercise(ex.key)}
-                                    activeOpacity={0.7}
-                                >
-                                    <View style={[styles.exerciseIcon, { backgroundColor: ex.color }]}>
-                                        <Ionicons name={ex.icon} size={22} color="#FFF" />
-                                    </View>
-                                    <View style={styles.exerciseInfo}>
-                                        <Text style={styles.exerciseLabel}>{ex.label}</Text>
-                                        <Text style={styles.exerciseSub}>{ex.sub}</Text>
-                                    </View>
-                                    {currentExercise === ex.key
-                                        ? <Ionicons name="checkmark" size={18} color="#007AFF" />
-                                        : <Ionicons name="chevron-forward" size={18} color="#C7C7CC" />
-                                    }
-                                </TouchableOpacity>
-                            ))}
+                            <View
+                                style={[
+                                    styles.exerciseList,
+                                    { backgroundColor: isDark ? '#2C2C2E' : '#FFFFFF' },
+                                ]}
+                            >
+                                {EXERCISES.map((ex, index) => (
+                                    <TouchableOpacity
+                                        key={ex.key}
+                                        style={[
+                                            styles.exerciseRow,
+                                            index < EXERCISES.length - 1 && [
+                                                styles.exerciseRowBorder,
+                                                { borderBottomColor: colors.border },
+                                            ],
+                                            currentExercise === ex.key && [
+                                                styles.exerciseRowActive,
+                                                { backgroundColor: isDark ? '#0A3060' : '#F0F6FF' },
+                                            ],
+                                        ]}
+                                        onPress={() => selectExercise(ex.key)}
+                                        activeOpacity={0.7}
+                                    >
+                                        <View style={[styles.exerciseIcon, { backgroundColor: ex.color }]}>
+                                            <Ionicons name={ex.icon} size={22} color="#FFF" />
+                                        </View>
+                                        <View style={styles.exerciseInfo}>
+                                            <Text style={[styles.exerciseLabel, { color: colors.text }]}>{ex.label}</Text>
+                                            <Text style={[styles.exerciseSub, { color: colors.textSecondary }]}>
+                                                {ex.sub}
+                                            </Text>
+                                        </View>
+                                        {currentExercise === ex.key
+                                            ? <Ionicons name="checkmark" size={18} color="#007AFF" />
+                                            : <Ionicons name="chevron-forward" size={18} color="#C7C7CC" />
+                                        }
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
                         </View>
-                    </View>
-                </View>
+                    </TouchableOpacity>
+                </TouchableOpacity>
             )}
         </View>
     );
@@ -391,23 +443,27 @@ const styles = StyleSheet.create({
     feedbackValue: { fontSize: 17, fontWeight: '600', color: '#1D1D1F', textAlign: 'center' },
 
     // ── SELECTION SHEET ──
-    sheetOverlay: { ...StyleSheet.absoluteFillObject, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.55)' },
-    sheet: { backgroundColor: '#F2F2F7', borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingBottom: Platform.OS === 'ios' ? 40 : 28 },
-    sheetHandle: { width: 36, height: 4, borderRadius: 2, backgroundColor: '#C7C7CC', alignSelf: 'center', marginTop: 10, marginBottom: 4 },
-    sheetHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12 },
-    sheetTitle: { fontSize: 22, fontWeight: '700', color: '#1D1D1F', marginBottom: 4 },
-    sheetSubtitle: { fontSize: 13, color: '#8E8E93' },
-    closeButton: { width: 30, height: 30, borderRadius: 15, backgroundColor: '#E5E5EA', justifyContent: 'center', alignItems: 'center', marginTop: 4 },
+    sheetOverlay: { ...StyleSheet.absoluteFillObject, justifyContent: 'flex-end' },
+    sheet: { borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingBottom: Platform.OS === 'ios' ? 40 : 28 },
+    sheetHandle: { width: 36, height: 4, borderRadius: 2, alignSelf: 'center', marginTop: 10, marginBottom: 4 },
+    sheetHeader: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12, gap: 8 },
+    sheetBackButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', minWidth: 60 },
+    sheetBackText: { fontSize: 16, fontWeight: '500', marginLeft: 2 },
+    sheetTitleBlock: { flex: 1 },
+    sheetTitle: { fontSize: 22, fontWeight: '700', marginBottom: 4 },
+    sheetTitleCentered: { textAlign: 'center' },
+    sheetSubtitle: { fontSize: 13 },
+    sheetSubtitleCentered: { textAlign: 'center' },
 
     // ── EXERCISE LIST ──
-    exerciseList: { marginHorizontal: 16, backgroundColor: '#FFF', borderRadius: 16, overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2 },
+    exerciseList: { marginHorizontal: 16, borderRadius: 16, overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2 },
     exerciseRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 16, gap: 14 },
-    exerciseRowBorder: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#E5E5EA' },
-    exerciseRowActive: { backgroundColor: '#F0F6FF' },
+    exerciseRowBorder: { borderBottomWidth: StyleSheet.hairlineWidth },
+    exerciseRowActive: {},
     exerciseIcon: { width: 44, height: 44, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
     exerciseInfo: { flex: 1 },
-    exerciseLabel: { fontSize: 16, fontWeight: '600', color: '#1D1D1F', marginBottom: 2 },
-    exerciseSub: { fontSize: 13, color: '#8E8E93' },
+    exerciseLabel: { fontSize: 16, fontWeight: '600', marginBottom: 2 },
+    exerciseSub: { fontSize: 13 },
 });
 
 export default AiGymTrainerScreen;

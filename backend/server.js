@@ -4,6 +4,7 @@ const { Server } = require("socket.io");
 const dotenv = require('dotenv');
 const connectDB = require('./config/db');
 const cors = require('cors');
+const path = require('path');
 const initializeSocket = require('./socketHandler');
 
 dotenv.config();
@@ -26,6 +27,9 @@ app.use(cors({
 }));
 
 app.use(express.json());
+
+// Serve uploaded files
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 connectDB();
 
